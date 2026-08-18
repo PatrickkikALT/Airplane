@@ -161,6 +161,10 @@ namespace Utils.Core.SceneLockTool
             GUILayout.Label("Connection", EditorStyles.boldLabel);
 
             interfacer.Url = EditorGUILayout.TextField("Endpoint", interfacer.Url);
+            if (EditorPrefs.GetString("SceneLockTool_URL") != interfacer.Url)
+            {
+                EditorPrefs.SetString("SceneLockTool_URL", interfacer.Url);
+            }
             using (new EditorGUI.DisabledScope(true))
             {
                 EditorGUILayout.TextField("Product", interfacer.ProductName);
@@ -168,7 +172,7 @@ namespace Utils.Core.SceneLockTool
                 EditorGUILayout.TextField("Project ID",
                     string.IsNullOrWhiteSpace(interfacer.ProjectId) ? "(unknown)" : interfacer.ProjectId);
             }
-
+            
             if (GUILayout.Button(new GUIContent(" Refresh", EditorGUIUtility.IconContent("Refresh").image), GUILayout.Height(24f)))
                 RefreshEverything();
 

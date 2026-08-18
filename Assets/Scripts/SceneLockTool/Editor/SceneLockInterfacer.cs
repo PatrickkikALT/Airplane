@@ -12,7 +12,6 @@ namespace Utils.Core.SceneLockTool
 {
     public sealed class SceneLockInterfacer
     {
-        public const string DefaultUrl = "https://127.0.0.1/";
         
         // PHP POST keys used for requests.
         private const string GET_REPLY_KEY = "get_reply_key";
@@ -41,9 +40,9 @@ namespace Utils.Core.SceneLockTool
         public delegate void StatusLockHandler(bool value);
         public static event StatusLockHandler OnStatusLockChanged;
         
-        public SceneLockInterfacer(string url = DefaultUrl, string productName = null, string deviceId = null)
+        public SceneLockInterfacer(string url = "", string productName = null, string deviceId = null)
         {
-            Url = string.IsNullOrWhiteSpace(url) ? DefaultUrl : url;
+            Url = string.IsNullOrWhiteSpace(url) ? string.IsNullOrWhiteSpace(EditorPrefs.GetString("SceneLockTool_URL")) ? "https://127.0.0.1" : EditorPrefs.GetString("SceneLockTool_URL") : url;
             ProductName = string.IsNullOrWhiteSpace(productName) ? Application.productName : productName;
             DeviceId = string.IsNullOrWhiteSpace(deviceId) ? GenerateDeviceId() : deviceId;
             GetProjectId((result, response) =>
