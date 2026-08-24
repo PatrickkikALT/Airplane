@@ -111,7 +111,7 @@ namespace Airplane.FlightSimulation
             return true;
         }
     }
-
+    
     /// <summary>
     /// Snapshot of the state. Value type so RK4 can clone without GC.
     /// </summary>
@@ -143,6 +143,9 @@ namespace Airplane.FlightSimulation
         public const float Rad2Deg = Mathf.Rad2Deg;
         public const float Pi = Mathf.PI;
         public const float TwoPi = Mathf.PI * 2f;
+        public const float AirSpeedToKnots = 1.944f;
+        public const float KnotsToKmh = 1.852f;
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 SafeNormalize(Vector3 v, float epsSqr = 1e-12f)

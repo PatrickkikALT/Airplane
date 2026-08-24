@@ -1,22 +1,63 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
     /// <summary>
-    /// Custom rigidbody
-    ///
-    /// State (SI units):
-    ///   r  position of the centre of mass (world, m)
-    ///   v  linear velocity of the CoM (world, m/s)
-    ///   a  linear acceleration of the CoM (world, m/s²) — diagnostic, from last step
-    ///   q  orientation (world, body-to-world)
-    ///   ω  angular velocity (body frame, rad/s)
-    ///   α  angular acceleration (body frame, rad/s²) — diagnostic, from last step
-    ///
-    /// Rotational dynamics (Euler's equation, body frame):
-    ///   α = I⁻¹ ( Στ − ω × (I ω) )
-    ///
-    /// Integration runs in FixedUpdate at Time.fixedDeltaTime with optional sub-stepping.
+    /// One contact in a <see cref="PlaneCollision"/>. Mirrors Unity's <see cref="ContactPoint"/>.
+    /// </summary>
+    public readonly struct PlaneContactPoint
+    {
+        public readonly Vector3 point;
+        public readonly Vector3 normal;
+        public readonly Collider thisCollider;
+        public readonly Collider otherCollider;
+        /// <summary>Negative while overlapping (same sign convention as Unity's <see cref="ContactPoint.separation"/>).</summary>
+        public readonly float separation;
+
+        public PlaneContactPoint(Vector3 point, Vector3 normal, Collider thisCollider, Collider otherCollider, float separation)
+        {
+            this.point = point;
+            this.normal = normal;
+            this.thisCollider = thisCollider;
+            this.otherCollider = otherCollider;
+            this.separation = separation;
+        }
+    }
+
+    /// <summary>
+    /// Hit report from <see cref="PlaneRigidbody"/> collider contact.
+    /// Same role as Unity's <see cref="Collision"/> for <c>OnCollisionEnter</c>.
+    /// </summary>
+    public struct PlaneCollision
+    {
+        public Collider collider;
+        public Collider thisCollider;
+        public Rigidbody rigidbody;
+        public PlaneRigidbody planeBody;
+        public Transform transform;
+        public GameObject gameObject;
+        public Vector3 relativeVelocity;
+        public Vector3 impulse;
+        public Vector3 point;
+        public Vector3 normal;
+        public float separation;
+        public int contactCount;
+
+        public PlaneContactPoint GetContact(int index)
+        {
+            if (index < 0 || index >= contactCount)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            return new PlaneContactPoint(point, normal, thisCollider, collider, separation);
+        }
+    }
+
+    /// <summary>
+    /// Custom rigid body. Aircraft dynamics are integrated here; PhysX is not the solver.
+    /// Collider contact uses PhysX only as a query / other-body back-end: overlaps are resolved
+    /// with sequential impulses so the aircraft can hit static colliders and exchange momentum
+    /// with Unity Rigidbodies (and other PlaneRigidbody instances).
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
@@ -27,63 +68,46 @@ namespace Airplane.FlightSimulation
         [Tooltip("Mass of the vehicle, kg. Baseline trainer = 1500 kg.")]
         [SerializeField] private float mass = 1500f;
 
-        [Tooltip("Ixx — roll inertia about body +X (forward), kg·m². Smallest of the three for a conventional airframe.")]
+        [Tooltip("Ixx — roll inertia about body +X (forward), kg·m².")]
         [SerializeField] private float inertiaIxx = 2200f;
 
-        [Tooltip("Iyy — yaw inertia about body +Y (up), kg·m². Largest of the three.")]
+        [Tooltip("Iyy — yaw inertia about body +Y (up), kg·m².")]
         [SerializeField] private float inertiaIyy = 5200f;
 
         [Tooltip("Izz — pitch inertia about body +Z (right), kg·m².")]
         [SerializeField] private float inertiaIzz = 3600f;
 
-        [Tooltip("Product of inertia Ixy, kg·m². Leave 0 for a left/right-symmetric airframe.")]
         [SerializeField] private float inertiaIxy;
-
-        [Tooltip("Product of inertia Ixz, kg·m². Small negative values appear on taildraggers; 0 is fine for a trainer.")]
         [SerializeField] private float inertiaIxz;
-
-        [Tooltip("Product of inertia Iyz, kg·m². Leave 0 for a left/right-symmetric airframe.")]
         [SerializeField] private float inertiaIyz;
 
-        [Tooltip("Centre of mass in local (body) coordinates, metres. Forces are applied about this point. Keep at origin for the default prefab.")]
+        [Tooltip("Centre of mass in local (body) coordinates, metres.")]
         [SerializeField] private Vector3 centerOfMassBody;
 
         [Header("Integration")]
-        [Tooltip("Semi-implicit Euler is recommended. RK4 is more accurate but evaluates aero 4× per sub-step.")]
         [SerializeField] private IntegrationScheme integrationScheme = IntegrationScheme.SemiImplicitEuler;
 
-        [Tooltip("Sub-steps per FixedUpdate. 4 at 50 Hz physics → 5 ms steps, enough for stall break and ground springs.")]
         [SerializeField] [Range(1, 16)] private int substeps = 4;
 
-        [Tooltip("Lerp the visible transform between physics ticks. Without this the aircraft (and any chase camera) stutter at FixedUpdate rate.")]
+        [Tooltip("Lerp the visible transform between physics ticks.")]
         [SerializeField] private bool interpolateTransform = true;
 
-        [Tooltip("Hard clamp on |a| (m/s²) to survive a bad initial condition. 0 disables.")]
+        [Tooltip("Hard clamp on |a| (m/s²). 0 disables.")]
         [SerializeField] private float maxLinearAcceleration = 2000f;
 
-        [Tooltip("Hard clamp on |α| (rad/s²). 0 disables.")]
-        [SerializeField] private float maxAngularAcceleration = 80f;
+        [Tooltip("Hard clamp on |α| (rad/s²). Keep this modest so the nose does not whip.")]
+        [SerializeField] private float maxAngularAcceleration = 6f;
 
         [Header("Initial Conditions (body frame)")]
-        [Tooltip("Initial linear velocity in body axes, m/s. (55, 0, 0) is a typical unstick / cruise TAS so the aircraft is immediately flyable.")]
-        [SerializeField] private Vector3 initialVelocityBody = new Vector3(55f, 0f, 0f);
-
-        [Tooltip("Initial angular velocity in body axes, rad/s.")]
+        [SerializeField] private Vector3 initialVelocityBody = new Vector3(50f, 0f, 0f);
         [SerializeField] private Vector3 initialAngularVelocityBody;
 
         [Header("Ground Contact")]
-        [Tooltip("Simple spring-damper landing gear so WheelBrakes have a surface to bite. Does not use a Rigidbody.")]
         [SerializeField] private bool enableLandingGear = true;
-
-        [Tooltip("World-Y of the infinite runway plane. Used when no collider is hit (and always in InfinitePlane mode).")]
         [SerializeField] private float groundPlaneY;
-
-        [Tooltip("If true, raycasts down from each gear point (PhysX query only — the aircraft is still integrated here).")]
         [SerializeField] private bool raycastGround;
-
         [SerializeField] private LayerMask groundMask = ~0;
 
-        [Tooltip("Gear attach points in body frame, metres. Y is typically negative (below CoM).")]
         [SerializeField] private Vector3[] gearAttachBody =
         {
             new Vector3(2.05f, -0.35f, 0f),
@@ -91,29 +115,50 @@ namespace Airplane.FlightSimulation
             new Vector3(-0.45f, -0.35f, 1.25f)
         };
 
-        [Tooltip("Uncompressed strut length, metres.")]
         [SerializeField] private float gearRestLength = 0.95f;
-
-        [Tooltip("Vertical stiffness per strut, N/m. ~m*g / 0.15 m compression at rest.")]
         [SerializeField] private float gearSpring = 55000f;
-
-        [Tooltip("Vertical damping per strut, N·s/m.")]
         [SerializeField] private float gearDamper = 6500f;
-
-        [Tooltip("Rolling-resistance friction coefficient (brakes released).")]
         [SerializeField] private float rollingFriction = 0.025f;
-
-        [Tooltip("Locked-wheel friction coefficient at full brake.")]
         [SerializeField] private float brakingFriction = 0.75f;
-
-        [Tooltip("Nose-gear index into Gear Attach Body used for tiller steering.")]
         [SerializeField] private int noseGearIndex;
-
-        [Tooltip("Max nose-wheel steer angle, degrees, at walking speed.")]
         [SerializeField] private float noseWheelSteerDeg = 35f;
-
-        [Tooltip("Ground speed (m/s) at which nose-wheel steer fades to 0 (aerodynamic rudder takes over).")]
         [SerializeField] private float noseSteerFadeSpeed = 25f;
+
+        [Header("Collider Contact")]
+        [Tooltip("Resolve overlaps against Unity colliders after each integration sub-step.")]
+        [SerializeField] private bool enableColliderContact = true;
+
+        [SerializeField] private LayerMask collisionMask = ~0;
+
+        [SerializeField] [Range(1, 8)] private int collisionIterations = 4;
+
+        [Tooltip("Used when a collider has no Physics Material. 0 = inelastic.")]
+        [SerializeField] [Range(0f, 1f)] private float collisionRestitution = 0.15f;
+
+        [Tooltip("Coulomb μ used when a collider has no Physics Material.")]
+        [SerializeField] private float collisionFriction = 0.4f;
+
+        [Tooltip("Leave this much penetration (m) before positional correction.")]
+        [SerializeField] private float collisionSlop = 0.015f;
+
+        [Tooltip("Fraction of overlap removed each iteration.")]
+        [SerializeField] [Range(0.1f, 1f)] private float collisionBaumgarte = 0.7f;
+
+        [Tooltip("If the aircraft has no colliders, add a box hull so contact still works.")]
+        [SerializeField] private bool createFallbackHull = true;
+
+        [SerializeField] private Vector3 fallbackHullSize = new Vector3(7.5f, 1.2f, 10.5f);
+        [SerializeField] private Vector3 fallbackHullCenter;
+
+        [Header("Handling")]
+        [Tooltip("Body-axis rate damping (N·m / (rad/s)) at reference q. Higher = slower, heavier rotation.")]
+        [SerializeField] private Vector3 angularDamping = new Vector3(8000f, 7000f, 7000f);
+
+        [Tooltip("Dynamic pressure (Pa) at which Angular Damping is quoted. Scales with q.")]
+        [SerializeField] private float dampingReferenceQ = 1800f;
+
+        [Tooltip("Hard cap on body rates, degrees/s (roll, yaw, pitch).")]
+        [SerializeField] private Vector3 maxAngularSpeedDeg = new Vector3(80f, 28f, 45f);
 
         [Header("Debug Gizmos")]
         [SerializeField] private bool drawGizmos = true;
@@ -145,6 +190,26 @@ namespace Airplane.FlightSimulation
         private AircraftEngine _engine;
         private AircraftFlightController _controller;
 
+        private Rigidbody _proxyBody;
+        private Collider[] _ownColliders = System.Array.Empty<Collider>();
+        private BoxCollider _fallbackHull;
+        private readonly Collider[] _overlapBuffer = new Collider[48];
+        private readonly RaycastHit[] _rayBuffer = new RaycastHit[16];
+        private readonly Contact[] _contacts = new Contact[32];
+        private int _gizmoContactCount;
+
+        private Dictionary<int, PlaneCollision> _hitsThisTick = new Dictionary<int, PlaneCollision>(16);
+        private Dictionary<int, PlaneCollision> _hitsLastTick = new Dictionary<int, PlaneCollision>(16);
+
+        /// <summary>Fired once when contact with a collider begins. Same timing idea as <c>OnCollisionEnter</c>.</summary>
+        public event Action<PlaneCollision> CollisionEnter;
+
+        /// <summary>Fired every physics tick while still overlapping that collider.</summary>
+        public event Action<PlaneCollision> CollisionStay;
+
+        /// <summary>Fired once when contact with a collider ends.</summary>
+        public event Action<PlaneCollision> CollisionExit;
+
         public float Mass => mass;
         public Vector3 Position => _position;
         public Vector3 Velocity => _velocity;
@@ -166,7 +231,7 @@ namespace Airplane.FlightSimulation
         {
             get { return FlightSimMath.SafeMagnitude(_velocity - AtmosphericModel.SampleWind()); }
         }
-        
+
         public void SetMassAndInertia(float newMass, float ixx, float iyy, float izz, float ixy = 0f, float ixz = 0f, float iyz = 0f)
         {
             mass = Mathf.Max(1f, newMass);
@@ -189,11 +254,15 @@ namespace Airplane.FlightSimulation
         {
             CacheSiblings();
             RebuildInertia();
+            ConfigureKinematicProxy();
+            CacheOwnColliders();
         }
 
         private void OnEnable()
         {
             CacheSiblings();
+            ConfigureKinematicProxy();
+            CacheOwnColliders();
         }
 
         private void Start()
@@ -213,9 +282,9 @@ namespace Airplane.FlightSimulation
             inertiaIyy = Mathf.Max(0.01f, inertiaIyy);
             inertiaIzz = Mathf.Max(0.01f, inertiaIzz);
             substeps = Mathf.Clamp(substeps, 1, 16);
+            collisionIterations = Mathf.Clamp(collisionIterations, 1, 8);
             _tensorDirty = true;
         }
-        
 
         private void CacheSiblings()
         {
@@ -235,7 +304,7 @@ namespace Airplane.FlightSimulation
             _inertia = Mat3.Inertia(inertiaIxx, inertiaIyy, inertiaIzz, inertiaIxy, inertiaIxz, inertiaIyz);
             if (!_inertia.TryInvert(out _inertiaInverse))
             {
-                Debug.LogError("CustomRigidBody6DOF: inertia tensor is singular. Check Ixx/Iyy/Izz.", this);
+                Debug.LogError("PlaneRigidbody: inertia tensor is singular. Check Ixx/Iyy/Izz.", this);
                 _inertiaInverse = Mat3.Diagonal(1f / inertiaIxx, 1f / inertiaIyy, 1f / inertiaIzz);
             }
 
@@ -278,6 +347,8 @@ namespace Airplane.FlightSimulation
                     StepSemiImplicitEuler(h);
             }
 
+            DispatchCollisionEvents();
+
             if (!interpolateTransform)
                 ApplyToTransform(_position, _orientation);
         }
@@ -295,13 +366,11 @@ namespace Airplane.FlightSimulation
             ApplyToTransform(pos, rot);
         }
 
-        /// <summary>World-frame force, Newtons. Accumulated until the next integration sub-step.</summary>
         public void AddForce(Vector3 forceWorld)
         {
             _forceWorld += forceWorld;
         }
 
-        /// <summary>Torque in the body frame, N * m. Use <see cref="AddTorqueWorld"/> for a world-frame moment.</summary>
         public void AddTorque(Vector3 torqueBody)
         {
             _torqueBody += torqueBody;
@@ -312,10 +381,6 @@ namespace Airplane.FlightSimulation
             _torqueBody += Quaternion.Inverse(_orientation) * torqueWorld;
         }
 
-        /// <summary>
-        /// Applies a world-frame force at a world-space point and the resulting moment about the CoM.
-        /// τ_world = r * F, then rotated into the body frame for Euler's equation.
-        /// </summary>
         public void AddForceAtPosition(Vector3 forceWorld, Vector3 worldPoint)
         {
             _forceWorld += forceWorld;
@@ -326,6 +391,19 @@ namespace Airplane.FlightSimulation
         public Vector3 GetPointVelocity(Vector3 worldPoint)
         {
             return _velocity + Vector3.Cross(AngularVelocityWorld, worldPoint - _position);
+        }
+
+        public void ApplyImpulseAtWorldPoint(Vector3 impulseWorld, Vector3 worldPoint)
+        {
+            _velocity += impulseWorld * (1f / mass);
+            Vector3 r = worldPoint - _position;
+            Vector3 torqueBody = Quaternion.Inverse(_orientation) * Vector3.Cross(r, impulseWorld);
+            _omegaBody += _inertiaInverse.Multiply(torqueBody);
+        }
+
+        public void TranslateWorld(Vector3 worldDelta)
+        {
+            _position += worldDelta;
         }
 
         public Vector3 TransformDirection(Vector3 bodyDirection)
@@ -379,6 +457,8 @@ namespace Airplane.FlightSimulation
 
             _lastAeroForceWorld = aeroSum;
 
+            ContributeRateDamping(in atmo);
+
             if (enableLandingGear)
                 ContributeLandingGear();
 
@@ -421,9 +501,11 @@ namespace Airplane.FlightSimulation
             _position += _velocity * dt;
 
             _omegaBody += _alphaBody * dt;
+            ClampAngularRates();
             _orientation = FlightSimMath.IntegrateQuaternionEuler(_orientation, _omegaBody, dt);
 
             SanitizeState();
+            ResolveColliderContacts();
         }
 
         private void StepRK4(float dt)
@@ -444,9 +526,9 @@ namespace Airplane.FlightSimulation
             _position = s0.Position + (dt / 6f) * (k1.Velocity + 2f * k2.Velocity + 2f * k3.Velocity + k4.Velocity);
             _velocity = s0.Velocity + (dt / 6f) * (k1.Acceleration + 2f * k2.Acceleration + 2f * k3.Acceleration + k4.Acceleration);
             _omegaBody = s0.AngularVelocityBody + (dt / 6f) * (k1.AngularAccelerationBody + 2f * k2.AngularAccelerationBody + 2f * k3.AngularAccelerationBody + k4.AngularAccelerationBody);
+            ClampAngularRates();
 
-            Quaternion q =
-                FlightSimMath.AddScaled(s0.Orientation, k1.OrientationDot, dt / 6f);
+            Quaternion q = FlightSimMath.AddScaled(s0.Orientation, k1.OrientationDot, dt / 6f);
             q = FlightSimMath.AddScaled(q, k2.OrientationDot, dt / 3f);
             q = FlightSimMath.AddScaled(q, k3.OrientationDot, dt / 3f);
             q = FlightSimMath.AddScaled(q, k4.OrientationDot, dt / 6f);
@@ -455,6 +537,18 @@ namespace Airplane.FlightSimulation
             _acceleration = k1.Acceleration;
             _alphaBody = k1.AngularAccelerationBody;
             SanitizeState();
+            ResolveColliderContacts();
+        }
+
+        private void ClampAngularRates()
+        {
+            Vector3 maxRad = maxAngularSpeedDeg * FlightSimMath.Deg2Rad;
+            if (maxRad.x > 0.01f)
+                _omegaBody.x = Mathf.Clamp(_omegaBody.x, -maxRad.x, maxRad.x);
+            if (maxRad.y > 0.01f)
+                _omegaBody.y = Mathf.Clamp(_omegaBody.y, -maxRad.y, maxRad.y);
+            if (maxRad.z > 0.01f)
+                _omegaBody.z = Mathf.Clamp(_omegaBody.z, -maxRad.z, maxRad.z);
         }
 
         private RigidBodyDerivatives EvaluateDerivatives(float dt)
@@ -513,6 +607,452 @@ namespace Airplane.FlightSimulation
         {
             Vector3 worldComOffset = orientation * centerOfMassBody;
             transform.SetPositionAndRotation(comWorld - worldComOffset, orientation);
+            if (_proxyBody != null)
+            {
+                _proxyBody.position = transform.position;
+                _proxyBody.rotation = transform.rotation;
+            }
+        }
+
+        private void ConfigureKinematicProxy()
+        {
+            _proxyBody = GetComponent<Rigidbody>();
+            if (_proxyBody == null)
+                _proxyBody = gameObject.AddComponent<Rigidbody>();
+
+            _proxyBody.mass = mass;
+            _proxyBody.useGravity = false;
+            _proxyBody.isKinematic = true;
+            _proxyBody.interpolation = RigidbodyInterpolation.None;
+            _proxyBody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            _proxyBody.detectCollisions = false;
+            _proxyBody.constraints = RigidbodyConstraints.None;
+        }
+
+        private void CacheOwnColliders()
+        {
+            Collider[] found = GetComponentsInChildren<Collider>(true);
+            int count = 0;
+            for (int i = 0; i < found.Length; i++)
+            {
+                Collider c = found[i];
+                if (c != null && c.enabled && !c.isTrigger)
+                    count++;
+            }
+
+            if (count == 0 && createFallbackHull && Application.isPlaying)
+            {
+                if (_fallbackHull == null)
+                {
+                    _fallbackHull = gameObject.AddComponent<BoxCollider>();
+                    _fallbackHull.size = fallbackHullSize;
+                    _fallbackHull.center = fallbackHullCenter;
+                    _fallbackHull.isTrigger = false;
+                }
+
+                found = GetComponentsInChildren<Collider>(true);
+                count = 0;
+                for (int i = 0; i < found.Length; i++)
+                {
+                    Collider c = found[i];
+                    if (c != null && c.enabled && !c.isTrigger)
+                        count++;
+                }
+            }
+
+            _ownColliders = new Collider[count];
+            int w = 0;
+            for (int i = 0; i < found.Length; i++)
+            {
+                Collider c = found[i];
+                if (c != null && c.enabled && !c.isTrigger)
+                    _ownColliders[w++] = c;
+            }
+        }
+
+        private bool IsOwnCollider(Collider c)
+        {
+            if (c == null)
+                return false;
+            for (int i = 0; i < _ownColliders.Length; i++)
+            {
+                if (_ownColliders[i] == c)
+                    return true;
+            }
+
+            return c.transform == transform || c.transform.IsChildOf(transform);
+        }
+
+        private void ResolveColliderContacts()
+        {
+            if (!enableColliderContact)
+                return;
+
+            if (_ownColliders == null || _ownColliders.Length == 0)
+                CacheOwnColliders();
+            if (_ownColliders.Length == 0)
+                return;
+
+            ApplyToTransform(_position, _orientation);
+            Physics.SyncTransforms();
+
+            int iterations = Mathf.Max(1, collisionIterations);
+            for (int iter = 0; iter < iterations; iter++)
+            {
+                int n = CollectContacts();
+                _gizmoContactCount = n;
+                if (n == 0)
+                    break;
+                SolveContacts(n);
+                RecordCollisionHits(n);
+                ApplyToTransform(_position, _orientation);
+                Physics.SyncTransforms();
+            }
+        }
+
+        private int CollectContacts()
+        {
+            int count = 0;
+            int mask = collisionMask.value;
+            float slop = Mathf.Max(0f, collisionSlop);
+
+            for (int i = 0; i < _ownColliders.Length; i++)
+            {
+                Collider own = _ownColliders[i];
+                if (own == null || !own.enabled || own.isTrigger)
+                    continue;
+
+                Bounds bounds = own.bounds;
+                int hits = Physics.OverlapBoxNonAlloc(
+                    bounds.center,
+                    bounds.extents,
+                    _overlapBuffer,
+                    Quaternion.identity,
+                    mask,
+                    QueryTriggerInteraction.Ignore);
+
+                for (int h = 0; h < hits; h++)
+                {
+                    Collider other = _overlapBuffer[h];
+                    if (other == null || other == own || other.isTrigger || IsOwnCollider(other))
+                        continue;
+
+                    if (!Physics.ComputePenetration(
+                            own, own.transform.position, own.transform.rotation,
+                            other, other.transform.position, other.transform.rotation,
+                            out Vector3 direction, out float distance))
+                        continue;
+
+                    if (distance <= slop * 0.25f || direction.sqrMagnitude < 1e-12f)
+                        continue;
+
+                    Vector3 n = direction.normalized;
+                    Vector3 contactPoint = own.ClosestPoint(other.bounds.center);
+                    if ((contactPoint - own.bounds.center).sqrMagnitude < 1e-10f)
+                        contactPoint = own.bounds.center - n * (distance * 0.5f);
+
+                    PlaneRigidbody otherPlane = other.GetComponentInParent<PlaneRigidbody>();
+                    if (otherPlane == this)
+                        continue;
+                    if (otherPlane != null && otherPlane.GetEntityId() < GetEntityId())
+                        continue;
+
+                    Rigidbody otherRb = other.attachedRigidbody;
+                    if (otherPlane != null)
+                        otherRb = null;
+                    else if (otherRb != null && otherRb.isKinematic && otherRb == _proxyBody)
+                        continue;
+
+                    GetContactMaterials(own, other, out float restitution, out float friction);
+
+                    if (count >= _contacts.Length)
+                        return count;
+
+                    _contacts[count++] = new Contact
+                    {
+                        Point = contactPoint,
+                        Normal = n,
+                        Penetration = distance,
+                        Restitution = restitution,
+                        Friction = friction,
+                        ThisCollider = own,
+                        OtherCollider = other,
+                        OtherBody = otherRb,
+                        OtherPlane = otherPlane
+                    };
+                }
+            }
+
+            return count;
+        }
+
+        private void SolveContacts(int count)
+        {
+            float invMassA = 1f / mass;
+            float slop = Mathf.Max(0f, collisionSlop);
+            float baumgarte = Mathf.Clamp01(collisionBaumgarte);
+
+            for (int i = 0; i < count; i++)
+            {
+                Contact c = _contacts[i];
+                Vector3 n = c.Normal;
+                Vector3 rA = c.Point - _position;
+
+                float invMassB = 0f;
+                Vector3 rB = Vector3.zero;
+                Vector3 vB = Vector3.zero;
+                bool otherIsDynamicRb = c.OtherBody != null && !c.OtherBody.isKinematic;
+                if (c.OtherPlane != null)
+                {
+                    invMassB = 1f / c.OtherPlane.mass;
+                    rB = c.Point - c.OtherPlane._position;
+                    vB = c.OtherPlane.GetPointVelocity(c.Point);
+                }
+                else if (c.OtherBody != null)
+                {
+                    rB = c.Point - c.OtherBody.worldCenterOfMass;
+                    vB = c.OtherBody.GetPointVelocity(c.Point);
+                    if (otherIsDynamicRb && c.OtherBody.mass > 1e-6f)
+                        invMassB = 1f / c.OtherBody.mass;
+                }
+
+                Vector3 vA = GetPointVelocity(c.Point);
+                Vector3 vRel = vA - vB;
+                c.RelativeVelocity = vRel;
+                float vN = Vector3.Dot(vRel, n);
+
+                float invMn = InverseMassAlong(rA, n, invMassA);
+                if (c.OtherPlane != null)
+                    invMn += c.OtherPlane.InverseMassAlong(rB, n, invMassB);
+                else if (otherIsDynamicRb)
+                    invMn += RigidbodyInverseMassAlong(c.OtherBody, rB, n);
+                if (invMn < 1e-8f)
+                {
+                    _contacts[i] = c;
+                    continue;
+                }
+
+                float jn = 0f;
+                if (vN < 0f)
+                    jn = -(1f + c.Restitution) * vN / invMn;
+
+                Vector3 impulse = n * jn;
+
+                Vector3 vTan = vRel - n * vN;
+                float vTanMag = vTan.magnitude;
+                if (vTanMag > 1e-4f && c.Friction > 1e-6f)
+                {
+                    Vector3 t = vTan / vTanMag;
+                    float invMt = InverseMassAlong(rA, t, invMassA);
+                    if (c.OtherPlane != null)
+                        invMt += c.OtherPlane.InverseMassAlong(rB, t, invMassB);
+                    else if (otherIsDynamicRb)
+                        invMt += RigidbodyInverseMassAlong(c.OtherBody, rB, t);
+                    if (invMt > 1e-8f)
+                    {
+                        float jt = -vTanMag / invMt;
+                        float maxJt = c.Friction * Mathf.Abs(jn);
+                        if (jt > maxJt) jt = maxJt;
+                        else if (jt < -maxJt) jt = -maxJt;
+                        impulse += t * jt;
+                    }
+                }
+
+                c.Impulse = impulse;
+                _contacts[i] = c;
+
+                ApplyImpulseAtWorldPoint(impulse, c.Point);
+                if (c.OtherPlane != null)
+                    c.OtherPlane.ApplyImpulseAtWorldPoint(-impulse, c.Point);
+                else if (otherIsDynamicRb)
+                {
+                    c.OtherBody.WakeUp();
+                    c.OtherBody.AddForceAtPosition(-impulse, c.Point, ForceMode.Impulse);
+                }
+
+                float correction = (c.Penetration - slop) * baumgarte;
+                if (correction > 0f)
+                {
+                    float wA = invMassA;
+                    float wB = otherIsDynamicRb || c.OtherPlane != null ? invMassB : 0f;
+                    float wSum = wA + wB;
+                    if (wSum < 1e-8f)
+                        wSum = wA;
+                    Vector3 corr = n * correction;
+                    _position += corr * (wA / wSum);
+                    if (c.OtherPlane != null)
+                        c.OtherPlane._position -= corr * (wB / wSum);
+                    else if (otherIsDynamicRb)
+                        c.OtherBody.position -= corr * (wB / wSum);
+                }
+            }
+        }
+
+        private float InverseMassAlong(Vector3 rWorld, Vector3 n, float invMass)
+        {
+            Vector3 rXn = Vector3.Cross(rWorld, n);
+            Vector3 torqueBody = Quaternion.Inverse(_orientation) * rXn;
+            Vector3 alphaBody = _inertiaInverse.Multiply(torqueBody);
+            Vector3 alphaWorld = _orientation * alphaBody;
+            float angular = Vector3.Dot(Vector3.Cross(alphaWorld, rWorld), n);
+            return Mathf.Max(1e-8f, invMass + angular);
+        }
+
+        private static float RigidbodyInverseMassAlong(Rigidbody rb, Vector3 rWorld, Vector3 n)
+        {
+            if (rb == null || rb.isKinematic)
+                return 0f;
+
+            float invMass = rb.mass > 1e-6f ? 1f / rb.mass : 0f;
+            Quaternion rot = rb.rotation * rb.inertiaTensorRotation;
+            Vector3 tauLocal = Quaternion.Inverse(rot) * Vector3.Cross(rWorld, n);
+            Vector3 I = rb.inertiaTensor;
+            Vector3 alphaLocal = new Vector3(
+                Mathf.Abs(I.x) > 1e-8f ? tauLocal.x / I.x : 0f,
+                Mathf.Abs(I.y) > 1e-8f ? tauLocal.y / I.y : 0f,
+                Mathf.Abs(I.z) > 1e-8f ? tauLocal.z / I.z : 0f);
+            Vector3 alphaWorld = rot * alphaLocal;
+            float angular = Vector3.Dot(Vector3.Cross(alphaWorld, rWorld), n);
+            return Mathf.Max(0f, invMass + angular);
+        }
+
+        private void GetContactMaterials(Collider a, Collider b, out float restitution, out float friction)
+        {
+            PhysicsMaterial ma = a != null ? a.sharedMaterial : null;
+            PhysicsMaterial mb = b != null ? b.sharedMaterial : null;
+
+            float eA = ma != null ? ma.bounciness : collisionRestitution;
+            float eB = mb != null ? mb.bounciness : collisionRestitution;
+            float fA = ma != null ? ma.dynamicFriction : collisionFriction;
+            float fB = mb != null ? mb.dynamicFriction : collisionFriction;
+
+            PhysicsMaterialCombine bounceMode = DominantCombine(
+                ma != null ? ma.bounceCombine : PhysicsMaterialCombine.Average,
+                mb != null ? mb.bounceCombine : PhysicsMaterialCombine.Average);
+            PhysicsMaterialCombine frictionMode = DominantCombine(
+                ma != null ? ma.frictionCombine : PhysicsMaterialCombine.Average,
+                mb != null ? mb.frictionCombine : PhysicsMaterialCombine.Average);
+
+            restitution = Combine(eA, eB, bounceMode);
+            friction = Combine(fA, fB, frictionMode);
+        }
+
+        private static PhysicsMaterialCombine DominantCombine(PhysicsMaterialCombine a, PhysicsMaterialCombine b)
+        {
+            return (PhysicsMaterialCombine)Mathf.Max((int)a, (int)b);
+        }
+
+        private static float Combine(float a, float b, PhysicsMaterialCombine mode)
+        {
+            switch (mode)
+            {
+                case PhysicsMaterialCombine.Multiply:
+                    return a * b;
+                case PhysicsMaterialCombine.Minimum:
+                    return Mathf.Min(a, b);
+                case PhysicsMaterialCombine.Maximum:
+                    return Mathf.Max(a, b);
+                default:
+                    return (a + b) * 0.5f;
+            }
+        }
+
+        private struct Contact
+        {
+            public Vector3 Point;
+            public Vector3 Normal;
+            public float Penetration;
+            public float Restitution;
+            public float Friction;
+            public Vector3 RelativeVelocity;
+            public Vector3 Impulse;
+            public Collider ThisCollider;
+            public Collider OtherCollider;
+            public Rigidbody OtherBody;
+            public PlaneRigidbody OtherPlane;
+        }
+
+        private void RecordCollisionHits(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                Contact c = _contacts[i];
+                if (c.OtherCollider == null)
+                    continue;
+
+                int id = c.OtherCollider.GetEntityId().ToInt();
+                if (_hitsThisTick.TryGetValue(id, out PlaneCollision hit))
+                {
+                    hit.impulse += c.Impulse;
+                    hit.contactCount++;
+                    if (c.Penetration > -hit.separation)
+                    {
+                        hit.point = c.Point;
+                        hit.normal = c.Normal;
+                        hit.separation = -c.Penetration;
+                        hit.thisCollider = c.ThisCollider;
+                    }
+                    _hitsThisTick[id] = hit;
+                }
+                else
+                {
+                    Transform otherTransform = c.OtherCollider.transform;
+                    _hitsThisTick[id] = new PlaneCollision
+                    {
+                        collider = c.OtherCollider,
+                        thisCollider = c.ThisCollider,
+                        rigidbody = c.OtherBody,
+                        planeBody = c.OtherPlane,
+                        transform = otherTransform,
+                        gameObject = otherTransform.gameObject,
+                        relativeVelocity = c.RelativeVelocity,
+                        impulse = c.Impulse,
+                        point = c.Point,
+                        normal = c.Normal,
+                        separation = -c.Penetration,
+                        contactCount = 1
+                    };
+                }
+            }
+        }
+
+        private void DispatchCollisionEvents()
+        {
+            foreach (var kv in _hitsThisTick)
+            {
+                if (_hitsLastTick.ContainsKey(kv.Key))
+                    InvokeCollisionEvent(CollisionStay, "OnPlaneCollisionStay", kv.Value);
+                else
+                    InvokeCollisionEvent(CollisionEnter, "OnPlaneCollisionEnter", kv.Value);
+            }
+
+            foreach (var kv in _hitsLastTick)
+            {
+                if (!_hitsThisTick.ContainsKey(kv.Key))
+                    InvokeCollisionEvent(CollisionExit, "OnPlaneCollisionExit", kv.Value);
+            }
+
+            (_hitsLastTick, _hitsThisTick) = (_hitsThisTick, _hitsLastTick);
+            _hitsThisTick.Clear();
+        }
+
+        private void InvokeCollisionEvent(Action<PlaneCollision> evt, string message, PlaneCollision hit)
+        {
+            evt?.Invoke(hit);
+            SendMessage(message, hit, SendMessageOptions.DontRequireReceiver);
+        }
+
+        private void ContributeRateDamping(in AtmosphereSample atmo)
+        {
+            float q = atmo.DynamicPressure(TrueAirspeed);
+            float scale = q / Mathf.Max(50f, dampingReferenceQ);
+            if (scale > 2.5f)
+                scale = 2.5f;
+
+            AddTorque(new Vector3(
+                -angularDamping.x * _omegaBody.x * scale,
+                -angularDamping.y * _omegaBody.y * scale,
+                -angularDamping.z * _omegaBody.z * scale));
         }
 
         private void ContributeLandingGear()
@@ -539,7 +1079,7 @@ namespace Airplane.FlightSimulation
 
                 if (raycastGround)
                 {
-                    if (Physics.Raycast(attachWorld, rayDir, out var hit, gearRestLength + 4f, groundMask, QueryTriggerInteraction.Ignore))
+                    if (RaycastIgnoringSelf(attachWorld, rayDir, gearRestLength + 4f, out var hit))
                     {
                         groundY = hit.point.y;
                         groundNormal = hit.normal;
@@ -576,13 +1116,39 @@ namespace Airplane.FlightSimulation
                 float vLong = Vector3.Dot(vTan, longDir);
                 float vLat = Vector3.Dot(vTan, latDir);
 
-                // Smooth Coulomb friction: F = −μ N v̂ * ( |v| / (|v|+ε) )
                 const float eps = 0.4f;
                 float latMu = Mathf.Max(mu, 0.55f);
                 Vector3 fLong = longDir * (-mu * nForce * vLong / (Mathf.Abs(vLong) + eps));
                 Vector3 fLat = latDir * (-latMu * nForce * vLat / (Mathf.Abs(vLat) + eps));
                 AddForceAtPosition(fLong + fLat, contact);
             }
+        }
+
+        private bool RaycastIgnoringSelf(Vector3 origin, Vector3 direction, float maxDistance, out RaycastHit hit)
+        {
+            int n = Physics.RaycastNonAlloc(origin, direction, _rayBuffer, maxDistance, groundMask, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue;
+            int bestIndex = -1;
+            for (int i = 0; i < n; i++)
+            {
+                Collider col = _rayBuffer[i].collider;
+                if (col == null || IsOwnCollider(col))
+                    continue;
+                if (_rayBuffer[i].distance < best)
+                {
+                    best = _rayBuffer[i].distance;
+                    bestIndex = i;
+                }
+            }
+
+            if (bestIndex < 0)
+            {
+                hit = default;
+                return false;
+            }
+
+            hit = _rayBuffer[bestIndex];
+            return true;
         }
 
         private void OnDrawGizmos()
@@ -605,6 +1171,14 @@ namespace Airplane.FlightSimulation
 
                 Gizmos.color = new Color(1f, 0.85f, 0.1f, 1f);
                 Gizmos.DrawLine(com, com + _lastAeroForceWorld * gizmoForceScale);
+
+                Gizmos.color = new Color(1f, 0.35f, 0.1f, 1f);
+                for (int i = 0; i < _gizmoContactCount && i < _contacts.Length; i++)
+                {
+                    Vector3 p = _contacts[i].Point;
+                    Gizmos.DrawSphere(p, 0.08f);
+                    Gizmos.DrawLine(p, p + _contacts[i].Normal * 0.6f);
+                }
             }
 
             if (!enableLandingGear || gearAttachBody == null)
@@ -612,10 +1186,10 @@ namespace Airplane.FlightSimulation
 
             Gizmos.color = new Color(0.4f, 0.9f, 0.3f, 0.8f);
             Quaternion q = Application.isPlaying ? _orientation : transform.rotation;
-            Vector3 p = Application.isPlaying ? _position : transform.TransformPoint(centerOfMassBody);
+            Vector3 p2 = Application.isPlaying ? _position : transform.TransformPoint(centerOfMassBody);
             foreach (var vec3 in gearAttachBody)
             {
-                Vector3 attach = p + q * (vec3 - centerOfMassBody);
+                Vector3 attach = p2 + q * (vec3 - centerOfMassBody);
                 Gizmos.DrawLine(attach, attach + Vector3.down * gearRestLength);
                 Gizmos.DrawWireSphere(attach + Vector3.down * gearRestLength, 0.08f);
             }

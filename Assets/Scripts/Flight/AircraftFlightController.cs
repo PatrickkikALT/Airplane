@@ -26,12 +26,14 @@ namespace Airplane.FlightSimulation
         [SerializeField] private InputActionProperty airbrakes;
         [SerializeField] private InputActionProperty wheelBrakes;
 
-        [SerializeField] private float rollSpeed;
-        [SerializeField] private float yawSpeed;
+        [Tooltip("Stick-to-aileron gain. 1 = full deflection at full stick. Values like 0.2 make the tails overpower you.")]
+        [SerializeField] private float rollSpeed = 1f;
 
-        [Header("Stick")] 
-        [SerializeField] private float step;
-        [Tooltip("If true, positive pitch input (S / stick back) commands nose UP (positive elevator trailing-edge UP on a conventional tail).")]
+        [Tooltip("Stick-to-rudder gain. 1 = full deflection at full stick.")]
+        [SerializeField] private float yawSpeed = 1f;
+
+        [Header("Stick")]
+        [Tooltip("If true, positive pitch input (S / stick back) commands nose UP.")]
         [SerializeField] private bool pitchStickBackNoseUp = true;
 
         [Tooltip("If true, invert the pitch axis. PlaneInput maps W = negative, S = positive.")]
@@ -51,7 +53,7 @@ namespace Airplane.FlightSimulation
         [SerializeField] private float throttleRate = 0.45f;
 
         [Tooltip("Throttle at Start(), 0–1.")]
-        [SerializeField] [Range(0f, 1f)] private float initialThrottle = 0.72f;
+        [SerializeField] [Range(0f, 1f)] private float initialThrottle = 0.65f;
 
         [Header("Flaps / Speedbrakes")]
         [Tooltip("If true, the flaps axis is a rate (hold to deploy/retract). If false, the axis is an analog 0–1 position.")]
@@ -64,11 +66,11 @@ namespace Airplane.FlightSimulation
         [Tooltip("Dynamic pressure (Pa) at which full mechanical deflection is still available. ~½ ρ V² at manoeuvre speed. 80 m/s ISA ≈ 3920 Pa.")]
         [SerializeField] private float referenceDynamicPressure = 3900f;
 
-        [Tooltip("Stiffening gain k in  limit = 1 / (1 + k · max(0, q/q_ref − 1)). 1.0 halves deflection at 2× q_ref.")]
-        [SerializeField] private float qStiffeningGain = 1.1f;
+        [Tooltip("Stiffening gain k in  limit = 1 / (1 + k · max(0, q/q_ref − 1)). Keep this low; high values let the tails overpower the stick.")]
+        [SerializeField] private float qStiffeningGain = 0.25f;
 
-        [Tooltip("Maximum hinge rate at q ≈ 0, degrees/s. Hydraulic / human limit. Reduced with q as well.")]
-        [SerializeField] private float maxHingeRateDeg = 80f;
+        [Tooltip("Stick travel rate, mapped as (this / 90) of full deflection per second. 120 ≈ 0.75 s to full.")]
+        [SerializeField] private float maxHingeRateDeg = 120f;
 
         [Header("Trim")]
         [Tooltip("Constant elevator offset, −1..1, for hands-off cruise. Negative = nose down on a conventional tail.")]
@@ -179,15 +181,19 @@ namespace Airplane.FlightSimulation
             float pitchCmd = pitchStickBackNoseUp ? _rawPitch : -_rawPitch;
 
             AtmosphereSample atmo = AtmosphericModel.SampleAt(_body != null ? _body.Position : transform.position);
-            float tas = _body != null ? _body.TrueAirspeed : 0f;
-            float qScale = ComputeQScale(atmo, tas);
+            float tas = _body ? _body.TrueAirspeed : 0f;
+            // Dynamic pressure only slows the hinge, it must not shrink max deflection.
+            // Otherwise the tails still restore at full q and the stick "bounces back".
+            float qRate = Mathf.Lerp(1f, ComputeQScale(atmo, tas), 0.3f);
+            float hinge = maxHingeRateDeg < 1f ? 120f : maxHingeRateDeg;
+            float maxStep = (hinge / 90f) * qRate * dt;
 
-            float rate = maxHingeRateDeg * qScale;
-            float maxStep = (rate / step) * dt;
+            float rollSens = rollSpeed > 0.01f ? rollSpeed : 1f;
+            float yawSens = yawSpeed > 0.01f ? yawSpeed : 1f;
 
-            _aileron01 = MoveToward(_aileron01, (Clamp11(_rawRoll) * qScale) * rollSpeed, maxStep);
-            _elevator01 = MoveToward(_elevator01, Clamp11(pitchCmd + elevatorTrim) * qScale, maxStep);
-            _rudder01 = MoveToward(_rudder01, (Clamp11(_rawYaw) * qScale) * yawSpeed, maxStep);
+            _aileron01 = MoveToward(_aileron01, Clamp11(_rawRoll * rollSens), maxStep);
+            _elevator01 = MoveToward(_elevator01, Clamp11(pitchCmd + elevatorTrim), maxStep);
+            _rudder01 = MoveToward(_rudder01, Clamp11(_rawYaw * yawSens), maxStep);
 
             float throttleRaw = ReadAxis(_throttleAction);
             if (throttleIsRate)
@@ -252,7 +258,7 @@ namespace Airplane.FlightSimulation
 
         private void OnGUI()
         {
-            if (!drawHud || _body == null)
+            if (!drawHud || !_body)
                 return;
 
             _hudClock += Time.unscaledDeltaTime;
@@ -282,12 +288,16 @@ namespace Airplane.FlightSimulation
             float gMag = g.magnitude;
             float gLoad = 1f;
             if (gMag > 0.1f)
-                gLoad = Vector3.Dot(_body.Acceleration - g, -g / gMag) / gMag + 1f;
+            {
+                Vector3 properAcc = _body.Acceleration - g;
+                gLoad = Vector3.Dot(properAcc, transform.up) / gMag;
+                gLoad = gLoad / 10;
+            }
 
             _hudBuilder.Length = 0;
             _hudBuilder.Append("ALT  ").Append(atmo.Altitude.ToString("F0")).Append(" m\n");
-            _hudBuilder.Append("TAS  ").Append((tas * 1.944f).ToString("F0")).Append(" kt   IAS ");
-            _hudBuilder.Append((ias * 1.944f).ToString("F0")).Append(" kt\n");
+            _hudBuilder.Append("TAS  ").Append(((tas * FlightSimMath.AirSpeedToKnots) * FlightSimMath.KnotsToKmh).ToString("F0")).Append(" km/u   IAS ");
+            _hudBuilder.Append(((ias * FlightSimMath.AirSpeedToKnots) * FlightSimMath.KnotsToKmh).ToString("F0")).Append(" km/u\n");
             _hudBuilder.Append("M    ").Append(mach.ToString("F2")).Append("    q ");
             _hudBuilder.Append(atmo.DynamicPressure(tas).ToString("F0")).Append(" Pa\n");
             _hudBuilder.Append("AoA  ").Append(aoa.ToString("F1")).Append("°    β ");

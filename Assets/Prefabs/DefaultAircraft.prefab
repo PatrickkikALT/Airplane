@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 325665831166539286}
   - component: {fileID: 3998889033887993484}
   - component: {fileID: 739736862482291929}
+  - component: {fileID: 81001001001001001}
   m_Layer: 0
   m_Name: FuselageDrag_Mesh
   m_TagString: Untagged
@@ -161,7 +162,7 @@ MonoBehaviour:
   flapStallShiftDeg: 0
   airbrakeCdIncrement: 0.18
   surfaceMode: 1
-  cyBetaPerRadian: -0.65
+  cyBetaPerRadian: -0.08
   bluffCdAlpha: 0.4
   propWashInfluence: 0.2
   minAirspeed: 0.6
@@ -211,6 +212,7 @@ GameObject:
   - component: {fileID: 9039865218824351716}
   - component: {fileID: 8221362288562728405}
   - component: {fileID: 457074712700245030}
+  - component: {fileID: 81001001001001003}
   m_Layer: 0
   m_Name: RightWing_Mesh
   m_TagString: Untagged
@@ -564,9 +566,9 @@ MonoBehaviour:
   separatedCd: 1.35
   controlType: 3
   controlSign: -1
-  maxDeflectionDeg: 22
-  deflectionAlphaEffectiveness: 0.55
-  clPerRadianDeflection: 0.8
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.15
   cdPerDeflectionSq: 0.12
   stallShiftPerDeflection: 0.35
   flapClIncrement: 0
@@ -577,6 +579,7 @@ MonoBehaviour:
   cyBetaPerRadian: -0.6
   bluffCdAlpha: 0.35
   propWashInfluence: 1
+  alphaRestoringScale: 0.18
   minAirspeed: 0.6
   compressibilityCorrection: 1
   drawGizmos: 1
@@ -607,14 +610,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3313273023232250028}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.052323502, y: 0.001141703, z: 0.021784988, w: 0.998391888}
-  m_LocalPosition: {x: -0.25, y: 0, z: -2.5}
+  m_LocalRotation: {x: 0, y: 0, z: 0.021814885, w: 0.999762027}
+  m_LocalPosition: {x: 0, y: 0, z: -2.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5040251204160314933}
   m_Father: {fileID: 7108522821200192694}
-  m_LocalEulerAnglesHint: {x: -6, y: 0, z: 2.5}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 2.5}
 --- !u!114 &8137037239045607168
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -644,8 +647,8 @@ MonoBehaviour:
   controlType: 1
   controlSign: 1
   maxDeflectionDeg: 20
-  deflectionAlphaEffectiveness: 0.55
-  clPerRadianDeflection: 0.8
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.1
   cdPerDeflectionSq: 0.12
   stallShiftPerDeflection: 0.35
   flapClIncrement: 0.55
@@ -723,8 +726,8 @@ MonoBehaviour:
   integrationScheme: 0
   substeps: 4
   maxLinearAcceleration: 2000
-  maxAngularAcceleration: 80
-  initialVelocityBody: {x: 55, y: 0, z: 0}
+  maxAngularAcceleration: 6
+  initialVelocityBody: {x: 50, y: 0, z: 0}
   initialAngularVelocityBody: {x: 0, y: 0, z: 0}
   enableLandingGear: 1
   groundPlaneY: 0
@@ -744,6 +747,9 @@ MonoBehaviour:
   noseGearIndex: 0
   noseWheelSteerDeg: 35
   noseSteerFadeSpeed: 25
+  angularDamping: {x: 8000, y: 7000, z: 7000}
+  dampingReferenceQ: 1800
+  maxAngularSpeedDeg: {x: 80, y: 28, z: 45}
   drawGizmos: 1
   gizmoForceScale: 0.0004
   gizmoVelocityScale: 0.15
@@ -854,15 +860,17 @@ MonoBehaviour:
   invertPitch: 0
   invertRoll: 0
   invertYaw: 0
+  rollSpeed: 1
+  yawSpeed: 1
   throttleIsRate: 1
   throttleRate: 0.45
-  initialThrottle: 0.72
+  initialThrottle: 0.65
   flapsIsRate: 1
   flapsRate: 0.5
   airbrakeRate: 1.2
   referenceDynamicPressure: 3900
-  qStiffeningGain: 1.1
-  maxHingeRateDeg: 80
+  qStiffeningGain: 0.25
+  maxHingeRateDeg: 120
   elevatorTrim: 0
   drawHud: 1
   hudPosition: {x: 16, y: 16}
@@ -899,7 +907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60b8cd8c8b1b0983ebf46363119b6dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAircraftEngine
-  maxStaticThrust: 6200
+  maxStaticThrust: 5200
   zeroThrustAirspeed: 125
   densityExponent: 1
   idleThrottle: 0.04
@@ -996,7 +1004,7 @@ MonoBehaviour:
   aspectRatioOverride: 3.4
   oswaldEfficiency: 0.8
   zeroLiftAlphaDeg: 0
-  clAlphaPerRadian: 4.1
+  clAlphaPerRadian: 2.6
   cl0: 0
   cd0: 0.018
   stallAlphaPositiveDeg: 14
@@ -1006,9 +1014,9 @@ MonoBehaviour:
   separatedCd: 1.35
   controlType: 2
   controlSign: -1
-  maxDeflectionDeg: 22
-  deflectionAlphaEffectiveness: 0.55
-  clPerRadianDeflection: 0.8
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.15
   cdPerDeflectionSq: 0.12
   stallShiftPerDeflection: 0.35
   flapClIncrement: 0
@@ -1019,7 +1027,8 @@ MonoBehaviour:
   cyBetaPerRadian: -0.6
   bluffCdAlpha: 0.35
   propWashInfluence: 0.95
-  wingDownwashFactor: 0.3
+  wingDownwashFactor: 0.05
+  alphaRestoringScale: 0.18
   minAirspeed: 0.6
   compressibilityCorrection: 1
   drawGizmos: 1
@@ -1050,14 +1059,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4513610689616674582}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.052323502, y: -0.001141703, z: 0.021784988, w: 0.998391888}
-  m_LocalPosition: {x: -0.25, y: 0, z: 2.5}
+  m_LocalRotation: {x: 0, y: 0, z: 0.021814885, w: 0.999762027}
+  m_LocalPosition: {x: 0, y: 0, z: 2.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 9039865218824351716}
   m_Father: {fileID: 7108522821200192694}
-  m_LocalEulerAnglesHint: {x: 6, y: 0, z: 2.5}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 2.5}
 --- !u!114 &1614301185336972021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1087,8 +1096,8 @@ MonoBehaviour:
   controlType: 1
   controlSign: -1
   maxDeflectionDeg: 20
-  deflectionAlphaEffectiveness: 0.55
-  clPerRadianDeflection: 0.8
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.1
   cdPerDeflectionSq: 0.12
   stallShiftPerDeflection: 0.35
   flapClIncrement: 0.55
@@ -1205,6 +1214,7 @@ GameObject:
   - component: {fileID: 5040251204160314933}
   - component: {fileID: 8888742265341138100}
   - component: {fileID: 4036638089658315191}
+  - component: {fileID: 81001001001001002}
   m_Layer: 0
   m_Name: LeftWing_Mesh
   m_TagString: Untagged
@@ -1295,6 +1305,7 @@ GameObject:
   - component: {fileID: 4570583252502194245}
   - component: {fileID: 1114336714886353709}
   - component: {fileID: 4759565709880441807}
+  - component: {fileID: 81001001001001005}
   m_Layer: 0
   m_Name: VerticalStabilizer_Mesh
   m_TagString: Untagged
@@ -1425,7 +1436,7 @@ MonoBehaviour:
   aspectRatioOverride: 3.4
   oswaldEfficiency: 0.8
   zeroLiftAlphaDeg: 0
-  clAlphaPerRadian: 4.1
+  clAlphaPerRadian: 2.6
   cl0: 0
   cd0: 0.018
   stallAlphaPositiveDeg: 14
@@ -1435,9 +1446,9 @@ MonoBehaviour:
   separatedCd: 1.35
   controlType: 2
   controlSign: -1
-  maxDeflectionDeg: 22
-  deflectionAlphaEffectiveness: 0.55
-  clPerRadianDeflection: 0.8
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.15
   cdPerDeflectionSq: 0.12
   stallShiftPerDeflection: 0.35
   flapClIncrement: 0
@@ -1448,7 +1459,8 @@ MonoBehaviour:
   cyBetaPerRadian: -0.6
   bluffCdAlpha: 0.35
   propWashInfluence: 0.95
-  wingDownwashFactor: 0.3
+  wingDownwashFactor: 0.05
+  alphaRestoringScale: 0.18
   minAirspeed: 0.6
   compressibilityCorrection: 1
   drawGizmos: 1
@@ -1465,6 +1477,7 @@ GameObject:
   - component: {fileID: 1747861520948928893}
   - component: {fileID: 1750315489024680686}
   - component: {fileID: 9064829982436151258}
+  - component: {fileID: 81001001001001004}
   m_Layer: 0
   m_Name: Nose
   m_TagString: Untagged
@@ -1704,3 +1717,108 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &81001001001001001
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 10197260108792265}
+  m_Material: {fileID: 13400000, guid: 8bc17a33b938b6f6d98047c309b88eff, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &81001001001001002
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5810830417708215596}
+  m_Material: {fileID: 13400000, guid: 8bc17a33b938b6f6d98047c309b88eff, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &81001001001001003
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1365207273975018882}
+  m_Material: {fileID: 13400000, guid: 8bc17a33b938b6f6d98047c309b88eff, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &81001001001001004
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8422751361112327077}
+  m_Material: {fileID: 13400000, guid: 8bc17a33b938b6f6d98047c309b88eff, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &81001001001001005
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6452383090451021949}
+  m_Material: {fileID: 13400000, guid: 8bc17a33b938b6f6d98047c309b88eff, type: 2}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}

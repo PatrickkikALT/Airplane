@@ -111,8 +111,11 @@ namespace Airplane.FlightSimulation
         [Tooltip("Multiplier on the geometric prop-wash cylinder. Tails ~1, outboard wings ~0.")]
         [SerializeField] [Range(0f, 1.5f)] private float propWashInfluence = 0.25f;
 
-        [Tooltip("Tail downwash coupling: α_eff -= factor · α_body. 0.25–0.4 on the H-stab. 0 on wings.")]
+        [Tooltip("Tail downwash coupling: α_eff -= factor · α_body. Keep this small or pitch will spring back to trim.")]
         [SerializeField] [Range(0f, 0.8f)] private float wingDownwashFactor;
+
+        [Tooltip("Scales CL from angle of attack only, not from stick deflection. <1 on tails = less weathercock.")]
+        [SerializeField] [Range(0.05f, 1.5f)] private float alphaRestoringScale = 1f;
 
         [Tooltip("Skip force evaluation below this local airspeed (m/s) to avoid 0/0 at rest.")]
         [SerializeField] private float minAirspeed = 0.6f;
@@ -321,7 +324,7 @@ namespace Airplane.FlightSimulation
                            * FlightSimMath.Deg2Rad;
             float softness = stallSoftnessDeg * FlightSimMath.Deg2Rad;
 
-            float clLin = cl0 + clAlpha * aEff + clPerRadianDeflection * delta + flapClIncrement * flaps;
+            float clLin = cl0 + clAlpha * aEff * alphaRestoringScale + clPerRadianDeflection * delta + flapClIncrement * flaps;
 
             float s = Mathf.Sin(alpha);
             float c = Mathf.Cos(alpha);
@@ -348,7 +351,7 @@ namespace Airplane.FlightSimulation
             float sB = Mathf.Sin(beta);
             cl = 0.35f * Mathf.Sin(2f * alpha);
             cd = cd0 + bluffCdAlpha * (sA * sA) + 0.25f * (sB * sB) + flapCdIncrement * flaps + airbrakeCdIncrement * brakes;
-            cy = cyBetaPerRadian * beta;
+            cy = cyBetaPerRadian * beta * alphaRestoringScale;
             if (cd < cd0)
                 cd = cd0;
         }
