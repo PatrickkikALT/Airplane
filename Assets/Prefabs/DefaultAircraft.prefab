@@ -812,6 +812,7 @@ MonoBehaviour:
   angularDamping: {x: 8000, y: 7000, z: 7000}
   dampingReferenceQ: 1800
   maxAngularSpeedDeg: {x: 80, y: 28, z: 45}
+  idleRateDamping: 2.2
   drawGizmos: 1
   gizmoForceScale: 0.0004
   gizmoVelocityScale: 0.15
@@ -932,8 +933,11 @@ MonoBehaviour:
   airbrakeRate: 1.2
   referenceDynamicPressure: 3900
   qStiffeningGain: 0.25
-  maxHingeRateDeg: 120
-  elevatorTrim: -0.1
+  stickFollowSeconds: 0
+  elevatorTrim: 0
+  autoElevatorTrim: 0
+  autoTrimRate: 0.4
+  autoTrimStickDeadzone: 0.08
   drawHud: 1
   hudPosition: {x: 16, y: 16}
 --- !u!114 &6236306846559322204

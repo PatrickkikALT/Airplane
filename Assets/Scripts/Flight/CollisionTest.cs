@@ -15,8 +15,6 @@ public class CollisionTest : MonoBehaviour
 
     /// <summary>
     /// Gets called by <see cref="PlaneRigidbody"/>'s SendMessage on collision.
-    /// In a session only the owning peer solves contact, so only the owner ever reaches this; the
-    /// server decides whether the wreck is real and hands out the replacement aircraft.
     /// </summary>
     private void OnPlaneCollisionEnter(PlaneCollision hit)
     {
@@ -26,11 +24,6 @@ public class CollisionTest : MonoBehaviour
         {
             _networked.ReportCrash(hit.Point, impactKmh);
             return;
-        }
-
-        if (impactKmh > 50)
-        {
-            Destroy(gameObject);
         }
     }
 }

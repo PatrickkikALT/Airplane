@@ -69,12 +69,21 @@ namespace Airplane.FlightSimulation
         [Tooltip("Stiffening gain k in  limit = 1 / (1 + k · max(0, q/q_ref − 1)). Keep this low; high values let the tails overpower the stick.")]
         [SerializeField] private float qStiffeningGain = 0.25f;
 
-        [Tooltip("Stick travel rate, mapped as (this / 90) of full deflection per second. 120 ≈ 0.75 s to full.")]
-        [SerializeField] private float maxHingeRateDeg = 120f;
+        [Tooltip("Seconds for aileron/elevator/rudder to catch the stick. 0 = immediate. The old hinge limiter made press and release feel late.")]
+        [SerializeField] private float stickFollowSeconds;
 
         [Header("Trim")]
-        [Tooltip("Constant elevator offset, −1..1, for hands-off cruise. Negative = nose down on a conventional tail.")]
+        [Tooltip("Hands-off elevator offset, −1..1. Written by auto-trim; positive = nose up.")]
         [SerializeField] [Range(-1f, 1f)] private float elevatorTrim;
+
+        [Tooltip("If true, elevator trim tracks load factor so stick-neutral holds level (1 / cos φ G).")]
+        [SerializeField] private bool autoElevatorTrim = true;
+
+        [Tooltip("Trim units per second per G of error. ~0.4 finds cruise without fighting the stick.")]
+        [SerializeField] private float autoTrimRate = 0.4f;
+
+        [Tooltip("Do not auto-trim while |pitch stick| is above this.")]
+        [SerializeField] [Range(0f, 0.5f)] private float autoTrimStickDeadzone = 0.08f;
 
         [Header("Debug HUD")]
         [SerializeField] private bool drawHud = true;
@@ -206,7 +215,6 @@ namespace Airplane.FlightSimulation
 
         /// <summary>
         /// Called by <see cref="PlaneRigidbody"/> once per FixedUpdate, before sub-steps.
-        /// Hinge rate limits run at the outer physics tick so RK4 sub-steps see a frozen deflection.
         /// </summary>
         public void PrePhysicsTick(float dt)
         {
@@ -223,38 +231,61 @@ namespace Airplane.FlightSimulation
             if (invertYaw) _rawYaw = -_rawYaw;
 
             float pitchCmd = pitchStickBackNoseUp ? _rawPitch : -_rawPitch;
-
-            AtmosphereSample atmo = AtmosphericModel.SampleAt(_body != null ? _body.Position : transform.position);
-            float tas = _body ? _body.TrueAirspeed : 0f;
-            // Dynamic pressure only slows the hinge, it must not shrink max deflection.
-            // Otherwise the tails still restore at full q and the stick "bounces back".
-            float qRate = Mathf.Lerp(1f, ComputeQScale(atmo, tas), 0.3f);
-            float hinge = maxHingeRateDeg < 1f ? 120f : maxHingeRateDeg;
-            float maxStep = (hinge / 90f) * qRate * dt;
+            UpdateAutoTrim(pitchCmd, dt);
 
             float rollSens = rollSpeed > 0.01f ? rollSpeed : 1f;
             float yawSens = yawSpeed > 0.01f ? yawSpeed : 1f;
+            float aileronT = Clamp11(_rawRoll * rollSens);
+            float elevatorT = Clamp11(pitchCmd + elevatorTrim);
+            float rudderT = Clamp11(_rawYaw * yawSens);
 
-            _aileron01 = MoveToward(_aileron01, Clamp11(_rawRoll * rollSens), maxStep);
-            _elevator01 = MoveToward(_elevator01, Clamp11(pitchCmd + elevatorTrim), maxStep);
-            _rudder01 = MoveToward(_rudder01, Clamp11(_rawYaw * yawSens), maxStep);
+            // Aircraft inertia is the smoothing. Rate-limiting the stick here is what
+            // made input start late and keep going after release.
+            if (stickFollowSeconds > 0.001f)
+            {
+                float maxStep = dt / stickFollowSeconds;
+                _aileron01 = MoveToward(_aileron01, aileronT, maxStep);
+                _elevator01 = MoveToward(_elevator01, elevatorT, maxStep);
+                _rudder01 = MoveToward(_rudder01, rudderT, maxStep);
+            }
+            else
+            {
+                _aileron01 = aileronT;
+                _elevator01 = elevatorT;
+                _rudder01 = rudderT;
+            }
 
             float throttleRaw = ReadAxis(_throttleAction);
-            if (throttleIsRate)
-                _throttle01 = FlightSimMath.Saturate(_throttle01 + throttleRaw * throttleRate * dt);
-            else
-                _throttle01 = FlightSimMath.Saturate(throttleRaw);
+            _throttle01 = throttleIsRate ? FlightSimMath.Saturate(_throttle01 + throttleRaw * throttleRate * dt) : FlightSimMath.Saturate(throttleRaw);
 
             float flapsRaw = ReadAxis(_flapsAction);
-            if (flapsIsRate)
-                _flaps01 = FlightSimMath.Saturate(_flaps01 + flapsRaw * flapsRate * dt);
-            else
-                _flaps01 = FlightSimMath.Saturate(flapsRaw);
+            _flaps01 = flapsIsRate ? FlightSimMath.Saturate(_flaps01 + flapsRaw * flapsRate * dt) : FlightSimMath.Saturate(flapsRaw);
 
             float brakeRaw = ReadAxis(_airbrakesAction);
             _airbrake01 = MoveToward(_airbrake01, FlightSimMath.Saturate(brakeRaw), airbrakeRate * dt);
 
             _wheelBrake01 = FlightSimMath.Saturate(ReadAxis(_wheelBrakesAction));
+        }
+
+        private void UpdateAutoTrim(float pitchCmd, float dt)
+        {
+            if (!autoElevatorTrim || _body == null || _body.AnyGearDown)
+                return;
+            if (Mathf.Abs(pitchCmd) > autoTrimStickDeadzone)
+                return;
+
+            Vector3 worldUp = -AtmosphericModel.SampleGravity();
+            if (worldUp.sqrMagnitude < 0.01f)
+                worldUp = Vector3.up;
+            worldUp.Normalize();
+
+            float cosBank = Vector3.Dot(_body.Orientation * Vector3.up, worldUp);
+            if (cosBank < 0.25f)
+                return;
+
+            float targetNz = 1f / cosBank;
+            float err = targetNz - _body.LoadFactorNz;
+            elevatorTrim = Clamp11(elevatorTrim + autoTrimRate * err * dt);
         }
 
         /// <summary>
@@ -328,15 +359,7 @@ namespace Airplane.FlightSimulation
             float beta = FlightSimMath.Sideslip(vBody) * FlightSimMath.Rad2Deg;
             float ias = tas * Mathf.Sqrt(atmo.Density / AtmosphericModel.StandardSeaLevelDensity);
             float mach = atmo.SpeedOfSound > 1f ? tas / atmo.SpeedOfSound : 0f;
-            Vector3 g = AtmosphericModel.SampleGravity();
-            float gMag = g.magnitude;
-            float gLoad = 1f;
-            if (gMag > 0.1f)
-            {
-                Vector3 properAcc = _body.Acceleration - g;
-                gLoad = Vector3.Dot(properAcc, transform.up) / gMag;
-                gLoad = gLoad / 10;
-            }
+            float gLoad = _body.LoadFactorNz;
 
             _hudBuilder.Length = 0;
             _hudBuilder.Append("ALT  ").Append(atmo.Altitude.ToString("F0")).Append(" m\n");
@@ -346,7 +369,8 @@ namespace Airplane.FlightSimulation
             _hudBuilder.Append(atmo.DynamicPressure(tas).ToString("F0")).Append(" Pa\n");
             _hudBuilder.Append("AoA  ").Append(aoa.ToString("F1")).Append("°    β ");
             _hudBuilder.Append(beta.ToString("F1")).Append("°\n");
-            _hudBuilder.Append("G    ").Append(gLoad.ToString("F2")).Append("    ρ ");
+            _hudBuilder.Append("G    ").Append(gLoad.ToString("F2")).Append("    TRIM ");
+            _hudBuilder.Append(elevatorTrim.ToString("F2")).Append("    ρ ");
             _hudBuilder.Append(atmo.Density.ToString("F3")).Append(" kg/m³\n");
             _hudBuilder.Append("THR  ").Append((_throttle01 * 100f).ToString("F0")).Append("%   T ");
             _hudBuilder.Append(_engine != null ? _engine.LastThrust.ToString("F0") : "0").Append(" N\n");

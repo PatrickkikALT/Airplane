@@ -168,6 +168,9 @@ namespace Airplane.FlightSimulation
         [Tooltip("Hard cap on body rates, degrees/s (roll, yaw, pitch).")]
         [SerializeField] private Vector3 maxAngularSpeedDeg = new Vector3(80f, 28f, 45f);
 
+        [Tooltip("Extra damping multiplier when the stick is released, so rotation stops with the input instead of coasting.")]
+        [SerializeField] private float idleRateDamping = 2.2f;
+
         [Header("Debug Gizmos")]
         [SerializeField] private bool drawGizmos = true;
         [SerializeField] private float gizmoForceScale = 0.0004f;
@@ -180,6 +183,7 @@ namespace Airplane.FlightSimulation
         private Vector3 _position;
         private Vector3 _velocity;
         private Vector3 _acceleration;
+        private float _loadFactorNz = 1f;
         private Quaternion _orientation = Quaternion.identity;
         private Vector3 _omegaBody;
         private Vector3 _alphaBody;
@@ -225,6 +229,7 @@ namespace Airplane.FlightSimulation
         public Vector3 Velocity => _velocity;
         public Vector3 Acceleration => _acceleration;
         public Quaternion Orientation => _orientation;
+        public float LoadFactorNz => _loadFactorNz;
         public Vector3 AngularVelocityBody => _omegaBody;
         public Vector3 AngularAccelerationBody => _alphaBody;
         public Vector3 CenterOfMassWorld => _position;
@@ -429,6 +434,7 @@ namespace Airplane.FlightSimulation
             }
 
             DispatchCollisionEvents();
+            UpdateLoadFactor();
 
             if (!interpolateTransform)
                 ApplyToTransform(_position, _orientation);
@@ -573,6 +579,19 @@ namespace Airplane.FlightSimulation
             _alphaBody = alpha;
         }
 
+        private void UpdateLoadFactor()
+        {
+            // Seat-pad load factor Nz = (a − g) · bodyUp / g0, with g0 = 9.80665 m/s².
+            // Use the force-model acceleration, not Δv/Δt: contact impulses would spike this to tens of G.
+            Vector3 g = AtmosphericModel.SampleGravity();
+            Vector3 proper = _acceleration - g;
+            Vector3 bodyUp = _orientation * Vector3.up;
+            float raw = Vector3.Dot(proper, bodyUp) / AtmosphericModel.StandardGravity;
+            if (!FlightSimMath.IsFinite(raw))
+                raw = _loadFactorNz;
+            _loadFactorNz = raw;
+        }
+
         private void StepSemiImplicitEuler(float dt)
         {
             EvaluateForces(dt);
@@ -615,8 +634,8 @@ namespace Airplane.FlightSimulation
             q = FlightSimMath.AddScaled(q, k4.OrientationDot, dt / 6f);
             _orientation = FlightSimMath.Normalize(q);
 
-            _acceleration = k1.Acceleration;
-            _alphaBody = k1.AngularAccelerationBody;
+            _acceleration = (k1.Acceleration + 2f * k2.Acceleration + 2f * k3.Acceleration + k4.Acceleration) / 6f;
+            _alphaBody = (k1.AngularAccelerationBody + 2f * k2.AngularAccelerationBody + 2f * k3.AngularAccelerationBody + k4.AngularAccelerationBody) / 6f;
             SanitizeState();
             ResolveColliderContacts();
         }
@@ -1122,6 +1141,16 @@ namespace Airplane.FlightSimulation
             float scale = q / Mathf.Max(50f, dampingReferenceQ);
             if (scale > 2.5f)
                 scale = 2.5f;
+
+            if (_controller && idleRateDamping > 0f)
+            {
+                float stick = Mathf.Max(
+                    Mathf.Abs(_controller.RawPitch),
+                    Mathf.Abs(_controller.RawRoll),
+                    Mathf.Abs(_controller.RawYaw));
+                float idle = 1f - FlightSimMath.Saturate(stick / 0.2f);
+                scale *= 1f + idle * idleRateDamping;
+            }
 
             AddTorque(new Vector3(
                 -angularDamping.x * _omegaBody.x * scale,

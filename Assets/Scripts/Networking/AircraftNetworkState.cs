@@ -233,6 +233,7 @@ namespace Airplane.Multiplayer
             return true;
         }
 
+        // i genuinely do not know what this does
         private static Vector3 Hermite(Vector3 p0, Vector3 v0, Vector3 p1, Vector3 v1, float t, float dt)
         {
             float t2 = t * t;

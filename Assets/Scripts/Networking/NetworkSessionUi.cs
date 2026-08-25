@@ -38,8 +38,6 @@ namespace Airplane.Multiplayer
 
         private NetworkManager Manager => NetworkManager.Singleton;
 
-        // Subscribed from Start rather than OnEnable: this component usually shares a GameObject with
-        // the NetworkManager, and NetworkManager.Singleton is not assigned until its own Awake.
         private void Start()
         {
             if (Manager != null)
@@ -87,7 +85,7 @@ namespace Airplane.Multiplayer
 
         public void Disconnect()
         {
-            if (Manager == null || !Manager.IsListening)
+            if (!Manager || !Manager.IsListening)
                 return;
             Manager.Shutdown();
             _status = "Offline";
@@ -95,14 +93,14 @@ namespace Airplane.Multiplayer
 
         private bool ApplyConnectionData(bool listening)
         {
-            if (Manager == null)
+            if (!Manager)
             {
                 _status = "No NetworkManager in the scene";
                 return false;
             }
 
             UnityTransport transport = Manager.GetComponent<UnityTransport>();
-            if (transport == null)
+            if (!transport)
             {
                 _status = "NetworkManager has no UnityTransport";
                 return false;
@@ -139,7 +137,7 @@ namespace Airplane.Multiplayer
         {
             float x = panelPosition.x;
             float y = panelPosition.y;
-            bool listening = Manager != null && Manager.IsListening;
+            bool listening = Manager && Manager.IsListening;
             float height = listening ? 150f : 168f;
 
             GUI.Box(new Rect(x, y, panelWidth, height), "Multiplayer");
@@ -182,7 +180,7 @@ namespace Airplane.Multiplayer
 
         private string BuildRoster()
         {
-            if (Manager == null || !Manager.IsListening)
+            if (!Manager || !Manager.IsListening)
                 return "";
 
             _rosterBuilder.Length = 0;
