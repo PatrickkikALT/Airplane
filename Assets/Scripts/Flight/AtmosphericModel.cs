@@ -108,6 +108,21 @@ namespace Airplane.FlightSimulation
             }
         }
 
+        /// <summary>
+        /// Replaces the uniform wind at runtime. Wind feeds the aero and propulsion models, so in a
+        /// networked session this must be driven from one authority rather than per-peer.
+        /// </summary>
+        public void SetWind(Vector3 windWorldMetresPerSecond)
+        {
+            windWorld = windWorldMetresPerSecond;
+        }
+
+        public void SetGravityOverride(Vector3 gravity)
+        {
+            overrideGravity = true;
+            gravityOverride = gravity;
+        }
+
         private void OnEnable()
         {
             Instance = this;

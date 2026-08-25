@@ -101,6 +101,7 @@ namespace Airplane.FlightSimulation
         private float _rawPitch;
         private float _rawRoll;
         private float _rawYaw;
+        private bool _inputEnabled = true;
         private readonly StringBuilder _hudBuilder = new StringBuilder(512);
         private string _hudText = "";
         private float _hudClock;
@@ -116,10 +117,50 @@ namespace Airplane.FlightSimulation
         public float RawPitch => _rawPitch;
         public float RawRoll => _rawRoll;
 
+        /// <summary>False when the lever and surface positions are being written by something else.</summary>
+        public bool InputEnabled => _inputEnabled;
+
         public void SetInitialThrottle(float value)
         {
             initialThrottle = FlightSimMath.Saturate(value);
             _throttle01 = initialThrottle;
+        }
+
+        /// <summary>
+        /// Disables the input path so <see cref="ApplyExternalControls"/> becomes the only writer.
+        /// Used for aircraft flown by a remote peer, where the deflections arrive over the wire.
+        /// </summary>
+        public void SetInputEnabled(bool enable)
+        {
+            _inputEnabled = enable;
+        }
+
+        public void SetHudVisible(bool visible)
+        {
+            drawHud = visible;
+        }
+
+        /// <summary>
+        /// Writes lever and surface positions from an outside source. No rate limiting is applied:
+        /// the values already went through the hinge model on the machine that owns the aircraft, and
+        /// limiting them twice would lag the visible surfaces behind the replicated attitude.
+        /// </summary>
+        public void ApplyExternalControls(
+            float aileron,
+            float elevator,
+            float rudder,
+            float throttle,
+            float flaps,
+            float airbrake,
+            float wheelBrake)
+        {
+            _aileron01 = Clamp11(aileron);
+            _elevator01 = Clamp11(elevator);
+            _rudder01 = Clamp11(rudder);
+            _throttle01 = FlightSimMath.Saturate(throttle);
+            _flaps01 = FlightSimMath.Saturate(flaps);
+            _airbrake01 = FlightSimMath.Saturate(airbrake);
+            _wheelBrake01 = FlightSimMath.Saturate(wheelBrake);
         }
 
         private void Awake()
@@ -169,6 +210,9 @@ namespace Airplane.FlightSimulation
         /// </summary>
         public void PrePhysicsTick(float dt)
         {
+            if (!_inputEnabled)
+                return;
+
             CacheActions();
             _rawPitch = ReadAxis(_pitchAction);
             _rawRoll = ReadAxis(_rollAction);

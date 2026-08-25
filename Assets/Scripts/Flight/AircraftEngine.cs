@@ -180,6 +180,11 @@ namespace Airplane.FlightSimulation
 
         private void LateUpdate()
         {
+            // Tracked here as well as in ContributeForces so the disc still spins on an aircraft whose
+            // solver is off because another peer owns it.
+            if (_controller)
+                _throttle01 = _controller.Throttle01;
+
             if (!propellerVisual)
                 return;
             float rpm = Mathf.Lerp(400f, fullThrottleRpm, _throttle01);
@@ -195,24 +200,24 @@ namespace Airplane.FlightSimulation
                 _throttle01 = _controller.Throttle01;
 
             GetThrustWorld(body, out Vector3 point, out Vector3 axisWorld);
-
+            
             float tas = body.TrueAirspeed;
             float densityRatio = atmo.Density / AtmosphericModel.StandardSeaLevelDensity;
             if (densityRatio < 0.05f)
                 densityRatio = 0.05f;
-
+            
             float tEff = idleThrottle + (1f - idleThrottle) * FlightSimMath.Saturate(_throttle01);
             float speedLapse = 1f - FlightSimMath.Saturate(tas / Mathf.Max(10f, zeroThrustAirspeed));
             // Slight residual high-speed thrust so the model does not go strictly propeller-idle at Vmax.
             speedLapse = 0.08f + 0.92f * speedLapse;
-
+            
             float thrust = maxStaticThrust * tEff * Mathf.Pow(densityRatio, densityExponent) * speedLapse;
             _lastThrust = thrust;
             _lastThrustWorld = axisWorld * thrust;
             _lastThrustPoint = point;
-
+            
             body.AddForceAtPosition(_lastThrustWorld, point);
-
+            
             if (torqueReactionPerNewton != 0f && thrust > 1f)
             {
                 Vector3 reactionWorld = axisWorld * (-propellerSpinSign * torqueReactionPerNewton * thrust);

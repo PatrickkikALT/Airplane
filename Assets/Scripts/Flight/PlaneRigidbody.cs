@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Airplane.FlightSimulation
@@ -9,20 +10,20 @@ namespace Airplane.FlightSimulation
     /// </summary>
     public readonly struct PlaneContactPoint
     {
-        public readonly Vector3 point;
-        public readonly Vector3 normal;
-        public readonly Collider thisCollider;
-        public readonly Collider otherCollider;
+        public readonly Vector3 Point;
+        public readonly Vector3 Normal;
+        public readonly Collider ThisCollider;
+        public readonly Collider OtherCollider;
         /// <summary>Negative while overlapping (same sign convention as Unity's <see cref="ContactPoint.separation"/>).</summary>
-        public readonly float separation;
+        public readonly float Separation;
 
         public PlaneContactPoint(Vector3 point, Vector3 normal, Collider thisCollider, Collider otherCollider, float separation)
         {
-            this.point = point;
-            this.normal = normal;
-            this.thisCollider = thisCollider;
-            this.otherCollider = otherCollider;
-            this.separation = separation;
+            this.Point = point;
+            this.Normal = normal;
+            this.ThisCollider = thisCollider;
+            this.OtherCollider = otherCollider;
+            this.Separation = separation;
         }
     }
 
@@ -32,24 +33,24 @@ namespace Airplane.FlightSimulation
     /// </summary>
     public struct PlaneCollision
     {
-        public Collider collider;
-        public Collider thisCollider;
-        public Rigidbody rigidbody;
-        public PlaneRigidbody planeBody;
-        public Transform transform;
-        public GameObject gameObject;
-        public Vector3 relativeVelocity;
-        public Vector3 impulse;
-        public Vector3 point;
-        public Vector3 normal;
-        public float separation;
-        public int contactCount;
+        public Collider Collider;
+        public Collider ThisCollider;
+        public Rigidbody Rigidbody;
+        public PlaneRigidbody PlaneBody;
+        public Transform Transform;
+        public GameObject GameObject;
+        public Vector3 RelativeVelocity;
+        public Vector3 Impulse;
+        public Vector3 Point;
+        public Vector3 Normal;
+        public float Separation;
+        public int ContactCount;
 
         public PlaneContactPoint GetContact(int index)
         {
-            if (index < 0 || index >= contactCount)
+            if (index < 0 || index >= ContactCount)
                 throw new ArgumentOutOfRangeException(nameof(index));
-            return new PlaneContactPoint(point, normal, thisCollider, collider, separation);
+            return new PlaneContactPoint(Point, Normal, ThisCollider, Collider, Separation);
         }
     }
 
@@ -58,6 +59,13 @@ namespace Airplane.FlightSimulation
     /// Collider contact uses PhysX only as a query / other-body back-end: overlaps are resolved
     /// with sequential impulses so the aircraft can hit static colliders and exchange momentum
     /// with Unity Rigidbodies (and other PlaneRigidbody instances).
+    /// You can also detect collisions with OnPlaneCollisionEnter, for example:
+    /// <code>
+    ///     private void OnPlaneCollisionEnter(PlaneCollision hit)
+    ///     {
+    ///         Debug.Log("Hit");
+    ///     }
+    /// </code>
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
@@ -68,13 +76,13 @@ namespace Airplane.FlightSimulation
         [Tooltip("Mass of the vehicle, kg. Baseline trainer = 1500 kg.")]
         [SerializeField] private float mass = 1500f;
 
-        [Tooltip("Ixx — roll inertia about body +X (forward), kg·m².")]
+        [Tooltip("Ixx - roll inertia about body +X (forward), kg·m².")]
         [SerializeField] private float inertiaIxx = 2200f;
 
-        [Tooltip("Iyy — yaw inertia about body +Y (up), kg·m².")]
+        [Tooltip("Iyy - yaw inertia about body +Y (up), kg·m².")]
         [SerializeField] private float inertiaIyy = 5200f;
 
-        [Tooltip("Izz — pitch inertia about body +Z (right), kg·m².")]
+        [Tooltip("Izz - pitch inertia about body +Z (right), kg·m².")]
         [SerializeField] private float inertiaIzz = 3600f;
 
         [SerializeField] private float inertiaIxy;
@@ -185,6 +193,8 @@ namespace Airplane.FlightSimulation
         private Vector3 _lastTotalForceWorld;
         private bool _initialized;
         private bool _anyGearDown;
+        private bool _simulationEnabled = true;
+        private bool _externalStateApplied;
 
         private AeroSurface[] _surfaces;
         private AircraftEngine _engine;
@@ -221,16 +231,19 @@ namespace Airplane.FlightSimulation
         public Vector3 LastAeroForceWorld => _lastAeroForceWorld;
         public Vector3 LastTotalForceWorld => _lastTotalForceWorld;
         public bool AnyGearDown => _anyGearDown;
+        public Vector3 CenterOfMassBody => centerOfMassBody;
 
-        public Vector3 AngularVelocityWorld
-        {
-            get { return _orientation * _omegaBody; }
-        }
+        /// <summary>
+        /// False while another peer owns this aircraft and the pose is being replayed from the network.
+        /// Integration, contact solving and controller ticks are all suppressed in that state; the
+        /// solver fields are still kept current so airspeed readouts and other bodies' contact maths
+        /// see sane values.
+        /// </summary>
+        public bool SimulationEnabled => _simulationEnabled;
 
-        public float TrueAirspeed
-        {
-            get { return FlightSimMath.SafeMagnitude(_velocity - AtmosphericModel.SampleWind()); }
-        }
+        public Vector3 AngularVelocityWorld => _orientation * _omegaBody;
+
+        public float TrueAirspeed => FlightSimMath.SafeMagnitude(_velocity - AtmosphericModel.SampleWind());
 
         public void SetMassAndInertia(float newMass, float ixx, float iyy, float izz, float ixy = 0f, float ixz = 0f, float iyz = 0f)
         {
@@ -250,6 +263,67 @@ namespace Airplane.FlightSimulation
             centerOfMassBody = com;
         }
 
+        /// <summary>
+        /// Enables or suppresses the solver. Disable this on a body whose pose comes from elsewhere
+        /// (a network proxy, a cutscene) so it stops integrating and stops fighting the driver.
+        /// </summary>
+        public void SetSimulationEnabled(bool enable)
+        {
+            if (_simulationEnabled == enable)
+                return;
+
+            _simulationEnabled = enable;
+
+            if (!enable)
+            {
+                _hitsThisTick.Clear();
+                _hitsLastTick.Clear();
+                _gizmoContactCount = 0;
+                return;
+            }
+
+            _prevPosition = _position;
+            _prevOrientation = _orientation;
+        }
+
+        /// <summary>
+        /// Hard-sets the full state and snaps the transform, discarding any interpolation history.
+        /// Use for spawning, respawning and teleports.
+        /// </summary>
+        public void Teleport(Vector3 comWorld, Quaternion orientation, Vector3 velocityWorld, Vector3 angularVelocityBody)
+        {
+            _orientation = FlightSimMath.Normalize(orientation);
+            _position = comWorld;
+            _velocity = velocityWorld;
+            _omegaBody = angularVelocityBody;
+            _acceleration = Vector3.zero;
+            _alphaBody = Vector3.zero;
+            _prevPosition = _position;
+            _prevOrientation = _orientation;
+            _hitsThisTick.Clear();
+            _hitsLastTick.Clear();
+            _initialized = true;
+            _externalStateApplied = true;
+            ApplyToTransform(_position, _orientation);
+        }
+
+        /// <summary>
+        /// Drives a non-simulated body from an externally computed state, keeping the previous pose so
+        /// gizmos and airspeed readouts stay continuous. Intended for network proxies once per frame.
+        /// </summary>
+        public void ApplyNetworkState(Vector3 comWorld, Quaternion orientation, Vector3 velocityWorld, Vector3 angularVelocityBody)
+        {
+            _prevPosition = _position;
+            _prevOrientation = _orientation;
+            _position = comWorld;
+            _orientation = FlightSimMath.Normalize(orientation);
+            _velocity = velocityWorld;
+            _omegaBody = angularVelocityBody;
+            _initialized = true;
+            _externalStateApplied = true;
+            ApplyToTransform(_position, _orientation);
+        }
+
         private void Awake()
         {
             CacheSiblings();
@@ -267,6 +341,10 @@ namespace Airplane.FlightSimulation
 
         private void Start()
         {
+            // A spawner may already have handed us a state before Start ran; don't stomp it.
+            if (_externalStateApplied)
+                return;
+
             CaptureFromTransform();
             _prevPosition = _position;
             _prevOrientation = _orientation;
@@ -313,6 +391,9 @@ namespace Airplane.FlightSimulation
 
         private void FixedUpdate()
         {
+            if (!_simulationEnabled)
+                return;
+
             if (!_initialized)
             {
                 CaptureFromTransform();
@@ -331,7 +412,7 @@ namespace Airplane.FlightSimulation
             if (dt <= 0f)
                 return;
 
-            if (_controller != null)
+            if (_controller)
                 _controller.PrePhysicsTick(dt);
 
             _prevPosition = _position;
@@ -355,7 +436,7 @@ namespace Airplane.FlightSimulation
 
         private void Update()
         {
-            if (!interpolateTransform || !_initialized)
+            if (!_simulationEnabled || !interpolateTransform || !_initialized)
                 return;
 
             float alpha = Time.fixedDeltaTime > 0f
@@ -393,7 +474,7 @@ namespace Airplane.FlightSimulation
             return _velocity + Vector3.Cross(AngularVelocityWorld, worldPoint - _position);
         }
 
-        public void ApplyImpulseAtWorldPoint(Vector3 impulseWorld, Vector3 worldPoint)
+        private void ApplyImpulseAtWorldPoint(Vector3 impulseWorld, Vector3 worldPoint)
         {
             _velocity += impulseWorld * (1f / mass);
             Vector3 r = worldPoint - _position;
@@ -607,7 +688,7 @@ namespace Airplane.FlightSimulation
         {
             Vector3 worldComOffset = orientation * centerOfMassBody;
             transform.SetPositionAndRotation(comWorld - worldComOffset, orientation);
-            if (_proxyBody != null)
+            if (_proxyBody)
             {
                 _proxyBody.position = transform.position;
                 _proxyBody.rotation = transform.rotation;
@@ -632,17 +713,11 @@ namespace Airplane.FlightSimulation
         private void CacheOwnColliders()
         {
             Collider[] found = GetComponentsInChildren<Collider>(true);
-            int count = 0;
-            for (int i = 0; i < found.Length; i++)
-            {
-                Collider c = found[i];
-                if (c != null && c.enabled && !c.isTrigger)
-                    count++;
-            }
+            int count = found.Count(c => c && c.enabled && !c.isTrigger);
 
             if (count == 0 && createFallbackHull && Application.isPlaying)
             {
-                if (_fallbackHull == null)
+                if (!_fallbackHull)
                 {
                     _fallbackHull = gameObject.AddComponent<BoxCollider>();
                     _fallbackHull.size = fallbackHullSize;
@@ -651,33 +726,25 @@ namespace Airplane.FlightSimulation
                 }
 
                 found = GetComponentsInChildren<Collider>(true);
-                count = 0;
-                for (int i = 0; i < found.Length; i++)
-                {
-                    Collider c = found[i];
-                    if (c != null && c.enabled && !c.isTrigger)
-                        count++;
-                }
+                count = found.Count(c => c && c.enabled && !c.isTrigger);
             }
 
             _ownColliders = new Collider[count];
             int w = 0;
-            for (int i = 0; i < found.Length; i++)
+            foreach (Collider c in found)
             {
-                Collider c = found[i];
-                if (c != null && c.enabled && !c.isTrigger)
+                if (c && c.enabled && !c.isTrigger)
                     _ownColliders[w++] = c;
             }
         }
 
         private bool IsOwnCollider(Collider c)
         {
-            if (c == null)
+            if (!c)
                 return false;
-            for (int i = 0; i < _ownColliders.Length; i++)
+            if (_ownColliders.Any(t => t == c))
             {
-                if (_ownColliders[i] == c)
-                    return true;
+                return true;
             }
 
             return c.transform == transform || c.transform.IsChildOf(transform);
@@ -690,7 +757,7 @@ namespace Airplane.FlightSimulation
 
             if (_ownColliders == null || _ownColliders.Length == 0)
                 CacheOwnColliders();
-            if (_ownColliders.Length == 0)
+            if (_ownColliders is { Length: 0 })
                 return;
 
             ApplyToTransform(_position, _orientation);
@@ -716,10 +783,9 @@ namespace Airplane.FlightSimulation
             int mask = collisionMask.value;
             float slop = Mathf.Max(0f, collisionSlop);
 
-            for (int i = 0; i < _ownColliders.Length; i++)
+            foreach (Collider own in _ownColliders)
             {
-                Collider own = _ownColliders[i];
-                if (own == null || !own.enabled || own.isTrigger)
+                if (!own || !own.enabled || own.isTrigger)
                     continue;
 
                 Bounds bounds = own.bounds;
@@ -734,7 +800,7 @@ namespace Airplane.FlightSimulation
                 for (int h = 0; h < hits; h++)
                 {
                     Collider other = _overlapBuffer[h];
-                    if (other == null || other == own || other.isTrigger || IsOwnCollider(other))
+                    if (!other || other == own || other.isTrigger || IsOwnCollider(other))
                         continue;
 
                     if (!Physics.ComputePenetration(
@@ -754,13 +820,19 @@ namespace Airplane.FlightSimulation
                     PlaneRigidbody otherPlane = other.GetComponentInParent<PlaneRigidbody>();
                     if (otherPlane == this)
                         continue;
-                    if (otherPlane != null && otherPlane.GetEntityId() < GetEntityId())
+
+                    // A plane that is not solving (a replicated proxy owned by another peer) cannot
+                    // absorb an impulse or push itself out of an overlap, so it acts as immovable
+                    // geometry. The lowest-id tie-break that stops a pair being solved twice only
+                    // makes sense when both bodies actually solve.
+                    bool otherPlaneStatic = otherPlane && !otherPlane._simulationEnabled;
+                    if (otherPlane && !otherPlaneStatic && otherPlane.GetEntityId() < GetEntityId())
                         continue;
 
                     Rigidbody otherRb = other.attachedRigidbody;
-                    if (otherPlane != null)
+                    if (otherPlane)
                         otherRb = null;
-                    else if (otherRb != null && otherRb.isKinematic && otherRb == _proxyBody)
+                    else if (otherRb && otherRb.isKinematic && otherRb == _proxyBody)
                         continue;
 
                     GetContactMaterials(own, other, out float restitution, out float friction);
@@ -778,7 +850,8 @@ namespace Airplane.FlightSimulation
                         ThisCollider = own,
                         OtherCollider = other,
                         OtherBody = otherRb,
-                        OtherPlane = otherPlane
+                        OtherPlane = otherPlane,
+                        OtherPlaneStatic = otherPlaneStatic
                     };
                 }
             }
@@ -801,14 +874,17 @@ namespace Airplane.FlightSimulation
                 float invMassB = 0f;
                 Vector3 rB = Vector3.zero;
                 Vector3 vB = Vector3.zero;
-                bool otherIsDynamicRb = c.OtherBody != null && !c.OtherBody.isKinematic;
-                if (c.OtherPlane != null)
+                bool otherIsDynamicRb = c.OtherBody && !c.OtherBody.isKinematic;
+                bool otherPlaneResponds = c.OtherPlane && !c.OtherPlaneStatic;
+                if (c.OtherPlane)
                 {
-                    invMassB = 1f / c.OtherPlane.mass;
+                    // A static proxy still contributes its velocity, so a head-on closing speed is
+                    // right even though only this aircraft reacts.
+                    invMassB = otherPlaneResponds ? 1f / c.OtherPlane.mass : 0f;
                     rB = c.Point - c.OtherPlane._position;
                     vB = c.OtherPlane.GetPointVelocity(c.Point);
                 }
-                else if (c.OtherBody != null)
+                else if (c.OtherBody)
                 {
                     rB = c.Point - c.OtherBody.worldCenterOfMass;
                     vB = c.OtherBody.GetPointVelocity(c.Point);
@@ -822,9 +898,9 @@ namespace Airplane.FlightSimulation
                 float vN = Vector3.Dot(vRel, n);
 
                 float invMn = InverseMassAlong(rA, n, invMassA);
-                if (c.OtherPlane != null)
+                if (otherPlaneResponds)
                     invMn += c.OtherPlane.InverseMassAlong(rB, n, invMassB);
-                else if (otherIsDynamicRb)
+                else if (!c.OtherPlane && otherIsDynamicRb)
                     invMn += RigidbodyInverseMassAlong(c.OtherBody, rB, n);
                 if (invMn < 1e-8f)
                 {
@@ -844,9 +920,9 @@ namespace Airplane.FlightSimulation
                 {
                     Vector3 t = vTan / vTanMag;
                     float invMt = InverseMassAlong(rA, t, invMassA);
-                    if (c.OtherPlane != null)
+                    if (otherPlaneResponds)
                         invMt += c.OtherPlane.InverseMassAlong(rB, t, invMassB);
-                    else if (otherIsDynamicRb)
+                    else if (!c.OtherPlane && otherIsDynamicRb)
                         invMt += RigidbodyInverseMassAlong(c.OtherBody, rB, t);
                     if (invMt > 1e-8f)
                     {
@@ -862,9 +938,9 @@ namespace Airplane.FlightSimulation
                 _contacts[i] = c;
 
                 ApplyImpulseAtWorldPoint(impulse, c.Point);
-                if (c.OtherPlane != null)
+                if (otherPlaneResponds)
                     c.OtherPlane.ApplyImpulseAtWorldPoint(-impulse, c.Point);
-                else if (otherIsDynamicRb)
+                else if (!c.OtherPlane && otherIsDynamicRb)
                 {
                     c.OtherBody.WakeUp();
                     c.OtherBody.AddForceAtPosition(-impulse, c.Point, ForceMode.Impulse);
@@ -874,15 +950,15 @@ namespace Airplane.FlightSimulation
                 if (correction > 0f)
                 {
                     float wA = invMassA;
-                    float wB = otherIsDynamicRb || c.OtherPlane != null ? invMassB : 0f;
+                    float wB = otherPlaneResponds || (!c.OtherPlane && otherIsDynamicRb) ? invMassB : 0f;
                     float wSum = wA + wB;
                     if (wSum < 1e-8f)
                         wSum = wA;
                     Vector3 corr = n * correction;
                     _position += corr * (wA / wSum);
-                    if (c.OtherPlane != null)
+                    if (otherPlaneResponds)
                         c.OtherPlane._position -= corr * (wB / wSum);
-                    else if (otherIsDynamicRb)
+                    else if (!c.OtherPlane && otherIsDynamicRb)
                         c.OtherBody.position -= corr * (wB / wSum);
                 }
             }
@@ -900,7 +976,7 @@ namespace Airplane.FlightSimulation
 
         private static float RigidbodyInverseMassAlong(Rigidbody rb, Vector3 rWorld, Vector3 n)
         {
-            if (rb == null || rb.isKinematic)
+            if (!rb || rb.isKinematic)
                 return 0f;
 
             float invMass = rb.mass > 1e-6f ? 1f / rb.mass : 0f;
@@ -918,20 +994,20 @@ namespace Airplane.FlightSimulation
 
         private void GetContactMaterials(Collider a, Collider b, out float restitution, out float friction)
         {
-            PhysicsMaterial ma = a != null ? a.sharedMaterial : null;
-            PhysicsMaterial mb = b != null ? b.sharedMaterial : null;
+            PhysicsMaterial ma = a ? a.sharedMaterial : null;
+            PhysicsMaterial mb = b ? b.sharedMaterial : null;
 
-            float eA = ma != null ? ma.bounciness : collisionRestitution;
-            float eB = mb != null ? mb.bounciness : collisionRestitution;
-            float fA = ma != null ? ma.dynamicFriction : collisionFriction;
-            float fB = mb != null ? mb.dynamicFriction : collisionFriction;
+            float eA = ma ? ma.bounciness : collisionRestitution;
+            float eB = mb ? mb.bounciness : collisionRestitution;
+            float fA = ma ? ma.dynamicFriction : collisionFriction;
+            float fB = mb ? mb.dynamicFriction : collisionFriction;
 
             PhysicsMaterialCombine bounceMode = DominantCombine(
-                ma != null ? ma.bounceCombine : PhysicsMaterialCombine.Average,
-                mb != null ? mb.bounceCombine : PhysicsMaterialCombine.Average);
+                ma ? ma.bounceCombine : PhysicsMaterialCombine.Average,
+                mb ? mb.bounceCombine : PhysicsMaterialCombine.Average);
             PhysicsMaterialCombine frictionMode = DominantCombine(
-                ma != null ? ma.frictionCombine : PhysicsMaterialCombine.Average,
-                mb != null ? mb.frictionCombine : PhysicsMaterialCombine.Average);
+                ma ? ma.frictionCombine : PhysicsMaterialCombine.Average,
+                mb ? mb.frictionCombine : PhysicsMaterialCombine.Average);
 
             restitution = Combine(eA, eB, bounceMode);
             friction = Combine(fA, fB, frictionMode);
@@ -944,17 +1020,13 @@ namespace Airplane.FlightSimulation
 
         private static float Combine(float a, float b, PhysicsMaterialCombine mode)
         {
-            switch (mode)
+            return mode switch
             {
-                case PhysicsMaterialCombine.Multiply:
-                    return a * b;
-                case PhysicsMaterialCombine.Minimum:
-                    return Mathf.Min(a, b);
-                case PhysicsMaterialCombine.Maximum:
-                    return Mathf.Max(a, b);
-                default:
-                    return (a + b) * 0.5f;
-            }
+                PhysicsMaterialCombine.Multiply => a * b,
+                PhysicsMaterialCombine.Minimum => Mathf.Min(a, b),
+                PhysicsMaterialCombine.Maximum => Mathf.Max(a, b),
+                _ => (a + b) * 0.5f
+            };
         }
 
         private struct Contact
@@ -970,6 +1042,8 @@ namespace Airplane.FlightSimulation
             public Collider OtherCollider;
             public Rigidbody OtherBody;
             public PlaneRigidbody OtherPlane;
+            /// <summary>Other plane exists but is not solving, so it takes no impulse and no correction.</summary>
+            public bool OtherPlaneStatic;
         }
 
         private void RecordCollisionHits(int count)
@@ -977,20 +1051,20 @@ namespace Airplane.FlightSimulation
             for (int i = 0; i < count; i++)
             {
                 Contact c = _contacts[i];
-                if (c.OtherCollider == null)
+                if (!c.OtherCollider)
                     continue;
 
                 int id = c.OtherCollider.GetEntityId().ToInt();
                 if (_hitsThisTick.TryGetValue(id, out PlaneCollision hit))
                 {
-                    hit.impulse += c.Impulse;
-                    hit.contactCount++;
-                    if (c.Penetration > -hit.separation)
+                    hit.Impulse += c.Impulse;
+                    hit.ContactCount++;
+                    if (c.Penetration > -hit.Separation)
                     {
-                        hit.point = c.Point;
-                        hit.normal = c.Normal;
-                        hit.separation = -c.Penetration;
-                        hit.thisCollider = c.ThisCollider;
+                        hit.Point = c.Point;
+                        hit.Normal = c.Normal;
+                        hit.Separation = -c.Penetration;
+                        hit.ThisCollider = c.ThisCollider;
                     }
                     _hitsThisTick[id] = hit;
                 }
@@ -999,18 +1073,18 @@ namespace Airplane.FlightSimulation
                     Transform otherTransform = c.OtherCollider.transform;
                     _hitsThisTick[id] = new PlaneCollision
                     {
-                        collider = c.OtherCollider,
-                        thisCollider = c.ThisCollider,
-                        rigidbody = c.OtherBody,
-                        planeBody = c.OtherPlane,
-                        transform = otherTransform,
-                        gameObject = otherTransform.gameObject,
-                        relativeVelocity = c.RelativeVelocity,
-                        impulse = c.Impulse,
-                        point = c.Point,
-                        normal = c.Normal,
-                        separation = -c.Penetration,
-                        contactCount = 1
+                        Collider = c.OtherCollider,
+                        ThisCollider = c.ThisCollider,
+                        Rigidbody = c.OtherBody,
+                        PlaneBody = c.OtherPlane,
+                        Transform = otherTransform,
+                        GameObject = otherTransform.gameObject,
+                        RelativeVelocity = c.RelativeVelocity,
+                        Impulse = c.Impulse,
+                        Point = c.Point,
+                        Normal = c.Normal,
+                        Separation = -c.Penetration,
+                        ContactCount = 1
                     };
                 }
             }
