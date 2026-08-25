@@ -443,13 +443,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b0e0afefe780314db4becff9dace008, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapGenerator
-  minSpawnPosition: {x: -1000, y: -1000, z: -1000}
-  maxSpawnPosition: {x: 1000, y: 1000, z: 1000}
-  minIslandAmount: 999
-  maxIslandAmount: 1000
+  minSpawnPosition: {x: -100, y: -100, z: -100}
+  maxSpawnPosition: {x: 100, y: 100, z: 100}
+  minIslandAmount: 100
+  maxIslandAmount: 200
   island: {fileID: 3130590148596470279, guid: 714cfa01bcfecab49945f874dea18592, type: 3}
   numberRanges: []
-  rangedNumber: 30
+  rangedNumber: 0
 --- !u!4 &1803732015
 Transform:
   m_ObjectHideFlags: 0
