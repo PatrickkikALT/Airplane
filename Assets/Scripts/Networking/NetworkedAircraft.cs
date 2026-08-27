@@ -1,5 +1,6 @@
 using System;
 using Airplane.FlightSimulation;
+using Airplane.Weapons;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -54,6 +55,7 @@ namespace Airplane.Multiplayer
 
         private PlaneRigidbody _body;
         private AircraftFlightController _controller;
+        private AircraftWeaponsController _weapons;
         private PlayerInput _playerInput;
         private float _sendAccumulator;
         private Vector3 _lastSentPosition;
@@ -82,6 +84,7 @@ namespace Airplane.Multiplayer
         {
             _body = GetComponent<PlaneRigidbody>();
             _controller = GetComponent<AircraftFlightController>();
+            _weapons = GetComponent<AircraftWeaponsController>();
             _playerInput = GetComponent<PlayerInput>();
         }
 
@@ -141,6 +144,12 @@ namespace Airplane.Multiplayer
             {
                 _controller.SetInputEnabled(simulate);
                 _controller.SetHudVisible(simulate);
+            }
+
+            if (_weapons)
+            {
+                _weapons.SetInputEnabled(simulate);
+                _weapons.SetHudVisible(simulate);
             }
 
             if (_playerInput)
@@ -206,7 +215,9 @@ namespace Airplane.Multiplayer
                 _controller.Throttle01,
                 _controller.Flaps01,
                 _controller.Airbrake01,
-                _controller.WheelBrake01);
+                _controller.WheelBrake01,
+                _weapons ? _weapons.Fire01 : 0f,
+                _weapons ? _weapons.FireSecondary01 : 0f);
         }
 
         private void ApplyBufferedState()
@@ -228,6 +239,12 @@ namespace Airplane.Multiplayer
                     c.Flaps01,
                     c.Airbrake01,
                     c.WheelBrake01);
+            }
+
+            if (_weapons)
+            {
+                AircraftControlPacket c = state.Controls;
+                _weapons.ApplyExternalFire(c.Fire01, c.FireSecondary01);
             }
         }
 
@@ -271,6 +288,50 @@ namespace Airplane.Multiplayer
 
         /// <summary>Threshold the owner compares impact speed against, km/h.</summary>
         public float CrashSpeedKmh => crashSpeedKmh;
+
+        /// <summary>
+        /// Called by <see cref="AircraftGun"/> on the firing owner when a round hits a remote
+        /// aircraft. The server forwards the impulse to the victim's owner so their solver feels it.
+        /// </summary>
+        public void ReportWeaponHit(NetworkedAircraft victim, Vector3 point, Vector3 impulse, float damage)
+        {
+            if (!IsSpawned || !IsOwner || !victim)
+                return;
+
+            SubmitWeaponHitRpc(victim.NetworkObject, point, impulse, damage);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void SubmitWeaponHitRpc(NetworkObjectReference victimRef, Vector3 point, Vector3 impulse, float damage)
+        {
+            if (!victimRef.TryGet(out NetworkObject victimObject))
+                return;
+
+            NetworkedAircraft victim = victimObject.GetComponent<NetworkedAircraft>();
+            if (!victim)
+                return;
+
+            victim.ReceiveWeaponHitRpc(point, impulse, damage);
+        }
+
+        [Rpc(SendTo.Owner)]
+        private void ReceiveWeaponHitRpc(Vector3 point, Vector3 impulse, float damage)
+        {
+            if (!_body || !_body.SimulationEnabled)
+                return;
+
+            GunHit hit = new GunHit
+            {
+                Point = point,
+                Normal = -impulse.normalized,
+                Impulse = impulse,
+                Damage = damage,
+                Victim = _body,
+                Shooter = null,
+                Gun = null
+            };
+            AircraftGun.ApplyHit(_body, in hit);
+        }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void SubmitCrashRpc(Vector3 point, float impactSpeedKmh)

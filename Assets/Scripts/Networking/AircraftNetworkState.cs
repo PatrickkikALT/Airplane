@@ -17,6 +17,8 @@ namespace Airplane.Multiplayer
         public byte Flaps;
         public byte Airbrake;
         public byte WheelBrake;
+        public byte Fire;
+        public byte FireSecondary;
 
         public float Aileron01 => Decode11(Aileron);
         public float Elevator01 => Decode11(Elevator);
@@ -25,6 +27,8 @@ namespace Airplane.Multiplayer
         public float Flaps01 => Decode01(Flaps);
         public float Airbrake01 => Decode01(Airbrake);
         public float WheelBrake01 => Decode01(WheelBrake);
+        public float Fire01 => Decode01(Fire);
+        public float FireSecondary01 => Decode01(FireSecondary);
 
         public static AircraftControlPacket Create(
             float aileron,
@@ -33,7 +37,9 @@ namespace Airplane.Multiplayer
             float throttle,
             float flaps,
             float airbrake,
-            float wheelBrake)
+            float wheelBrake,
+            float fire = 0f,
+            float fireSecondary = 0f)
         {
             return new AircraftControlPacket
             {
@@ -43,7 +49,9 @@ namespace Airplane.Multiplayer
                 Throttle = Encode01(throttle),
                 Flaps = Encode01(flaps),
                 Airbrake = Encode01(airbrake),
-                WheelBrake = Encode01(wheelBrake)
+                WheelBrake = Encode01(wheelBrake),
+                Fire = Encode01(fire),
+                FireSecondary = Encode01(fireSecondary)
             };
         }
 
@@ -56,6 +64,8 @@ namespace Airplane.Multiplayer
             serializer.SerializeValue(ref Flaps);
             serializer.SerializeValue(ref Airbrake);
             serializer.SerializeValue(ref WheelBrake);
+            serializer.SerializeValue(ref Fire);
+            serializer.SerializeValue(ref FireSecondary);
         }
 
         private static sbyte Encode11(float value)
@@ -234,6 +244,7 @@ namespace Airplane.Multiplayer
         }
 
         // i genuinely do not know what this does
+        // https://en.wikibooks.org/wiki/Cg_Programming/Unity/Hermite_Curves
         private static Vector3 Hermite(Vector3 p0, Vector3 v0, Vector3 p1, Vector3 v1, float t, float dt)
         {
             float t2 = t * t;
