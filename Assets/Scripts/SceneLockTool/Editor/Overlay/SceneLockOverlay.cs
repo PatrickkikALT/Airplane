@@ -1,8 +1,5 @@
-using System;
 using System.IO;
-using Unity.VisualScripting;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -14,14 +11,11 @@ namespace Utils.Core.SceneLockTool
         private static Texture2D lockIcon;
         private static Color lockedNotOwnerColor = new Color(0.8f, 0.1f, 0f, 0.2f);
 
-        //TODO: Check if we can replace hierarchyWindowItemOnGUI, this probably used InstanceIDs.
-        [Obsolete("Obsolete")]
         static SceneLockOverlay()
         {
             lockIcon = EditorGUIUtility.IconContent("Locked").image as Texture2D;
             EditorApplication.projectWindowItemOnGUI += OnProjectWindowGUI;
-            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyWindowGUI;
-            
+            EditorApplication.hierarchyWindowItemByEntityIdOnGUI += OnHierarchyWindowGUI;
         }
 
         private static void OnProjectWindowGUI(string guid, Rect rect)
@@ -50,13 +44,11 @@ namespace Utils.Core.SceneLockTool
             GUI.Label(iconRect, new GUIContent("", tooltip));
         }
 
-        //TODO: Replace InstanceID with EntityID, because Unity is stupid.
-        [Obsolete("Obsolete")]
-        private static void OnHierarchyWindowGUI(int id, Rect rect)
+        private static void OnHierarchyWindowGUI(EntityId entityId, Rect rect)
         {
-            GameObject obj = EditorUtility.InstanceIDToObject(id) as GameObject;
+            GameObject obj = EditorUtility.EntityIdToObject(entityId) as GameObject;
 
-            // Scene headers have a valid instance id but have a null object, this allows us to easily check if the drawn object is the scene header or not.
+            // Scene headers have a valid EntityId but a null object.
             if (!obj)
             {
                 Scene scene = SceneManager.GetActiveScene();
