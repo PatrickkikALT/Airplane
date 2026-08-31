@@ -66,6 +66,7 @@ namespace Airplane.Multiplayer
             default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
         private PlaneRigidbody _body;
+        private AircraftEngine _engine;
         private AircraftFlightController _controller;
         private AircraftWeaponsController _weapons;
         private PlayerInput _playerInput;
@@ -94,6 +95,7 @@ namespace Airplane.Multiplayer
         public static IReadOnlyList<NetworkedAircraft> All => Registry;
 
         public PlaneRigidbody Body => _body;
+        public AircraftEngine Engine => _controller.Engine;
 
         public int CrashCount => _crashCount.Value;
 

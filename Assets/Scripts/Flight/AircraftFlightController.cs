@@ -115,6 +115,7 @@ namespace Airplane.FlightSimulation
         private string _hudText = "";
         private float _hudClock;
 
+        public AircraftEngine Engine => _engine;
         public float Throttle01 => _throttle01;
         public float Flaps01 => _flaps01;
         public float Airbrake01 => _airbrake01;

@@ -270,6 +270,11 @@ namespace Airplane.FlightSimulation
                 _lastExcessWake);
         }
 
+        public void SetMaxThrust(int thrust)
+        {
+            maxStaticThrust = thrust;
+        }
+
         private void OnDrawGizmos()
         {
             if (!drawGizmos)

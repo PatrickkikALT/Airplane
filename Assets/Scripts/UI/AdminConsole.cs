@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Airplane.Multiplayer;
 using Airplane.Weapons;
@@ -455,6 +456,9 @@ namespace Airplane.UI
             Add("dummy", "dummy", "Spawn a still target in front of you. Server only.", CmdDummy);
             Add("timescale", "timescale [rate]", "Set Time.timeScale. 1 is normal.", CmdTimescale);
             Add("nametags", "nametags [on|off]", "Toggle aircraft nametags.", CmdNametags);
+            Add("scale", "scale [scale]", "Change your aircraft's scale", CmdScale);
+            Add("destroy", "destroy [displayName]", "Destroys the targeted aircraft", CmdDestroy);
+            Add("speed", "speed [speed]", "Sets your aircraft's speed, base is 60000.",  CmdSpeed);
         }
 
         private void Add(string name, string usage, string help, Func<string[], string> handler)
@@ -466,6 +470,45 @@ namespace Airplane.UI
                 Help = help,
                 Handler = handler
             });
+        }
+
+        private string CmdSpeed(string[] args)
+        {
+            NetworkedAircraft aircraft = NetworkedAircraft.Local;
+            if (!int.TryParse(args[0], out int speed))
+            {
+                return "Invalid argument";
+            }
+            aircraft.Engine.SetMaxThrust(speed);
+            return "";
+        }
+        private string CmdDestroy(string[] args)
+        {
+            string displayName = args[0].ToLower();
+            if (args[0] == "*")
+            {
+                foreach (NetworkedAircraft air in NetworkedAircraft.All)
+                {
+                    air.ReportCrash(Vector3.zero, 500);
+                }
+
+                return "";
+            }
+            NetworkedAircraft aircraft = NetworkedAircraft.All.First(x => x.DisplayName.ToLower() == displayName);
+            aircraft.ReportCrash(Vector3.zero, 500);
+            return "";
+        }
+        
+        private string CmdScale(string[] args)
+        {
+            NetworkedAircraft local = NetworkedAircraft.Local;
+            if (float.TryParse(args[0], out float scale))
+            {
+                scale = Mathf.Clamp(scale, 0, 50);
+                local.transform.localScale =  new Vector3(scale, scale, scale);
+            }
+
+            return "";
         }
 
         private string CmdHelp(string[] args)
