@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using Airplane.FlightSimulation;
+using Airplane.Multiplayer;
+using Airplane.UI;
 using UnityEngine;
 
 namespace Airplane.Weapons
@@ -31,8 +34,10 @@ namespace Airplane.Weapons
         private float _area = 0.000046f;
         private float _cd = 0.3f;
         private bool _ballistic;
+        private bool _kinematic;
         private bool _visualOnly;
         private bool _inFlight;
+        private NetworkedAircraft _homeOn;
         private readonly RaycastHit[] _hits = new RaycastHit[8];
 
         public bool IsInFlight => _inFlight;
@@ -122,21 +127,44 @@ namespace Airplane.Weapons
             return _lineMaterial;
         }
 
-        /// <summary>Instant streak from muzzle to hit / max range. No collision of its own.</summary>
-        public void LaunchHitscanVisual(Vector3 origin, Vector3 end, float lifetime)
+        /// <summary>
+        /// Moving tracer whose velocity already includes the firing aircraft's point velocity.
+        /// Used for hitscan guns so the streak travels in the world frame instead of sitting still
+        /// while the airframe flies past it.
+        /// </summary>
+        public void LaunchKinematic(Vector3 origin, Vector3 velocity, float lifetime)
         {
             EnsureLine();
+            SetShooterIgnore(false);
+            _gun = null;
+            _shooter = null;
             _ballistic = false;
+            _kinematic = true;
             _visualOnly = true;
             _inFlight = true;
             _age = 0f;
             _life = Mathf.Max(0.02f, lifetime);
-            _position = end;
+            _velocity = velocity;
             _prevPosition = origin;
-            _velocity = Vector3.zero;
+            _position = origin;
+            _homeOn = null;
             gameObject.SetActive(true);
             _line.SetPosition(0, origin);
-            _line.SetPosition(1, end);
+            _line.SetPosition(1, origin);
+        }
+
+        /// <summary>
+        /// Instant streak from muzzle to hit / max range. No collision of its own.
+        /// Prefer <see cref="LaunchKinematic"/> — a frozen beam reads as lagging behind a moving aircraft.
+        /// </summary>
+        public void LaunchHitscanVisual(Vector3 origin, Vector3 end, float lifetime)
+        {
+            Vector3 delta = end - origin;
+            float dist = delta.magnitude;
+            Vector3 velocity = dist > 1e-4f
+                ? delta / Mathf.Max(0.02f, lifetime)
+                : Vector3.zero;
+            LaunchKinematic(origin, velocity, lifetime);
         }
 
         /// <summary>
@@ -154,13 +182,17 @@ namespace Airplane.Weapons
             _gun = gun;
             _shooter = shooter;
             _ballistic = true;
+            _kinematic = false;
             _visualOnly = visualOnly;
             _inFlight = true;
             _age = 0f;
             _life = maxLifetime;
-            _position = origin;
-            _prevPosition = origin;
             _velocity = velocity;
+            _prevPosition = origin;
+            _position = origin;
+            _homeOn = !visualOnly && CheatFlags.HomingBullets && CheatFlags.AppliesTo(shooter)
+                ? PickHomingTarget(shooter, origin, velocity)
+                : null;
             gameObject.SetActive(true);
             transform.SetPositionAndRotation(origin, Quaternion.LookRotation(
                 velocity.sqrMagnitude > 1e-4f ? velocity : Vector3.right, Vector3.up));
@@ -209,6 +241,12 @@ namespace Airplane.Weapons
                 return;
             }
 
+            if (_kinematic)
+            {
+                StepKinematic(dt);
+                return;
+            }
+
             if (!_ballistic)
                 return;
 
@@ -220,7 +258,7 @@ namespace Airplane.Weapons
             if (!_inFlight || !_line)
                 return;
 
-            if (_ballistic)
+            if (_ballistic || _kinematic)
             {
                 float alpha = Time.fixedDeltaTime > 0f
                     ? Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime)
@@ -240,6 +278,12 @@ namespace Airplane.Weapons
             }
         }
 
+        private void StepKinematic(float dt)
+        {
+            _prevPosition = _position;
+            _position += _velocity * dt;
+        }
+
         private void StepBallistic(float dt)
         {
             AtmosphereSample atmo = AtmosphericModel.SampleAt(_position);
@@ -257,6 +301,7 @@ namespace Airplane.Weapons
             }
 
             _velocity += (g + drag / _mass) * dt;
+            SteerHoming(dt);
             _prevPosition = _position;
             Vector3 next = _position + _velocity * dt;
             Vector3 delta = next - _position;
@@ -271,6 +316,85 @@ namespace Airplane.Weapons
             }
 
             _position = next;
+        }
+
+        private void SteerHoming(float dt)
+        {
+            if (!CheatFlags.HomingBullets)
+            {
+                _homeOn = null;
+                return;
+            }
+
+            if (!_homeOn || !_homeOn.IsAlive || _homeOn.Body == null)
+            {
+                _homeOn = _shooter
+                    ? PickHomingTarget(_shooter, _position, _velocity)
+                    : null;
+                if (!_homeOn)
+                    return;
+            }
+
+            PlaneRigidbody target = _homeOn.Body;
+            Vector3 speedVec = _velocity;
+            float speed = FlightSimMath.SafeMagnitude(speedVec);
+            if (speed < 1f)
+                return;
+
+            Vector3 toTarget = target.Position - _position;
+            float range = FlightSimMath.SafeMagnitude(toTarget);
+            if (range < 0.5f)
+                return;
+
+            float eta = range / speed;
+            Vector3 aim = target.Position + target.Velocity * eta;
+            Vector3 desired = aim - _position;
+            float desiredMag = FlightSimMath.SafeMagnitude(desired);
+            if (desiredMag < 1e-4f)
+                return;
+
+            float maxRad = Mathf.Max(10f, CheatFlags.HomingTurnRateDeg) * Mathf.Deg2Rad * dt;
+            Vector3 newDir = Vector3.RotateTowards(speedVec / speed, desired / desiredMag, maxRad, 0f);
+            _velocity = newDir * speed;
+        }
+
+        private static NetworkedAircraft PickHomingTarget(PlaneRigidbody shooter, Vector3 origin, Vector3 velocity)
+        {
+            Vector3 dir = velocity;
+            float dirMag = FlightSimMath.SafeMagnitude(dir);
+            if (dirMag < 1e-4f)
+                return null;
+            dir /= dirMag;
+
+            NetworkedAircraft best = null;
+            float bestScore = float.NegativeInfinity;
+            IReadOnlyList<NetworkedAircraft> all = NetworkedAircraft.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                NetworkedAircraft other = all[i];
+                if (!other || !other.IsSpawned || !other.IsAlive || other.Body == null)
+                    continue;
+                if (other.Body == shooter)
+                    continue;
+
+                Vector3 to = other.Body.Position - origin;
+                float dist = FlightSimMath.SafeMagnitude(to);
+                if (dist < 8f || dist > 4000f)
+                    continue;
+
+                float align = Vector3.Dot(dir, to / dist);
+                if (align < 0f)
+                    continue;
+
+                float score = align * 2.5f - dist / 4000f;
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = other;
+                }
+            }
+
+            return best;
         }
 
         private bool TrySweep(Vector3 origin, Vector3 direction, float range, out RaycastHit hit)
@@ -305,6 +429,9 @@ namespace Airplane.Weapons
         private void Stop()
         {
             _inFlight = false;
+            _kinematic = false;
+            _ballistic = false;
+            _homeOn = null;
             SetShooterIgnore(false);
             _gun = null;
             _shooter = null;

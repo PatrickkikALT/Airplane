@@ -1,15 +1,17 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Airplane.UI;
 using System.Text;
 
 namespace Airplane.FlightSimulation
 {
     /// <summary>
-    /// Reads Inspector-assigned <see cref="InputActionProperty"/> axes and converts them into
-    /// rate-limited, dynamic-pressure-scaled control deflections and engine throttle.
+    /// Converts PlayerInput stick axes into rate-limited, dynamic-pressure-scaled control
+    /// deflections and engine throttle.
     ///
-    /// Contract: actions are enabled by a PlayerInput / Input Action asset in the Inspector.
-    /// This class never calls Enable(), Disable(), or new InputAction().
+    /// PlayerInput Unity Events still feed the On* methods, but stick axes are re-read from
+    /// device/action state each physics tick. Value-action <c>canceled</c> callbacks drop the
+    /// opposite WASD key when pitch is held, so latching those events leaves roll/yaw stuck.
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-50)]
@@ -17,15 +19,6 @@ namespace Airplane.FlightSimulation
     [AddComponentMenu("Airplane/Aircraft Flight Controller")]
     public sealed class AircraftFlightController : MonoBehaviour
     {
-        [Header("Input")]
-        [SerializeField] private InputActionProperty pitch;
-        [SerializeField] private InputActionProperty roll;
-        [SerializeField] private InputActionProperty yaw;
-        [SerializeField] private InputActionProperty throttle;
-        [SerializeField] private InputActionProperty flaps;
-        [SerializeField] private InputActionProperty airbrakes;
-        [SerializeField] private InputActionProperty wheelBrakes;
-
         [Tooltip("Stick-to-aileron gain. 1 = full deflection at full stick. Values like 0.2 make the tails overpower you.")]
         [SerializeField] private float rollSpeed = 1f;
 
@@ -72,6 +65,13 @@ namespace Airplane.FlightSimulation
         [Tooltip("Seconds for aileron/elevator/rudder to catch the stick. 0 = immediate. The old hinge limiter made press and release feel late.")]
         [SerializeField] private float stickFollowSeconds;
 
+        [Header("Turn coordination")]
+        [Tooltip("Rudder mixed in with aileron so A/D rolls around the nose instead of skidding. 1 = full rudder at full stick, which is what holding Q/E with A/D used to do by hand. 0 = raw aero (adverse yaw).")]
+        [SerializeField] [Range(0f, 1.5f)] private float aileronRudderMix = 1f;
+
+        [Tooltip("Extra rudder per radian of sideslip, airborne only. Washes out leftover drift after the mix. Player yaw overrides this.")]
+        [SerializeField] private float sideslipYawGain = 1.2f;
+
         [Header("Trim")]
         [Tooltip("Hands-off elevator offset, −1..1. Written by auto-trim; positive = nose up.")]
         [SerializeField] [Range(-1f, 1f)] private float elevatorTrim;
@@ -91,15 +91,11 @@ namespace Airplane.FlightSimulation
 
         private PlaneRigidbody _body;
         private AircraftEngine _engine;
-        private PlayerInput _playerInput;
-        private InputAction _pitchAction;
-        private InputAction _rollAction;
-        private InputAction _yawAction;
-        private InputAction _throttleAction;
-        private InputAction _flapsAction;
-        private InputAction _airbrakesAction;
-        private InputAction _wheelBrakesAction;
 
+        private float _throttleRaw;
+        private float _flapsRaw;
+        private float _airbrakesRaw;
+        private float _wheelBrakesRaw;
         private float _throttle01;
         private float _flaps01;
         private float _airbrake01;
@@ -111,6 +107,10 @@ namespace Airplane.FlightSimulation
         private float _rawRoll;
         private float _rawYaw;
         private bool _inputEnabled = true;
+        private PlayerInput _playerInput;
+        private InputAction _pitchAction;
+        private InputAction _rollAction;
+        private InputAction _yawAction;
         private readonly StringBuilder _hudBuilder = new StringBuilder(512);
         private string _hudText = "";
         private float _hudClock;
@@ -122,9 +122,16 @@ namespace Airplane.FlightSimulation
         public float Aileron01 => _aileron01;
         public float Elevator01 => _elevator01;
         public float Rudder01 => _rudder01;
-        public float RawYaw => _rawYaw;
-        public float RawPitch => _rawPitch;
-        public float RawRoll => _rawRoll;
+        public float RawYaw => invertYaw ? -_rawYaw : _rawYaw;
+        public float RawPitch => invertPitch ? -_rawPitch : _rawPitch;
+        public float RawRoll => invertRoll ? -_rawRoll : _rawRoll;
+
+        /// <summary>
+        /// Hands-off elevator offset, −1..1. Positive = nose up. Bots have to add this themselves
+        /// because <see cref="ApplyExternalControls"/> writes the surface, not the stick, and this
+        /// airframe climbs with the stick at zero (the prefab trims it to about −0.1).
+        /// </summary>
+        public float ElevatorTrim => elevatorTrim;
 
         /// <summary>False when the lever and surface positions are being written by something else.</summary>
         public bool InputEnabled => _inputEnabled;
@@ -150,6 +157,16 @@ namespace Airplane.FlightSimulation
         }
 
         /// <summary>
+        /// Runs the 1G / 1-over-cosine-bank auto-trim as if the stick were released. Used by bot
+        /// pilots: their input path is off, so <see cref="PrePhysicsTick"/> never gets here, but they
+        /// still need the same hands-off elevator the player trimmed to −0.1 for.
+        /// </summary>
+        public void TickAutoTrim(float dt)
+        {
+            UpdateAutoTrim(0f, dt);
+        }
+
+        /// <summary>
         /// Writes lever and surface positions from an outside source. No rate limiting is applied:
         /// the values already went through the hinge model on the machine that owns the aircraft, and
         /// limiting them twice would lag the visible surfaces behind the replicated attitude.
@@ -172,45 +189,66 @@ namespace Airplane.FlightSimulation
             _wheelBrake01 = FlightSimMath.Saturate(wheelBrake);
         }
 
+        public void OnPitch(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _rawPitch = ReadAxis(context);
+        }
+
+        public void OnRoll(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _rawRoll = ReadAxis(context);
+        }
+
+        public void OnYaw(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _rawYaw = ReadAxis(context);
+        }
+
+        public void OnThrottle(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _throttleRaw = ReadAxis(context);
+        }
+
+        public void OnFlaps(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _flapsRaw = ReadAxis(context);
+        }
+
+        public void OnAirbrakes(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _airbrakesRaw = ReadAxis(context);
+        }
+
+        public void OnWheelBrakes(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled)
+                _wheelBrakesRaw = ReadAxis(context);
+        }
+
         private void Awake()
         {
             _body = GetComponent<PlaneRigidbody>();
             _engine = GetComponentInChildren<AircraftEngine>(true);
             _playerInput = GetComponent<PlayerInput>();
             _throttle01 = FlightSimMath.Saturate(initialThrottle);
-        }
-        
-        /// <summary>
-        /// Resolves Inspector references, preferring the PlayerInput clone when present
-        /// so we never have to call Enable() ourselves.
-        /// </summary>
-        private InputAction Resolve(InputActionProperty property, string actionName)
-        {
-            if (_playerInput)
-            {
-                InputActionAsset asset = _playerInput.actions;
-                if (asset)
-                {
-                    InputAction fromPlayer = asset.FindAction(actionName, false);
-                    if (fromPlayer != null)
-                        return fromPlayer;
-                }
-            }
-
-            return property.action;
+            CacheStickActions();
         }
 
-        private void CacheActions()
+        private void OnEnable()
         {
-            if (_pitchAction != null)
-                return;
-            _pitchAction = Resolve(pitch, "Pitch");
-            _rollAction = Resolve(roll, "Roll");
-            _yawAction = Resolve(yaw, "Yaw");
-            _throttleAction = Resolve(throttle, "Throttle");
-            _flapsAction = Resolve(flaps, "Flaps");
-            _airbrakesAction = Resolve(airbrakes, "Airbrakes");
-            _wheelBrakesAction = Resolve(wheelBrakes, "WheelBrakes");
+            CacheStickActions();
+        }
+
+        private void Update()
+        {
+            if (_inputEnabled && !CheatFlags.BlockPlayerInput)
+                PullStickAxes();
         }
 
         /// <summary>
@@ -221,23 +259,33 @@ namespace Airplane.FlightSimulation
             if (!_inputEnabled)
                 return;
 
-            CacheActions();
-            _rawPitch = ReadAxis(_pitchAction);
-            _rawRoll = ReadAxis(_rollAction);
-            _rawYaw = ReadAxis(_yawAction);
+            if (CheatFlags.BlockPlayerInput)
+            {
+                _rawPitch = 0f;
+                _rawRoll = 0f;
+                _rawYaw = 0f;
+                _throttleRaw = 0f;
+                _flapsRaw = 0f;
+                _airbrakesRaw = 0f;
+                _wheelBrakesRaw = 0f;
+            }
+            else
+            {
+                PullStickAxes();
+            }
 
-            if (invertPitch) _rawPitch = -_rawPitch;
-            if (invertRoll) _rawRoll = -_rawRoll;
-            if (invertYaw) _rawYaw = -_rawYaw;
+            float pitch = invertPitch ? -_rawPitch : _rawPitch;
+            float roll = invertRoll ? -_rawRoll : _rawRoll;
+            float yaw = invertYaw ? -_rawYaw : _rawYaw;
 
-            float pitchCmd = pitchStickBackNoseUp ? _rawPitch : -_rawPitch;
+            float pitchCmd = pitchStickBackNoseUp ? pitch : -pitch;
             UpdateAutoTrim(pitchCmd, dt);
 
             float rollSens = rollSpeed > 0.01f ? rollSpeed : 1f;
             float yawSens = yawSpeed > 0.01f ? yawSpeed : 1f;
-            float aileronT = Clamp11(_rawRoll * rollSens);
+            float aileronT = Clamp11(roll * rollSens);
             float elevatorT = Clamp11(pitchCmd + elevatorTrim);
-            float rudderT = Clamp11(_rawYaw * yawSens);
+            float rudderT = Clamp11(yaw * yawSens + CoordinatedRudder(aileronT, yaw));
 
             // Aircraft inertia is the smoothing. Rate-limiting the stick here is what
             // made input start late and keep going after release.
@@ -255,16 +303,16 @@ namespace Airplane.FlightSimulation
                 _rudder01 = rudderT;
             }
 
-            float throttleRaw = ReadAxis(_throttleAction);
-            _throttle01 = throttleIsRate ? FlightSimMath.Saturate(_throttle01 + throttleRaw * throttleRate * dt) : FlightSimMath.Saturate(throttleRaw);
+            _throttle01 = throttleIsRate
+                ? FlightSimMath.Saturate(_throttle01 + _throttleRaw * throttleRate * dt)
+                : FlightSimMath.Saturate(_throttleRaw);
 
-            float flapsRaw = ReadAxis(_flapsAction);
-            _flaps01 = flapsIsRate ? FlightSimMath.Saturate(_flaps01 + flapsRaw * flapsRate * dt) : FlightSimMath.Saturate(flapsRaw);
+            _flaps01 = flapsIsRate
+                ? FlightSimMath.Saturate(_flaps01 + _flapsRaw * flapsRate * dt)
+                : FlightSimMath.Saturate(_flapsRaw);
 
-            float brakeRaw = ReadAxis(_airbrakesAction);
-            _airbrake01 = MoveToward(_airbrake01, FlightSimMath.Saturate(brakeRaw), airbrakeRate * dt);
-
-            _wheelBrake01 = FlightSimMath.Saturate(ReadAxis(_wheelBrakesAction));
+            _airbrake01 = MoveToward(_airbrake01, FlightSimMath.Saturate(_airbrakesRaw), airbrakeRate * dt);
+            _wheelBrake01 = FlightSimMath.Saturate(_wheelBrakesRaw);
         }
 
         private void UpdateAutoTrim(float pitchCmd, float dt)
@@ -289,6 +337,33 @@ namespace Airplane.FlightSimulation
         }
 
         /// <summary>
+        /// Aileron drag yaws the nose off the roll axis, so A/D alone skids unless Q/E is held
+        /// with it. Mix the same rudder in automatically, then wash out leftover sideslip.
+        /// Stays off on the ground so A/D cannot steal nosewheel steering, and fades when the
+        /// player is already on the rudder so a slip is still possible.
+        /// </summary>
+        private float CoordinatedRudder(float aileron, float manualYaw)
+        {
+            if (_body == null || _body.AnyGearDown)
+                return 0f;
+
+            float mix = aileron * aileronRudderMix;
+            float damper = 0f;
+            if (sideslipYawGain > 0.01f)
+            {
+                Vector3 vBody = _body.InverseTransformDirection(
+                    _body.Velocity - AtmosphericModel.SampleWind());
+                damper = FlightSimMath.Sideslip(vBody) * sideslipYawGain;
+            }
+
+            float manual = Mathf.Abs(manualYaw);
+            if (manual > 0.05f)
+                damper *= 1f - FlightSimMath.Saturate((manual - 0.05f) / 0.25f);
+
+            return mix + damper;
+        }
+
+        /// <summary>
         /// Dynamic-pressure-scaled deflection limit, radians. Surfaces call this so ailerons,
         /// elevators and the rudder all share the same q-stiffening law.
         /// </summary>
@@ -307,11 +382,58 @@ namespace Airplane.FlightSimulation
             return 1f / (1f + qStiffeningGain * excess);
         }
 
-        private static float ReadAxis(InputAction action)
+        private void CacheStickActions()
         {
-            if (action == null)
+            if (!_playerInput)
+                _playerInput = GetComponent<PlayerInput>();
+            if (!_playerInput || _playerInput.actions == null)
+                return;
+
+            _pitchAction = _playerInput.actions.FindAction("Pitch", false);
+            _rollAction = _playerInput.actions.FindAction("Roll", false);
+            _yawAction = _playerInput.actions.FindAction("Yaw", false);
+        }
+
+        /// <summary>
+        /// Keyboard WASD/QE is read from the device so swapping A/D while W/S is held cannot
+        /// get stuck on a missed PlayerInput event. Gamepad still comes from the actions.
+        /// </summary>
+        private void PullStickAxes()
+        {
+            CacheStickActions();
+
+            Keyboard kb = Keyboard.current;
+            bool keyboardStick = kb != null && (
+                kb.wKey.isPressed || kb.sKey.isPressed ||
+                kb.aKey.isPressed || kb.dKey.isPressed ||
+                kb.qKey.isPressed || kb.eKey.isPressed);
+
+            if (keyboardStick)
+            {
+                _rawPitch = AxisFromKeys(kb.wKey.isPressed, kb.sKey.isPressed);
+                _rawRoll = AxisFromKeys(kb.dKey.isPressed, kb.aKey.isPressed);
+                _rawYaw = AxisFromKeys(kb.eKey.isPressed, kb.qKey.isPressed);
+                return;
+            }
+
+            if (_pitchAction != null)
+                _rawPitch = _pitchAction.ReadValue<float>();
+            if (_rollAction != null)
+                _rawRoll = _rollAction.ReadValue<float>();
+            if (_yawAction != null)
+                _rawYaw = _yawAction.ReadValue<float>();
+        }
+
+        private static float AxisFromKeys(bool negative, bool positive)
+        {
+            if (negative == positive)
                 return 0f;
-            return action.ReadValue<float>();
+            return positive ? 1f : -1f;
+        }
+
+        private static float ReadAxis(InputAction.CallbackContext context)
+        {
+            return context.ReadValue<float>();
         }
 
         private static float Clamp11(float x)

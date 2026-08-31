@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Airplane.FlightSimulation;
+using Airplane.UI;
 using Airplane.Weapons;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -49,9 +52,18 @@ namespace Airplane.Multiplayer
         [Tooltip("Optional label shown by the session UI. Falls back to \"Pilot <clientId>\".")]
         [SerializeField] private string displayNameFallback = "";
 
+        private static readonly List<NetworkedAircraft> Registry = new List<NetworkedAircraft>();
+
         private readonly AircraftSnapshotBuffer _buffer = new AircraftSnapshotBuffer();
         private readonly NetworkVariable<int> _crashCount = new NetworkVariable<int>(
             0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+        /// <summary>Replicated so every peer can label a nametag and skip a bot when picking a camera.</summary>
+        private readonly NetworkVariable<bool> _isBot = new NetworkVariable<bool>(
+            false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+        private readonly NetworkVariable<FixedString64Bytes> _pilotName = new NetworkVariable<FixedString64Bytes>(
+            default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
         private PlaneRigidbody _body;
         private AircraftFlightController _controller;
@@ -62,6 +74,9 @@ namespace Airplane.Multiplayer
         private Quaternion _lastSentOrientation = Quaternion.identity;
         private bool _hasSent;
         private bool _crashReported;
+        private bool _botLocally;
+        private bool _isAlive;
+        private string _pendingPilotName;
 
         /// <summary>Raised when the aircraft this client owns finishes spawning.</summary>
         public static event Action<NetworkedAircraft> LocalAircraftSpawned;
@@ -72,13 +87,55 @@ namespace Airplane.Multiplayer
         /// <summary>The aircraft owned by this peer, or null between a crash and the respawn.</summary>
         public static NetworkedAircraft Local { get; private set; }
 
+        /// <summary>
+        /// Every spawned aircraft on this peer, human or bot. Bot pilots search it instead of doing
+        /// their own scene queries, and the nametag overlay draws from it.
+        /// </summary>
+        public static IReadOnlyList<NetworkedAircraft> All => Registry;
+
         public PlaneRigidbody Body => _body;
 
         public int CrashCount => _crashCount.Value;
 
-        public string DisplayName => string.IsNullOrWhiteSpace(displayNameFallback)
-            ? $"Pilot {OwnerClientId}"
-            : displayNameFallback;
+        /// <summary>True for a server-flown aircraft with an <c>AircraftBotPilot</c> at the controls.</summary>
+        public bool IsBot => _botLocally || (IsSpawned && _isBot.Value);
+
+        /// <summary>False from the moment the wreck is concealed until the replacement spawns.</summary>
+        public bool IsAlive => _isAlive;
+
+        /// <summary>
+        /// Name shown on this aircraft's nametag. Humans submit their own on spawn, bots are named by
+        /// the server; the serialized fallback only matters before either has arrived.
+        /// </summary>
+        public string DisplayName
+        {
+            get
+            {
+                if (IsSpawned)
+                {
+                    FixedString64Bytes replicated = _pilotName.Value;
+                    if (replicated.Length > 0)
+                        return replicated.ToString();
+                }
+
+                if (!string.IsNullOrWhiteSpace(_pendingPilotName))
+                    return _pendingPilotName;
+
+                return string.IsNullOrWhiteSpace(displayNameFallback)
+                    ? $"Pilot {OwnerClientId}"
+                    : displayNameFallback;
+            }
+        }
+
+        /// <summary>
+        /// Server-side, called before <c>Spawn</c>. Marks the aircraft as bot-flown so the input path
+        /// and the local-player hooks stay switched off even though the server owns it.
+        /// </summary>
+        internal void ConfigureAsBot(string callsign)
+        {
+            _botLocally = true;
+            _pendingPilotName = callsign;
+        }
 
         private void Awake()
         {
@@ -86,21 +143,39 @@ namespace Airplane.Multiplayer
             _controller = GetComponent<AircraftFlightController>();
             _weapons = GetComponent<AircraftWeaponsController>();
             _playerInput = GetComponent<PlayerInput>();
+            _isAlive = true;
         }
 
         public override void OnNetworkSpawn()
         {
+            _isAlive = true;
+            if (!Registry.Contains(this))
+                Registry.Add(this);
+
+            if (IsServer)
+            {
+                _isBot.Value = _botLocally;
+                if (!string.IsNullOrWhiteSpace(_pendingPilotName))
+                    _pilotName.Value = ToFixedName(_pendingPilotName);
+            }
+
             ApplyAuthorityRoles();
 
-            if (IsOwner)
+            // A bot is owned by the server, so IsOwner is true for it on the host. Claiming Local
+            // would hand the chase camera and the session UI to a bot instead of the player.
+            if (IsOwner && !IsBot)
             {
                 Local = this;
                 LocalAircraftSpawned?.Invoke(this);
+                SubmitPilotNameRpc(ToFixedName(LocalPlayerIdentity.PilotName));
             }
         }
 
         public override void OnNetworkDespawn()
         {
+            Registry.Remove(this);
+            _isAlive = false;
+
             if (Local == this)
             {
                 Local = null;
@@ -112,9 +187,18 @@ namespace Airplane.Multiplayer
             _crashReported = false;
         }
 
+        public override void OnDestroy()
+        {
+            Registry.Remove(this);
+            base.OnDestroy();
+        }
+
         public override void OnGainedOwnership()
         {
             ApplyAuthorityRoles();
+            if (IsBot)
+                return;
+
             Local = this;
             LocalAircraftSpawned?.Invoke(this);
         }
@@ -129,6 +213,27 @@ namespace Airplane.Multiplayer
             }
         }
 
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void SubmitPilotNameRpc(FixedString64Bytes pilotName)
+        {
+            if (pilotName.Length == 0 || _botLocally)
+                return;
+
+            _pilotName.Value = pilotName;
+        }
+
+        private static FixedString64Bytes ToFixedName(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return default;
+
+            string trimmed = value.Trim();
+            if (trimmed.Length > 24)
+                trimmed = trimmed.Substring(0, 24);
+
+            return new FixedString64Bytes(trimmed);
+        }
+
         /// <summary>
         /// Turns the local copy into either a simulated aircraft or a replay proxy. Everything that
         /// consumes input or integrates forces is switched off on a proxy; visuals and colliders stay.
@@ -137,26 +242,50 @@ namespace Airplane.Multiplayer
         {
             bool simulate = IsOwner;
 
+            // A bot simulates but takes no human input: the pilot component is the only writer of
+            // its deflections and triggers, exactly like a remote proxy is written by the wire.
+            bool humanInput = simulate && !IsBot;
+
             if (_body)
                 _body.SetSimulationEnabled(simulate);
 
             if (_controller)
             {
-                _controller.SetInputEnabled(simulate);
-                _controller.SetHudVisible(simulate);
+                _controller.SetInputEnabled(humanInput);
+                _controller.SetHudVisible(humanInput);
             }
 
             if (_weapons)
             {
-                _weapons.SetInputEnabled(simulate);
-                _weapons.SetHudVisible(simulate);
+                _weapons.SetInputEnabled(humanInput);
+                _weapons.SetHudVisible(humanInput);
             }
 
             if (_playerInput)
-                _playerInput.enabled = simulate;
+                _playerInput.enabled = humanInput;
 
             _buffer.Clear();
             _hasSent = false;
+        }
+
+        public void OnLook(InputAction.CallbackContext context)
+        {
+            AircraftChaseCamera.Active?.OnLook(context);
+        }
+
+        public void OnOrbitHold(InputAction.CallbackContext context)
+        {
+            AircraftChaseCamera.Active?.OnOrbitHold(context);
+        }
+
+        public void OnZoom(InputAction.CallbackContext context)
+        {
+            AircraftChaseCamera.Active?.OnZoom(context);
+        }
+
+        public void OnResetOrbit(InputAction.CallbackContext context)
+        {
+            AircraftChaseCamera.Active?.OnResetOrbit(context);
         }
 
         private void Update()
@@ -279,6 +408,8 @@ namespace Airplane.Multiplayer
         {
             if (!IsSpawned || !IsOwner || _crashReported)
                 return;
+            if (CheatFlags.GodMode && this == Local)
+                return;
             if (impactSpeedKmh < crashSpeedKmh)
                 return;
 
@@ -341,6 +472,62 @@ namespace Airplane.Multiplayer
 
             _crashCount.Value++;
             AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
+        }
+
+        /// <summary>
+        /// Server-only. Plays the crash explosion on every peer and hides this airframe until despawn.
+        /// Must run before <see cref="NetworkObject.Despawn"/> so the RPC still has an object to travel on.
+        /// </summary>
+        internal void PlayCrashExplosion(Vector3 origin)
+        {
+            if (!IsSpawned || !IsServer)
+                return;
+
+            PlayCrashExplosionRpc(origin);
+        }
+
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
+        private void PlayCrashExplosionRpc(Vector3 origin)
+        {
+            AircraftExplosion.Play(origin);
+            ConcealWreck();
+        }
+
+        private void ConcealWreck()
+        {
+            _isAlive = false;
+
+            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i])
+                    renderers[i].enabled = false;
+            }
+
+            Collider[] colliders = GetComponentsInChildren<Collider>(true);
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                if (colliders[i])
+                    colliders[i].enabled = false;
+            }
+
+            if (_body)
+                _body.SetSimulationEnabled(false);
+
+            if (_controller)
+            {
+                _controller.SetInputEnabled(false);
+                _controller.SetHudVisible(false);
+            }
+
+            if (_weapons)
+            {
+                _weapons.SetInputEnabled(false);
+                _weapons.SetHudVisible(false);
+            }
+
+            if (_playerInput)
+                _playerInput.enabled = false;
         }
 
         /// <summary>

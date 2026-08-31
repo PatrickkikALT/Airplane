@@ -52,7 +52,7 @@ namespace Airplane.FlightSimulation
         [Tooltip("Hard clamp on |a| (m/s²). 0 disables.")]
         [SerializeField] private float maxLinearAcceleration = 2000f;
 
-        [Tooltip("Hard clamp on |α| (rad/s²). Keep this modest so the nose does not whip.")]
+        [Tooltip("Hard clamp on |α| per body axis (rad/s²). 0 disables. Applied per axis so pitch does not steal roll.")]
         [SerializeField] private float maxAngularAcceleration = 6f;
 
         [Header("Initial Conditions (body frame)")]
@@ -512,9 +512,9 @@ namespace Airplane.FlightSimulation
             if (maxAngularAcceleration > 0f)
             {
                 float maxAl = maxAngularAcceleration;
-                float magSqr = alpha.sqrMagnitude;
-                if (magSqr > maxAl * maxAl)
-                    alpha *= maxAl / Mathf.Sqrt(magSqr);
+                alpha.x = Mathf.Clamp(alpha.x, -maxAl, maxAl);
+                alpha.y = Mathf.Clamp(alpha.y, -maxAl, maxAl);
+                alpha.z = Mathf.Clamp(alpha.z, -maxAl, maxAl);
             }
 
             _acceleration = a;

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Airplane.AI;
 using Airplane.FlightSimulation;
 using Unity.Netcode;
 using UnityEngine;
@@ -45,21 +46,65 @@ namespace Airplane.Multiplayer
         [SerializeField] private float spawnAirspeed = 60f;
 
         [Header("Respawn")]
+        [Tooltip("How long the explosion is allowed to play before the wreck is despawned, seconds.")]
+        [SerializeField] private float despawnDelay = 1.5f;
+
         [Tooltip("Delay between a validated crash and the replacement aircraft, seconds.")]
         [SerializeField] private float respawnDelay = 3f;
 
         [Tooltip("Spawn the next aircraft at the next free spawn point instead of reusing the crash site's slot.")]
         [SerializeField] private bool rotateSpawnPoints = true;
 
+        [Header("Bots")]
+        [Tooltip("Bot-flown aircraft the server keeps in the air. Owned and simulated by the server, " +
+                 "so they cost the same bandwidth as an extra player each.")]
+        [SerializeField] [Range(0, 16)] private int botCount = 4;
+
+        [Tooltip("Competence spread of the squadron, 0 = rookie, 1 = ace. Each bot rolls in this band.")]
+        [SerializeField] [Range(0f, 1f)] private float botMinSkill = 0.3f;
+
+        [SerializeField] [Range(0f, 1f)] private float botMaxSkill = 0.85f;
+
+        [Tooltip("Centre of the airspace bots patrol while they have nothing to chase.")]
+        [SerializeField] private Vector3 botPatrolCentre = new Vector3(0f, 700f, 0f);
+
+        [SerializeField] private float botPatrolRadius = 2500f;
+        [SerializeField] private float botPatrolMinAltitude = 400f;
+        [SerializeField] private float botPatrolMaxAltitude = 1300f;
+
+        [Tooltip("Bots enter on a ring of this radius around the patrol centre so they never spawn " +
+                 "into each other the way a shared spawn point would.")]
+        [SerializeField] private float botSpawnRingRadius = 1100f;
+
+        [SerializeField] private float botSpawnAltitude = 800f;
+        [SerializeField] private float botSpawnAltitudeJitter = 250f;
+
+        [Tooltip("Airspeed a bot enters with, m/s. Bots start at cruise rather than at the player's launch speed.")]
+        [SerializeField] private float botSpawnAirspeed = 105f;
+
+        [Tooltip("Delay between a bot going down and its replacement, seconds.")]
+        [SerializeField] private float botRespawnDelay = 8f;
+
         private readonly Dictionary<ulong, NetworkObject> _aircraftByClient = new Dictionary<ulong, NetworkObject>();
         private readonly Dictionary<ulong, int> _slotByClient = new Dictionary<ulong, int>();
+        private readonly List<NetworkObject> _bots = new List<NetworkObject>();
+        private readonly List<NetworkObject> _dummies = new List<NetworkObject>();
         private int _nextSlot;
+        private int _nextBotIndex;
+        private int _nextDummyIndex;
+        private int _desiredBots;
         private bool _subscribed;
 
         /// <summary>The spawner in the active scene, if any.</summary>
         public static AircraftNetworkSpawner Instance { get; private set; }
 
         public IReadOnlyDictionary<ulong, NetworkObject> AircraftByClient => _aircraftByClient;
+
+        /// <summary>Bots currently in the air.</summary>
+        public int LiveBotCount => _bots.Count;
+
+        /// <summary>Bots the server is trying to keep in the air, including any waiting to respawn.</summary>
+        public int DesiredBotCount => _desiredBots;
 
         private static NetworkManager Manager => NetworkManager.Singleton;
 
@@ -109,13 +154,21 @@ namespace Airplane.Multiplayer
             
             foreach (ulong clientId in Manager.ConnectedClientsIds)
                 SpawnFor(clientId);
+
+            SetBotCount(botCount);
         }
 
         private void HandleServerStopped(bool wasHost)
         {
             _aircraftByClient.Clear();
             _slotByClient.Clear();
+            _bots.Clear();
+            _dummies.Clear();
             _nextSlot = 0;
+            _nextBotIndex = 0;
+            _nextDummyIndex = 0;
+            _desiredBots = 0;
+            BotCallsigns.Reset();
         }
 
         private void HandleClientConnected(ulong clientId)
@@ -177,6 +230,172 @@ namespace Airplane.Multiplayer
                 networked.TeleportRpc(comWorld, rotation, velocity, Vector3.zero);
         }
 
+        /// <summary>
+        /// Server-only. Grows or trims the bot squadron. Safe to call while a session is running,
+        /// which is how the session UI adds and removes opposition mid-flight.
+        /// </summary>
+        public void SetBotCount(int count)
+        {
+            if (!IsServerActive)
+                return;
+
+            _desiredBots = Mathf.Clamp(count, 0, 32);
+
+            while (_bots.Count > _desiredBots)
+                DespawnLastBot();
+
+            while (_bots.Count < _desiredBots)
+            {
+                if (!SpawnBot())
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Spawns one bot: a stock aircraft, owned by the server so the server simulates it, with a
+        /// pilot component bolted on at runtime. The pilot deliberately does not live on the prefab,
+        /// so a client's replica of the same aircraft stays a brainless replay proxy.
+        /// </summary>
+        public bool SpawnBot()
+        {
+            if (!IsServerActive || !aircraftPrefab)
+                return false;
+
+            int index = _nextBotIndex++;
+            ResolveBotSpawnPose(index, out Vector3 position, out Quaternion rotation);
+            Vector3 velocity = rotation * new Vector3(Mathf.Max(40f, botSpawnAirspeed), 0f, 0f);
+
+            NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
+            string callsign = BotCallsigns.Next();
+            aircraft.name = $"Bot Aircraft ({callsign})";
+
+            NetworkedAircraft networked = aircraft.GetComponent<NetworkedAircraft>();
+            if (networked)
+                networked.ConfigureAsBot(callsign);
+
+            AircraftBotPilot pilot = aircraft.gameObject.GetComponent<AircraftBotPilot>();
+            if (!pilot)
+                pilot = aircraft.gameObject.AddComponent<AircraftBotPilot>();
+
+            float low = Mathf.Min(botMinSkill, botMaxSkill);
+            float high = Mathf.Max(botMinSkill, botMaxSkill);
+            pilot.Initialize(
+                BotSkillProfile.FromSkill(Random.Range(low, high)),
+                botPatrolCentre,
+                botPatrolRadius,
+                botPatrolMinAltitude,
+                botPatrolMaxAltitude);
+
+            PlaneRigidbody body = aircraft.GetComponent<PlaneRigidbody>();
+            Vector3 comWorld = position;
+            if (body)
+            {
+                comWorld = position + rotation * body.CenterOfMassBody;
+                body.Teleport(comWorld, rotation, velocity, Vector3.zero);
+            }
+
+            aircraft.Spawn();
+            _bots.Add(aircraft);
+
+            if (networked)
+                networked.TeleportRpc(comWorld, rotation, velocity, Vector3.zero);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Spawns a still, AI-less aircraft in front of the local player so gun hits can be tested
+        /// against a real networked victim. Server-only. Does not count toward the bot squadron.
+        /// </summary>
+        public bool SpawnDummy()
+        {
+            if (!IsServerActive || !aircraftPrefab)
+                return false;
+
+            ResolveDummySpawnPose(out Vector3 position, out Quaternion rotation);
+
+            NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
+            int index = ++_nextDummyIndex;
+            string callsign = index == 1 ? "Dummy" : $"Dummy {index}";
+            aircraft.name = $"Dummy Aircraft ({callsign})";
+
+            NetworkedAircraft networked = aircraft.GetComponent<NetworkedAircraft>();
+            if (networked)
+                networked.ConfigureAsBot(callsign);
+
+            AircraftBotPilot existingPilot = aircraft.GetComponent<AircraftBotPilot>();
+            if (existingPilot)
+                Destroy(existingPilot);
+
+            PlaneRigidbody body = aircraft.GetComponent<PlaneRigidbody>();
+            Vector3 comWorld = position;
+            if (body)
+            {
+                comWorld = position + rotation * body.CenterOfMassBody;
+                body.Teleport(comWorld, rotation, Vector3.zero, Vector3.zero);
+            }
+
+            AircraftDummyHold hold = aircraft.gameObject.GetComponent<AircraftDummyHold>();
+            if (!hold)
+                hold = aircraft.gameObject.AddComponent<AircraftDummyHold>();
+            hold.Capture(comWorld, rotation);
+
+            aircraft.Spawn();
+            _dummies.Add(aircraft);
+
+            if (networked)
+                networked.TeleportRpc(comWorld, rotation, Vector3.zero, Vector3.zero);
+            aircraft.transform.localScale = new Vector3(15, 15, 15);
+            return true;
+        }
+
+        private void ResolveDummySpawnPose(out Vector3 position, out Quaternion rotation)
+        {
+            NetworkedAircraft local = NetworkedAircraft.Local;
+            if (local && local.Body != null)
+            {
+                rotation = local.Body.Orientation;
+                // Body +X is the nose. Sit it ahead and a little to the right so a host does not
+                // spawn it inside their own propeller.
+                position = local.Body.Position + rotation * new Vector3(140f, 0f, 25f);
+                return;
+            }
+
+            ResolveSpawnPose(_nextSlot, out position, out rotation);
+            position += rotation * new Vector3(80f, 0f, 40f);
+        }
+
+        private void DespawnLastBot()
+        {
+            int last = _bots.Count - 1;
+            if (last < 0)
+                return;
+
+            NetworkObject bot = _bots[last];
+            _bots.RemoveAt(last);
+            if (bot && bot.IsSpawned)
+                bot.Despawn();
+        }
+
+        /// <summary>
+        /// Bots enter on a golden-angle ring, tangentially, so consecutive spawns are spread around
+        /// the circle instead of stacking on the handful of player spawn points.
+        /// </summary>
+        private void ResolveBotSpawnPose(int index, out Vector3 position, out Quaternion rotation)
+        {
+            float angle = index * 137.508f + Random.Range(-10f, 10f);
+            float radius = Mathf.Max(100f, botSpawnRingRadius) * Random.Range(0.75f, 1.15f);
+            float radians = angle * Mathf.Deg2Rad;
+
+            position = new Vector3(
+                botPatrolCentre.x + Mathf.Sin(radians) * radius,
+                botSpawnAltitude + Random.Range(-botSpawnAltitudeJitter, botSpawnAltitudeJitter),
+                botPatrolCentre.z + Mathf.Cos(radians) * radius);
+
+            // Body +X is the nose, so this heading puts the bot on a tangent to the ring.
+            rotation = Quaternion.Euler(0f, angle, 0f);
+        }
+
         private void ResolveSpawnPose(int slot, out Vector3 position, out Quaternion rotation)
         {
             if (spawnPoints != null && spawnPoints.Length > 0)
@@ -209,21 +428,75 @@ namespace Airplane.Multiplayer
             if (!IsServerActive)
                 return;
 
-            ulong clientId = aircraft.OwnerClientId;
             NetworkObject netObject = aircraft.NetworkObject;
+            Vector3 origin = aircraft.Body ? aircraft.Body.Position : aircraft.transform.position;
+            aircraft.PlayCrashExplosion(origin);
 
+            if (_dummies.Remove(netObject))
+            {
+                StartCoroutine(DespawnDummy(netObject));
+                return;
+            }
+
+            // A bot is owned by the server, so its OwnerClientId collides with the host's own
+            // aircraft. It has to be tracked and replaced on its own list.
+            if (aircraft.IsBot)
+            {
+                _bots.Remove(netObject);
+                StartCoroutine(DespawnThenRespawnBot(netObject));
+                return;
+            }
+
+            ulong clientId = aircraft.OwnerClientId;
             if (_aircraftByClient.TryGetValue(clientId, out NetworkObject tracked) && tracked == netObject)
                 _aircraftByClient.Remove(clientId);
 
-            if (netObject && netObject.IsSpawned)
-                netObject.Despawn();
-
-            StartCoroutine(RespawnAfterDelay(clientId));
+            StartCoroutine(DespawnThenRespawn(clientId, netObject));
         }
 
-        private IEnumerator RespawnAfterDelay(ulong clientId)
+        private IEnumerator DespawnThenRespawnBot(NetworkObject wreck)
         {
-            yield return new WaitForSeconds(Mathf.Max(0f, respawnDelay));
+            float hideFor = Mathf.Max(0f, despawnDelay);
+            if (hideFor > 0f)
+                yield return new WaitForSeconds(hideFor);
+
+            if (wreck && wreck.IsSpawned)
+                wreck.Despawn();
+
+            float remaining = Mathf.Max(0f, botRespawnDelay - hideFor);
+            if (remaining > 0f)
+                yield return new WaitForSeconds(remaining);
+
+            if (!IsServerActive)
+                yield break;
+
+            // Someone may have trimmed the squadron while this one was burning.
+            if (_bots.Count < _desiredBots)
+                SpawnBot();
+        }
+
+        private IEnumerator DespawnDummy(NetworkObject wreck)
+        {
+            float hideFor = Mathf.Max(0f, despawnDelay);
+            if (hideFor > 0f)
+                yield return new WaitForSeconds(hideFor);
+
+            if (wreck && wreck.IsSpawned)
+                wreck.Despawn();
+        }
+
+        private IEnumerator DespawnThenRespawn(ulong clientId, NetworkObject wreck)
+        {
+            float hideFor = Mathf.Max(0f, despawnDelay);
+            if (hideFor > 0f)
+                yield return new WaitForSeconds(hideFor);
+
+            if (wreck && wreck.IsSpawned)
+                wreck.Despawn();
+
+            float remaining = Mathf.Max(0f, respawnDelay - hideFor);
+            if (remaining > 0f)
+                yield return new WaitForSeconds(remaining);
 
             if (!IsServerActive)
                 yield break;

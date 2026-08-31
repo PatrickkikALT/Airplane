@@ -1,13 +1,17 @@
 using System.Text;
 using Airplane.FlightSimulation;
+using Airplane.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Airplane.Weapons
 {
     /// <summary>
-    /// Reads input triggers and fans them out to
-    /// every child <see cref="AircraftGun"/>. Recoil is applied through <see cref="PlaneRigidbody"/>.
+    /// Receives fire triggers from PlayerInput and fans them out to every child
+    /// <see cref="AircraftGun"/>. Recoil is applied through <see cref="PlaneRigidbody"/>.
+    ///
+    /// Input arrives from PlayerInput (Unity Events / Send Messages) via the On* CallbackContext
+    /// methods. This class never enables, disables, or resolves InputActions.
     /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-50)]
@@ -15,18 +19,11 @@ namespace Airplane.Weapons
     [AddComponentMenu("Airplane/Weapons/Aircraft Weapons Controller")]
     public sealed class AircraftWeaponsController : MonoBehaviour
     {
-        [Header("Input")]
-        [SerializeField] private InputActionProperty fire;
-        [SerializeField] private InputActionProperty fireSecondary;
-
         [Header("Debug HUD")]
         [SerializeField] private bool drawHud = true;
         [SerializeField] private Vector2 hudPosition = new Vector2(16f, 236f);
 
         private PlaneRigidbody _body;
-        private PlayerInput _playerInput;
-        private InputAction _fireAction;
-        private InputAction _fireSecondaryAction;
         private AircraftGun[] _guns = System.Array.Empty<AircraftGun>();
 
         private float _fire01;
@@ -70,13 +67,26 @@ namespace Airplane.Weapons
 
         public float ReadTrigger(GunTriggerChannel channel)
         {
+            if (CheatFlags.BlockPlayerInput && _inputEnabled)
+                return 0f;
             return channel == GunTriggerChannel.Secondary ? _fireSecondary01 : _fire01;
+        }
+
+        public void OnFire(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled && !CheatFlags.BlockPlayerInput)
+                _fire01 = FlightSimMath.Saturate(ReadAxis(context));
+        }
+
+        public void OnFireSecondary(InputAction.CallbackContext context)
+        {
+            if (_inputEnabled && !CheatFlags.BlockPlayerInput)
+                _fireSecondary01 = FlightSimMath.Saturate(ReadAxis(context));
         }
 
         private void Awake()
         {
             _body = GetComponent<PlaneRigidbody>();
-            _playerInput = GetComponent<PlayerInput>();
             CacheGuns();
         }
 
@@ -91,46 +101,11 @@ namespace Airplane.Weapons
         }
 
         /// <summary>
-        /// Resolves Inspector references, preferring the PlayerInput clone when present
-        /// so we never have to call Enable() ourselves.
-        /// </summary>
-        private InputAction Resolve(InputActionProperty property, string actionName)
-        {
-            if (_playerInput)
-            {
-                InputActionAsset asset = _playerInput.actions;
-                if (asset)
-                {
-                    InputAction fromPlayer = asset.FindAction(actionName, false);
-                    if (fromPlayer != null)
-                        return fromPlayer;
-                }
-            }
-
-            return property.action;
-        }
-
-        private void CacheActions()
-        {
-            if (_fireAction != null)
-                return;
-            _fireAction = Resolve(fire, "Fire");
-            _fireSecondaryAction = Resolve(fireSecondary, "FireSecondary");
-        }
-
-        /// <summary>
         /// Called by <see cref="PlaneRigidbody"/> once per FixedUpdate, before sub-steps.
-        /// Owner path: reads the stick and lets guns fire with recoil.
+        /// Owner path: lets guns fire with recoil from the last PlayerInput trigger values.
         /// </summary>
         public void PrePhysicsTick(float dt)
         {
-            if (_inputEnabled)
-            {
-                CacheActions();
-                _fire01 = FlightSimMath.Saturate(ReadAxis(_fireAction));
-                _fireSecondary01 = FlightSimMath.Saturate(ReadAxis(_fireSecondaryAction));
-            }
-
             TickGuns(dt, visualOnly: false);
         }
 
@@ -170,11 +145,11 @@ namespace Airplane.Weapons
             }
         }
 
-        private static float ReadAxis(InputAction action)
+        private static float ReadAxis(InputAction.CallbackContext context)
         {
-            if (action == null)
+            if (context.canceled)
                 return 0f;
-            return action.ReadValue<float>();
+            return context.ReadValue<float>();
         }
 
         private void OnGUI()

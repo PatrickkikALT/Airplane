@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.Serialization;
 
 namespace Airplane.FlightSimulation
 {
     /// <summary>
     /// Chase / orbit camera. The aircraft stays centered and the rig does not roll with the
-    /// airframe. Heading eases behind the nose; right-drag orbits, scroll zooms, middle-click resets.
-    /// Body axes are +X forward, so the nose is <see cref="Transform.right"/>.
+    /// airframe. Heading eases behind the nose; Look orbits, Zoom dollies, ResetOrbit recenters.
     /// </summary>
     [AddComponentMenu("Airplane/Aircraft Chase Camera")]
     public sealed class AircraftChaseCamera : MonoBehaviour
@@ -26,17 +27,29 @@ namespace Airplane.FlightSimulation
         [SerializeField] private float lookAtHeight = 0.45f;
 
         [Header("Orbit")]
-        [Tooltip("If true, only orbit while the right mouse button is held. If false, the mouse always orbits.")]
-        [SerializeField] private bool requireRightMouse = true;
+        [Tooltip("If true, pointer Look only orbits while OrbitHold is pressed. Analog sticks always orbit.")]
+        [FormerlySerializedAs("requireRightMouse")]
+        [SerializeField] private bool requireOrbitHold = true;
 
+        [Tooltip("Degrees per mouse-delta unit (typically pixels).")]
         [SerializeField] private float yawSensitivity = 0.16f;
         [SerializeField] private float pitchSensitivity = 0.14f;
+
+        [Tooltip("Degrees per second at full stick deflection.")]
+        [SerializeField] private float stickYawSpeed = 90f;
+        [SerializeField] private float stickPitchSpeed = 70f;
+
         [SerializeField] private bool invertPitch;
 
         [SerializeField] private float minPitch = -10f;
         [SerializeField] private float maxPitch = 80f;
 
+        [Tooltip("Mouse-wheel zoom: distance *= 1 − scroll × this.")]
         [SerializeField] private float zoomSensitivity = 0.012f;
+
+        [Tooltip("Held analog zoom: distance *= 1 − axis × this × dt.")]
+        [SerializeField] private float zoomStickSensitivity = 1.4f;
+
         [SerializeField] private float minDistance = 6f;
         [SerializeField] private float maxDistance = 48f;
 
@@ -48,11 +61,68 @@ namespace Airplane.FlightSimulation
         private float _defaultPitch;
         private float _defaultDistance;
 
+        private Vector2 _pointerLook;
+        private Vector2 _stickLook;
+        private float _pointerZoom;
+        private float _stickZoom;
+        private bool _orbitHeld;
+
+        /// <summary>Scene chase camera, if one is enabled. Used so PlayerInput on the aircraft can forward Look.</summary>
+        public static AircraftChaseCamera Active { get; private set; }
+
         public void SetTarget(Transform t)
         {
             target = t;
             _hasHeading = false;
             ResetOrbit();
+        }
+
+        public void OnLook(InputAction.CallbackContext context)
+        {
+            if (IsAnalog(context))
+            {
+                _stickLook = context.canceled ? Vector2.zero : context.ReadValue<Vector2>();
+                return;
+            }
+
+            if (context.canceled)
+                return;
+            _pointerLook += context.ReadValue<Vector2>();
+        }
+
+        public void OnOrbitHold(InputAction.CallbackContext context)
+        {
+            _orbitHeld = !context.canceled && context.ReadValueAsButton();
+        }
+
+        public void OnZoom(InputAction.CallbackContext context)
+        {
+            if (IsAnalog(context))
+            {
+                _stickZoom = context.canceled ? 0f : context.ReadValue<float>();
+                return;
+            }
+
+            if (context.canceled)
+                return;
+            _pointerZoom += context.ReadValue<float>();
+        }
+
+        public void OnResetOrbit(InputAction.CallbackContext context)
+        {
+            if (context.performed)
+                ResetOrbit();
+        }
+
+        private void OnEnable()
+        {
+            Active = this;
+        }
+
+        private void OnDisable()
+        {
+            if (Active == this)
+                Active = null;
         }
 
         private void Awake()
@@ -71,7 +141,7 @@ namespace Airplane.FlightSimulation
             if (target == null)
                 return;
 
-            ApplyMouseOrbit();
+            ApplyOrbitInput();
             UpdateFollowHeading();
 
             if (_followFwd.sqrMagnitude < 1e-6f)
@@ -88,34 +158,37 @@ namespace Airplane.FlightSimulation
             transform.SetPositionAndRotation(desired, Quaternion.LookRotation(toFocus, Vector3.up));
         }
 
-        private void ApplyMouseOrbit()
+        private void ApplyOrbitInput()
         {
-            Mouse mouse = Mouse.current;
-            if (mouse == null)
-                return;
-
-            if (mouse.middleButton.wasPressedThisFrame)
-            {
-                ResetOrbit();
-                return;
-            }
-
-            bool orbit = !requireRightMouse || mouse.rightButton.isPressed;
+            bool analogOrbit = _stickLook.sqrMagnitude > 1e-8f;
+            bool orbit = !requireOrbitHold || analogOrbit || _orbitHeld;
             if (orbit)
             {
-                Vector2 delta = mouse.delta.ReadValue();
-                _orbitYaw += delta.x * yawSensitivity;
-                float pitchDelta = delta.y * pitchSensitivity;
-                _orbitPitch += invertPitch ? pitchDelta : -pitchDelta;
-                _orbitPitch = Mathf.Clamp(_orbitPitch, minPitch, maxPitch);
+                if (analogOrbit)
+                {
+                    float dt = Time.deltaTime;
+                    ApplyLook(_stickLook.x * stickYawSpeed * dt, _stickLook.y * stickPitchSpeed * dt);
+                }
+
+                if (_pointerLook.sqrMagnitude > 1e-8f)
+                    ApplyLook(_pointerLook.x * yawSensitivity, _pointerLook.y * pitchSensitivity);
             }
 
-            float scroll = mouse.scroll.ReadValue().y;
-            if (scroll * scroll > 0.01f)
-            {
-                _distance *= 1f - scroll * zoomSensitivity;
-                _distance = Mathf.Clamp(_distance, minDistance, maxDistance);
-            }
+            _pointerLook = Vector2.zero;
+
+            if (_stickZoom * _stickZoom > 1e-8f)
+                _distance *= 1f - _stickZoom * zoomStickSensitivity * Time.deltaTime;
+            if (_pointerZoom * _pointerZoom > 1e-8f)
+                _distance *= 1f - _pointerZoom * zoomSensitivity;
+            _pointerZoom = 0f;
+
+            _distance = Mathf.Clamp(_distance, minDistance, maxDistance);
+        }
+
+        private void ApplyLook(float yawDelta, float pitchDelta)
+        {
+            _orbitYaw += yawDelta;
+            _orbitPitch += invertPitch ? pitchDelta : -pitchDelta;
         }
 
         private void UpdateFollowHeading()
@@ -154,6 +227,16 @@ namespace Airplane.FlightSimulation
             _orbitYaw = 0f;
             _orbitPitch = _defaultPitch;
             _distance = _defaultDistance;
+        }
+
+        private static bool IsAnalog(InputAction.CallbackContext context)
+        {
+            InputControl control = context.control;
+            if (control == null)
+                return false;
+            if (control is DeltaControl || control.parent is DeltaControl)
+                return false;
+            return control.device is Gamepad || control.device is Joystick;
         }
 
         private static Vector3 HorizontalForward(Transform t)

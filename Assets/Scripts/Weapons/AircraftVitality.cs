@@ -1,5 +1,6 @@
 using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
+using Airplane.UI;
 using UnityEngine;
 
 namespace Airplane.Weapons
@@ -25,6 +26,11 @@ namespace Airplane.Weapons
         public float HitPoints => _hp;
         public float MaxHitPoints => hitPoints;
 
+        public void Restore()
+        {
+            _hp = hitPoints;
+        }
+
         private void Awake()
         {
             _body = GetComponent<PlaneRigidbody>();
@@ -46,6 +52,8 @@ namespace Airplane.Weapons
             if (hit.Damage <= 0f)
                 return;
             if (_body && !_body.SimulationEnabled)
+                return;
+            if (CheatFlags.GodMode && CheatFlags.AppliesTo(_body))
                 return;
 
             _hp -= hit.Damage;

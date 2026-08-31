@@ -66,6 +66,8 @@ namespace Airplane.FlightSimulation
 
         private Dictionary<EntityId, PlaneCollision> _hitsThisTick = new Dictionary<EntityId, PlaneCollision>(16);
         private Dictionary<EntityId, PlaneCollision> _hitsLastTick = new Dictionary<EntityId, PlaneCollision>(16);
+        private readonly Dictionary<EntityId, PlaneCollision> _dispatchThis = new Dictionary<EntityId, PlaneCollision>(16);
+        private readonly Dictionary<EntityId, PlaneCollision> _dispatchLast = new Dictionary<EntityId, PlaneCollision>(16);
 
         private readonly HashSet<EntityId> _ignoredColliders = new HashSet<EntityId>();
         private readonly HashSet<ColliderPair> _ignoredPairs = new HashSet<ColliderPair>();
@@ -163,7 +165,7 @@ namespace Airplane.FlightSimulation
             _proxyBody.isKinematic = true;
             _proxyBody.interpolation = RigidbodyInterpolation.None;
             _proxyBody.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            _proxyBody.detectCollisions = false;
+            _proxyBody.detectCollisions = true;
             _proxyBody.constraints = RigidbodyConstraints.None;
         }
 
@@ -575,22 +577,36 @@ namespace Airplane.FlightSimulation
 
         private void DispatchCollisionEvents()
         {
-            foreach (var kv in _hitsThisTick)
+            // Snapshot first. A crash callback hides the wreck and calls SetSimulationEnabled(false),
+            // which Clears these dictionaries; enumerating the live maps would throw.
+            CopyHits(_hitsThisTick, _dispatchThis);
+            CopyHits(_hitsLastTick, _dispatchLast);
+
+            foreach (var kv in _dispatchThis)
             {
-                if (_hitsLastTick.ContainsKey(kv.Key))
+                if (_dispatchLast.ContainsKey(kv.Key))
                     InvokeCollisionEvent(CollisionStay, "OnPlaneCollisionStay", kv.Value);
                 else
                     InvokeCollisionEvent(CollisionEnter, "OnPlaneCollisionEnter", kv.Value);
             }
 
-            foreach (var kv in _hitsLastTick)
+            foreach (var kv in _dispatchLast)
             {
-                if (!_hitsThisTick.ContainsKey(kv.Key))
+                if (!_dispatchThis.ContainsKey(kv.Key))
                     InvokeCollisionEvent(CollisionExit, "OnPlaneCollisionExit", kv.Value);
             }
 
             (_hitsLastTick, _hitsThisTick) = (_hitsThisTick, _hitsLastTick);
             _hitsThisTick.Clear();
+        }
+
+        private static void CopyHits(
+            Dictionary<EntityId, PlaneCollision> source,
+            Dictionary<EntityId, PlaneCollision> dest)
+        {
+            dest.Clear();
+            foreach (var kv in source)
+                dest[kv.Key] = kv.Value;
         }
 
         private void InvokeCollisionEvent(Action<PlaneCollision> evt, string message, PlaneCollision hit)

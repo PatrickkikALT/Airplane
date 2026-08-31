@@ -1,5 +1,6 @@
 using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
+using Airplane.UI;
 using UnityEngine;
 
 namespace Airplane.Weapons
@@ -103,6 +104,26 @@ namespace Airplane.Weapons
         public bool IsFiring => _isFiring;
         public Transform Muzzle => muzzle != null ? muzzle : transform;
 
+        public void RefillAmmo()
+        {
+            _ammo = ammoCapacity;
+            _reloadClock = 0f;
+        }
+
+        /// <summary>Muzzle speed added on top of the airframe's point velocity, m/s.</summary>
+        public float MuzzleSpeed => muzzleSpeed;
+
+        /// <summary>Hitscan / tracer range, metres.</summary>
+        public float MaxRange => maxRange;
+
+        public Vector3 MuzzlePosition => Muzzle.position;
+
+        /// <summary>
+        /// World-space shot axis. A fire-control solution has to steer this rather than the fuselage
+        /// axis, because a mount is free to be converged or offset.
+        /// </summary>
+        public Vector3 ShotAxisWorld => Muzzle.TransformDirection(localMuzzleAxis.normalized);
+
         public void SetMuzzle(Transform t)
         {
             muzzle = t;
@@ -169,8 +190,9 @@ namespace Airplane.Weapons
 
             float trigger = controller != null ? controller.ReadTrigger(triggerChannel) : 0f;
             bool wantFire = trigger > 0.5f;
+            bool cheats = CheatFlags.AppliesTo(body);
 
-            if (ammoCapacity > 0 && _ammo <= 0)
+            if (ammoCapacity > 0 && _ammo <= 0 && !(cheats && CheatFlags.InfiniteAmmo))
             {
                 _isFiring = false;
                 if (reloadSeconds > 0.01f && !visualOnly)
@@ -203,7 +225,7 @@ namespace Airplane.Weapons
                 FireOne(body, visualOnly);
                 _cooldown += interval;
                 _isFiring = true;
-                if (ammoCapacity > 0 && _ammo <= 0)
+                if (ammoCapacity > 0 && _ammo <= 0 && !(CheatFlags.InfiniteAmmo && CheatFlags.AppliesTo(body)))
                     break;
             }
         }
@@ -219,11 +241,11 @@ namespace Airplane.Weapons
             {
                 if (recoilImpulse > 0f)
                     body.ApplyImpulseAtPosition(-shotDir * recoilImpulse, origin);
-                if (ammoCapacity > 0)
+                if (ammoCapacity > 0 && !(CheatFlags.InfiniteAmmo && CheatFlags.AppliesTo(body)))
                     _ammo--;
             }
 
-            if (fireMode == GunFireMode.Hitscan)
+            if (fireMode == GunFireMode.Hitscan && !(CheatFlags.HomingBullets && CheatFlags.AppliesTo(body)))
                 FireHitscan(body, origin, shotDir, velocity, visualOnly);
             else
                 LaunchProjectile(body, origin, velocity, visualOnly);
@@ -241,23 +263,29 @@ namespace Airplane.Weapons
             Vector3 velocity,
             bool visualOnly)
         {
-            Vector3 end = origin + shotDir * maxRange;
-            if (TryRaycast(origin, shotDir, maxRange, body, out RaycastHit hit))
+            // World path is the inherited airframe velocity plus muzzle speed. Raycasting along
+            // shotDir alone leaves the tracer stuck in the ground frame, so a moving aircraft
+            // appears to outrun its own rounds.
+            float speed = FlightSimMath.SafeMagnitude(velocity);
+            Vector3 worldDir = speed > 0.01f ? velocity / speed : shotDir;
+
+            if (TryRaycast(origin, worldDir, maxRange, body, out RaycastHit hit))
             {
-                end = hit.point;
                 if (!visualOnly)
                     ResolveHit(body, hit, velocity);
             }
 
-            SpawnTracer(origin, end, ballistic: false);
+            AircraftProjectile tracer = RentTracer();
+            if (tracer)
+                tracer.LaunchKinematic(origin, velocity, tracerLifetime);
         }
 
         private void LaunchProjectile(PlaneRigidbody body, Vector3 origin, Vector3 velocity, bool visualOnly)
         {
-            AircraftProjectile tracer = SpawnTracer(origin, origin + velocity.normalized, ballistic: true);
+            AircraftProjectile tracer = RentTracer();
             if (!tracer)
                 return;
-            
+
             tracer.SetBallistics(projectileMass, projectileArea, projectileCd, projectileLifetime);
             tracer.LaunchBallistic(this, body, origin, velocity, visualOnly);
         }
@@ -322,20 +350,11 @@ namespace Airplane.Weapons
             victim.SendMessage("OnGunHit", hit, SendMessageOptions.DontRequireReceiver);
         }
 
-        private AircraftProjectile SpawnTracer(Vector3 origin, Vector3 end, bool ballistic)
+        private AircraftProjectile RentTracer()
         {
-            AircraftProjectile tracer = projectilePrefab
+            return projectilePrefab
                 ? RentPooledPrefab()
                 : AircraftProjectile.RentDefault(tracerColor, tracerWidth);
-
-            if (!tracer)
-                return null;
-
-            if (ballistic)
-                return tracer;
-
-            tracer.LaunchHitscanVisual(origin, end, tracerLifetime);
-            return tracer;
         }
 
         private AircraftProjectile RentPooledPrefab()

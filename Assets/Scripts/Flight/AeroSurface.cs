@@ -324,11 +324,14 @@ namespace Airplane.FlightSimulation
                            * FlightSimMath.Deg2Rad;
             float softness = stallSoftnessDeg * FlightSimMath.Deg2Rad;
 
-            float clLin = cl0 + clAlpha * aEff * alphaRestoringScale + clPerRadianDeflection * delta + flapClIncrement * flaps;
+            // Control CL must survive stall blend. S (nose up) puts the wing past stallP; the
+            // separated polar used to ignore delta, so left and right ailerons cancelled out.
+            float clControl = clPerRadianDeflection * delta;
+            float clLin = cl0 + clAlpha * aEff * alphaRestoringScale + clControl + flapClIncrement * flaps;
 
             float s = Mathf.Sin(alpha);
             float c = Mathf.Cos(alpha);
-            float clSep = separatedClPeak * (2f * s * c);
+            float clSep = separatedClPeak * (2f * s * c) + clControl;
             float cdSep = cd0 + separatedCd * (s * s);
 
             float absEff = aEff >= 0f ? aEff : -aEff;

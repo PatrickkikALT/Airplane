@@ -1,7 +1,9 @@
 using System.Text;
+using Airplane.UI;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Airplane.Multiplayer
 {
@@ -35,11 +37,16 @@ namespace Airplane.Multiplayer
         private readonly StringBuilder _rosterBuilder = new StringBuilder(256);
         private string _status = "Offline";
         private bool _subscribed;
+        private string _callsignField;
 
         private NetworkManager Manager => NetworkManager.Singleton;
 
+        private static AircraftNetworkSpawner Spawner => AircraftNetworkSpawner.Instance;
+
         private void Start()
         {
+            _callsignField = LocalPlayerIdentity.PilotName;
+
             if (Manager != null)
             {
                 Manager.OnClientConnectedCallback += HandleClientConnected;
@@ -133,12 +140,31 @@ namespace Airplane.Multiplayer
             _status = string.IsNullOrEmpty(reason) ? "Disconnected" : $"Disconnected: {reason}";
         }
 
+        private void Update()
+        {
+            // F8 is a backup for the Dummy button: the session panel sits under the guns HUD in
+            // this scene, and a short Game view clips anything we add below the bot +/− row.
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null || !keyboard.f8Key.wasPressedThisFrame)
+                return;
+            if (CheatFlags.BlockPlayerInput)
+                return;
+            if (Manager == null || !Manager.IsListening || !Manager.IsServer)
+                return;
+            if (Spawner != null)
+                Spawner.SpawnDummy();
+        }
+
         private void OnGUI()
         {
+            if (CheatFlags.BlockPlayerInput)
+                return;
+
             float x = panelPosition.x;
             float y = panelPosition.y;
             bool listening = Manager && Manager.IsListening;
-            float height = listening ? 150f : 168f;
+            bool server = listening && Manager.IsServer;
+            float height = listening ? (server ? 192f : 164f) : 196f;
 
             GUI.Box(new Rect(x, y, panelWidth, height), "Multiplayer");
             float row = y + 24f;
@@ -146,6 +172,18 @@ namespace Airplane.Multiplayer
 
             if (!listening)
             {
+                // The callsign is what everyone else sees on this aircraft's nametag, so it is the
+                // first thing on the panel rather than buried behind a settings screen.
+                GUI.Label(new Rect(x + 10f, row, 60f, 20f), "Callsign");
+                string typed = GUI.TextField(new Rect(x + 74f, row, inner - 64f, 20f), _callsignField ?? "", 24);
+                if (typed != _callsignField)
+                {
+                    _callsignField = typed;
+                    LocalPlayerIdentity.PilotName = typed;
+                }
+
+                row += 26f;
+
                 GUI.Label(new Rect(x + 10f, row, 60f, 20f), "Address");
                 address = GUI.TextField(new Rect(x + 74f, row, inner - 130f, 20f), address);
                 GUI.Label(new Rect(x + inner - 50f, row, 30f, 20f), "Port");
@@ -171,6 +209,26 @@ namespace Airplane.Multiplayer
                 if (GUI.Button(new Rect(x + 10f, row, inner, 24f), "Disconnect"))
                     Disconnect();
                 row += 30f;
+
+                if (server)
+                {
+                    AircraftNetworkSpawner spawner = Spawner;
+
+                    if (spawner != null)
+                    {
+                        if (GUI.Button(new Rect(x + 10f, row, 86f, 22f), "Dummy"))
+                            spawner.SpawnDummy();
+
+                        GUI.Label(new Rect(x + 102f, row, inner - 192f, 20f), $"Bots  {spawner.LiveBotCount}/{spawner.DesiredBotCount}");
+
+                        if (GUI.Button(new Rect(x + inner - 62f, row, 28f, 22f), "−"))
+                            spawner.SetBotCount(spawner.DesiredBotCount - 1);
+                        if (GUI.Button(new Rect(x + inner - 28f, row, 28f, 22f), "+"))
+                            spawner.SetBotCount(spawner.DesiredBotCount + 1);
+                    }
+
+                    row += 28f;
+                }
             }
 
             GUI.Label(new Rect(x + 10f, row, inner, 20f), _status);
@@ -189,7 +247,11 @@ namespace Airplane.Multiplayer
             {
                 _rosterBuilder.Append("Pilots: ").Append(Manager.ConnectedClientsIds.Count).Append('\n');
                 foreach (ulong id in Manager.ConnectedClientsIds)
-                    _rosterBuilder.Append(id == Manager.LocalClientId ? "· you\n" : $"· client {id}\n");
+                {
+                    _rosterBuilder.Append(id == Manager.LocalClientId
+                        ? $"· {LocalPlayerIdentity.PilotName} (you)\n"
+                        : $"· client {id}\n");
+                }
             }
             else
             {
