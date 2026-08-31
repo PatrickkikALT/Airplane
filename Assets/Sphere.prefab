@@ -127,4 +127,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftProjectile
   maxLifetime: 4
   color: {r: 1, g: 0.75, b: 0.2, a: 1}
-  width: 0.045
+  width: 0.05
