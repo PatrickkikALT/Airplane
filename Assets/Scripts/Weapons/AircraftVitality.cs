@@ -1,3 +1,4 @@
+using System;
 using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
 using Airplane.UI;
@@ -19,6 +20,7 @@ namespace Airplane.Weapons
         [Tooltip("Impact true airspeed reported to the crash path, km/h. The existing spawner only cares that it clears the threshold.")]
         [SerializeField] private float reportedCrashSpeedKmh = 80f;
 
+        public Action<GunHit> OnDeathEvent;
         private float _hp;
         private PlaneRigidbody _body;
         private NetworkedAircraft _networked;
@@ -64,6 +66,7 @@ namespace Airplane.Weapons
             Vector3 point = hit.Point;
             if (_networked && _networked.IsSpawned)
             {
+                OnDeathEvent?.Invoke(hit);
                 _networked.ReportCrash(point, reportedCrashSpeedKmh);
                 return;
             }
