@@ -142,7 +142,7 @@ namespace Airplane.FlightSimulation
                 return;
 
             ApplyOrbitInput();
-            UpdateFollowHeading();
+            //UpdateFollowHeading();
 
             if (_followFwd.sqrMagnitude < 1e-6f)
                 _followFwd = Vector3.forward;
