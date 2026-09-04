@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Airplane.Multiplayer;
 using Airplane.Weapons;
@@ -451,16 +450,16 @@ namespace Airplane.UI
             Add("homing", "homing [on|off|rate]", "Steer this aircraft's rounds into the nearest target.", CmdHoming);
             Add("god", "god [on|off]", "Ignore crashes and gun damage on this aircraft.", CmdGod);
             Add("ammo", "ammo [on|off]", "Infinite magazines on this aircraft.", CmdAmmo);
-            Add("heal", "heal", "Refill hit points on this aircraft.", CmdHeal);
-            Add("reload", "reload", "Refill every gun magazine.", CmdReload);
-            Add("bots", "bots [count]", "Set the bot squadron size. Server only.", CmdBots);
-            Add("dummy", "dummy", "Spawn a still target in front of you. Server only.", CmdDummy);
-            Add("timescale", "timescale [rate]", "Set Time.timeScale. 1 is normal.", CmdTimescale);
+            Add("heal", "heal [name|*]", "Refill hit points. Default is you.", CmdHeal);
+            Add("reload", "reload [name|*]", "Refill every gun magazine. Default is you.", CmdReload);
+            Add("bots", "bots [count]", "Set the bot squadron size. Replicated, any admin.", CmdBots);
+            Add("dummy", "dummy", "Spawn a still target in front of you. Replicated, any admin.", CmdDummy);
+            Add("timescale", "timescale [rate]", "Set Time.timeScale for everyone. 1 is normal.", CmdTimescale);
             Add("nametags", "nametags [on|off]", "Toggle aircraft nametags.", CmdNametags);
-            Add("scale", "scale [scale]", "Change your aircraft's scale", CmdScale);
-            Add("destroy", "destroy [displayName]", "Destroys the targeted aircraft", CmdDestroy);
-            Add("speed", "speed [speed]", "Sets your aircraft's speed, base is 60000.",  CmdSpeed);
-            Add("weather", "weather [weather]", "Use just 'weather' for a list of possible weathers.", CmdWeather);
+            Add("scale", "scale [scale] [name|*]", "Change an aircraft's scale. Default is you.", CmdScale);
+            Add("destroy", "destroy [name|*]", "Crash an aircraft by nametag, or * for everyone.", CmdDestroy);
+            Add("speed", "speed [speed] [name|*]", "Set max thrust. Base is 60000. Default is you.", CmdSpeed);
+            Add("weather", "weather [weather]", "Set the shared weather. No argument lists presets.", CmdWeather);
         }
 
         private void Add(string name, string usage, string help, Func<string[], string> handler)
@@ -477,54 +476,59 @@ namespace Airplane.UI
         private string CmdWeather(string[] args)
         {
             WeatherManager manager = WeatherManager.Instance;
+            if (!manager)
+                return "no weather manager";
+
             string[] possibleWeathers = manager.GetWeathers();
             if (args == null || args.Length == 0)
                 return string.Join(", ", possibleWeathers);
 
-            if (possibleWeathers.Contains(args[0].ToLower()))
-            {
-                manager.SetWeather(args[0].ToLower());
-                return "";
-            }
-            return "Invalid weather, run weather for possible weathers.";
+            string name = args[0];
+            if (!manager.HasWeather(name))
+                return "Invalid weather, run weather for possible weathers.";
+
+            string error = AdminSession.Send(AdminCommand.Weather, name, 0f);
+            return string.IsNullOrEmpty(error) ? "weather " + name.ToLowerInvariant() : error;
         }
+
         private string CmdSpeed(string[] args)
         {
-            NetworkedAircraft aircraft = NetworkedAircraft.Local;
-            if (!int.TryParse(args[0], out int speed))
-            {
-                return "Invalid argument";
-            }
-            aircraft.Engine.SetMaxThrust(speed);
-            return "";
+            if (args == null || args.Length == 0 || !int.TryParse(args[0], out int speed))
+                return "usage: speed [speed] [name|*]";
+
+            string target = args.Length > 1 ? args[1] : "";
+            if (!string.IsNullOrEmpty(target) && target != "*" && !AdminSession.AnyMatch(target))
+                return "no aircraft named '" + target + "'";
+
+            string error = AdminSession.Send(AdminCommand.Speed, target, speed);
+            return string.IsNullOrEmpty(error) ? "speed " + speed : error;
         }
+
         private string CmdDestroy(string[] args)
         {
-            string displayName = args[0].ToLower();
-            if (args[0] == "*")
-            {
-                foreach (NetworkedAircraft air in NetworkedAircraft.All)
-                {
-                    air.ReportCrash(Vector3.zero, 500);
-                }
+            if (args == null || args.Length == 0)
+                return "usage: destroy [name|*]";
 
-                return "";
-            }
-            NetworkedAircraft aircraft = NetworkedAircraft.All.First(x => x.DisplayName.ToLower() == displayName);
-            aircraft.ReportCrash(Vector3.zero, 500);
-            return "";
+            string target = args[0];
+            if (target != "*" && !AdminSession.AnyMatch(target))
+                return "no aircraft named '" + target + "'";
+
+            string error = AdminSession.Send(AdminCommand.Destroy, target, 0f);
+            return string.IsNullOrEmpty(error) ? "destroy " + target : error;
         }
-        
+
         private string CmdScale(string[] args)
         {
-            NetworkedAircraft local = NetworkedAircraft.Local;
-            if (float.TryParse(args[0], out float scale))
-            {
-                scale = Mathf.Clamp(scale, 0, 50);
-                local.transform.localScale =  new Vector3(scale, scale, scale);
-            }
+            if (args == null || args.Length == 0 || !float.TryParse(args[0], out float scale))
+                return "usage: scale [scale] [name|*]";
 
-            return "";
+            scale = Mathf.Clamp(scale, 0f, 50f);
+            string target = args.Length > 1 ? args[1] : "";
+            if (!string.IsNullOrEmpty(target) && target != "*" && !AdminSession.AnyMatch(target))
+                return "no aircraft named '" + target + "'";
+
+            string error = AdminSession.Send(AdminCommand.Scale, target, scale);
+            return string.IsNullOrEmpty(error) ? "scale " + scale.ToString("0.###") : error;
         }
 
         private string CmdHelp(string[] args)
@@ -550,11 +554,14 @@ namespace Airplane.UI
 
         private string CmdStatus(string[] args)
         {
+            WeatherManager weather = WeatherManager.Instance;
+            string weatherName = weather != null ? weather.CurrentWeatherName : "";
             return "homing " + OnOff(CheatFlags.HomingBullets)
                    + "  (" + CheatFlags.HomingTurnRateDeg.ToString("0") + " deg/s)"
                    + "  god " + OnOff(CheatFlags.GodMode)
                    + "  ammo " + OnOff(CheatFlags.InfiniteAmmo)
-                   + "  timescale " + Time.timeScale.ToString("0.###");
+                   + "  timescale " + Time.timeScale.ToString("0.###")
+                   + (string.IsNullOrEmpty(weatherName) ? "" : "  weather " + weatherName);
         }
 
         private string CmdClear(string[] args)
@@ -606,60 +613,62 @@ namespace Airplane.UI
 
         private static string CmdHeal(string[] args)
         {
-            NetworkedAircraft local = NetworkedAircraft.Local;
-            if (!local)
-                return "no local aircraft";
+            string target = args != null && args.Length > 0 ? args[0] : "";
+            if (!string.IsNullOrEmpty(target) && target != "*" && !AdminSession.AnyMatch(target))
+                return "no aircraft named '" + target + "'";
 
-            AircraftVitality vitality = local.GetComponent<AircraftVitality>();
-            if (!vitality)
-                return "this aircraft has no vitality";
+            string error = AdminSession.Send(AdminCommand.Heal, target, 0f);
+            if (!string.IsNullOrEmpty(error))
+                return error;
 
-            vitality.Restore();
-            return "healed  ·  " + vitality.HitPoints.ToString("0") + " hp";
+            if (string.IsNullOrEmpty(target))
+            {
+                NetworkedAircraft local = NetworkedAircraft.Local;
+                AircraftVitality vitality = local ? local.GetComponent<AircraftVitality>() : null;
+                if (vitality && (!AdminSession.IsListening || IsServer()))
+                    return "healed  ·  " + vitality.HitPoints.ToString("0") + " hp";
+            }
+
+            return "healed";
         }
 
         private static string CmdReload(string[] args)
         {
-            NetworkedAircraft local = NetworkedAircraft.Local;
-            if (!local)
-                return "no local aircraft";
+            string target = args != null && args.Length > 0 ? args[0] : "";
+            if (!string.IsNullOrEmpty(target) && target != "*" && !AdminSession.AnyMatch(target))
+                return "no aircraft named '" + target + "'";
 
-            AircraftWeaponsController weapons = local.GetComponent<AircraftWeaponsController>();
-            if (!weapons || weapons.Guns == null || weapons.Guns.Length == 0)
-                return "no guns mounted";
-
-            for (int i = 0; i < weapons.Guns.Length; i++)
-            {
-                if (weapons.Guns[i])
-                    weapons.Guns[i].RefillAmmo();
-            }
-
-            return "magazines refilled";
+            string error = AdminSession.Send(AdminCommand.Reload, target, 0f);
+            return string.IsNullOrEmpty(error) ? "magazines refilled" : error;
         }
 
         private static string CmdBots(string[] args)
         {
             AircraftNetworkSpawner spawner = AircraftNetworkSpawner.Instance;
-            if (!IsServer() || spawner == null)
-                return "bots can only be changed on the server";
-
             if (args.Length == 0)
-                return "bots " + spawner.LiveBotCount + "/" + spawner.DesiredBotCount;
+            {
+                if (IsServer() && spawner != null)
+                    return "bots " + spawner.LiveBotCount + "/" + spawner.DesiredBotCount;
+                return "usage: bots [count]";
+            }
 
             if (!int.TryParse(args[0], out int count))
                 return "usage: bots [count]";
 
-            spawner.SetBotCount(count);
-            return "bots " + spawner.LiveBotCount + "/" + spawner.DesiredBotCount;
+            string error = AdminSession.Send(AdminCommand.Bots, "", count);
+            if (!string.IsNullOrEmpty(error))
+                return error;
+
+            if (IsServer() && spawner != null)
+                return "bots " + spawner.LiveBotCount + "/" + spawner.DesiredBotCount;
+
+            return "bots " + count + "  ·  sent";
         }
 
         private static string CmdDummy(string[] args)
         {
-            AircraftNetworkSpawner spawner = AircraftNetworkSpawner.Instance;
-            if (!IsServer() || spawner == null)
-                return "dummy can only be spawned on the server";
-
-            return spawner.SpawnDummy() ? "dummy spawned" : "failed to spawn dummy";
+            string error = AdminSession.Send(AdminCommand.Dummy, "", 0f);
+            return string.IsNullOrEmpty(error) ? "dummy spawned" : error;
         }
 
         private static string CmdTimescale(string[] args)
@@ -670,8 +679,9 @@ namespace Airplane.UI
             if (!float.TryParse(args[0], out float scale))
                 return "usage: timescale [rate]";
 
-            Time.timeScale = Mathf.Clamp(scale, 0f, 8f);
-            return "timescale " + Time.timeScale.ToString("0.###");
+            scale = Mathf.Clamp(scale, 0f, 8f);
+            string error = AdminSession.Send(AdminCommand.Timescale, "", scale);
+            return string.IsNullOrEmpty(error) ? "timescale " + scale.ToString("0.###") : error;
         }
 
         private static string CmdNametags(string[] args)

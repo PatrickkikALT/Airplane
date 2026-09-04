@@ -185,6 +185,7 @@ namespace Airplane.Multiplayer
             _nextDummyIndex = 0;
             _desiredBots = 0;
             BotCallsigns.Reset();
+            AdminSession.Reset();
         }
 
         private void HandleClientConnected(ulong clientId)
@@ -333,10 +334,20 @@ namespace Airplane.Multiplayer
         /// </summary>
         public bool SpawnDummy()
         {
+            ulong clientId = Manager != null ? Manager.LocalClientId : 0;
+            return SpawnDummyFor(clientId);
+        }
+
+        /// <summary>
+        /// Same as <see cref="SpawnDummy"/>, but places the dummy in front of
+        /// <paramref name="clientId"/>'s aircraft so a client admin sees it in their windscreen.
+        /// </summary>
+        public bool SpawnDummyFor(ulong clientId)
+        {
             if (!IsServerActive || !aircraftPrefab)
                 return false;
 
-            ResolveDummySpawnPose(out Vector3 position, out Quaternion rotation);
+            ResolveDummySpawnPoseFor(clientId, out Vector3 position, out Quaternion rotation);
 
             NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
             int index = ++_nextDummyIndex;
@@ -368,9 +379,28 @@ namespace Airplane.Multiplayer
             _dummies.Add(aircraft);
 
             if (networked)
+            {
                 networked.TeleportRpc(comWorld, rotation, Vector3.zero, Vector3.zero);
-            aircraft.transform.localScale = new Vector3(15, 15, 15);
+                networked.ServerSetScale(15f);
+            }
+
             return true;
+        }
+
+        private void ResolveDummySpawnPoseFor(ulong clientId, out Vector3 position, out Quaternion rotation)
+        {
+            if (_aircraftByClient.TryGetValue(clientId, out NetworkObject aircraft) && aircraft)
+            {
+                NetworkedAircraft networked = aircraft.GetComponent<NetworkedAircraft>();
+                if (networked && networked.Body != null)
+                {
+                    rotation = networked.Body.Orientation;
+                    position = networked.Body.Position + rotation * new Vector3(140f, 0f, 25f);
+                    return;
+                }
+            }
+
+            ResolveDummySpawnPose(out position, out rotation);
         }
 
         private void ResolveDummySpawnPose(out Vector3 position, out Quaternion rotation)

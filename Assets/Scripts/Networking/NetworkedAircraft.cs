@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Airplane.FlightSimulation;
 using Airplane.UI;
 using Airplane.Weapons;
+using Airplane.Weather;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -64,6 +65,9 @@ namespace Airplane.Multiplayer
 
         private readonly NetworkVariable<FixedString64Bytes> _pilotName = new NetworkVariable<FixedString64Bytes>(
             default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+        private readonly NetworkVariable<float> _visualScale = new NetworkVariable<float>(
+            1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
         private PlaneRigidbody _body;
         private AircraftEngine _engine;
@@ -161,6 +165,9 @@ namespace Airplane.Multiplayer
                     _pilotName.Value = ToFixedName(_pendingPilotName);
             }
 
+            _visualScale.OnValueChanged += HandleScaleChanged;
+            HandleScaleChanged(1f, _visualScale.Value);
+
             ApplyAuthorityRoles();
 
             // A bot is owned by the server, so IsOwner is true for it on the host. Claiming Local
@@ -171,10 +178,16 @@ namespace Airplane.Multiplayer
                 LocalAircraftSpawned?.Invoke(this);
                 SubmitPilotNameRpc(ToFixedName(LocalPlayerIdentity.PilotName));
             }
+
+            // Late joiners missed the weather/timescale broadcast. Push the current world state
+            // onto the new human's owner, not onto bots (the host would get it every respawn).
+            if (IsServer && !IsBot && OwnerClientId != NetworkManager.LocalClientId)
+                AdminSession.SyncToAircraft(this);
         }
 
         public override void OnNetworkDespawn()
         {
+            _visualScale.OnValueChanged -= HandleScaleChanged;
             Registry.Remove(this);
             _isAlive = false;
 
@@ -192,6 +205,7 @@ namespace Airplane.Multiplayer
 
         public override void OnDestroy()
         {
+            _visualScale.OnValueChanged -= HandleScaleChanged;
             Registry.Remove(this);
             base.OnDestroy();
         }
@@ -499,6 +513,7 @@ namespace Airplane.Multiplayer
         private void ConcealWreck()
         {
             _isAlive = false;
+            _crashReported = true;
 
             Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < renderers.Length; i++)
@@ -544,6 +559,143 @@ namespace Airplane.Multiplayer
             _hasSent = false;
             _crashReported = false;
             _body.Teleport(comWorld, orientation, velocityWorld, angularVelocityBody);
+        }
+
+        /// <summary>
+        /// Server-only. Crashes this aircraft regardless of who owns it, which is what the admin
+        /// destroy command needs for a remote human. God mode does not apply: an admin kill is
+        /// not an impact.
+        /// </summary>
+        internal void ForceDestroyFromServer()
+        {
+            if (!IsSpawned || !IsServer || _crashReported)
+                return;
+
+            _crashReported = true;
+            _crashCount.Value++;
+            Vector3 point = _body ? _body.Position : transform.position;
+            AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
+        }
+
+        internal void ServerSetScale(float scale)
+        {
+            if (!IsSpawned || !IsServer)
+                return;
+
+            _visualScale.Value = Mathf.Clamp(scale, 0f, 50f);
+        }
+
+        internal void RequestAdmin(AdminCommand command, string target, float value)
+        {
+            if (!IsSpawned)
+                return;
+
+            SubmitAdminRpc((byte)command, ToFixedName(target), value);
+        }
+
+        internal void BroadcastWorldAdmin(AdminCommand command, string payload, float value)
+        {
+            if (!IsSpawned || !IsServer)
+                return;
+
+            ApplyWorldAdminRpc((byte)command, ToFixedName(payload), value);
+        }
+
+        internal void ApplyOwnerAdmin(AdminCommand command, float value)
+        {
+            if (!IsSpawned || !IsServer)
+                return;
+
+            ApplyOwnerAdminRpc((byte)command, value);
+        }
+
+        internal void SyncWorldState(string weather, float timescale)
+        {
+            if (!IsSpawned || !IsServer)
+                return;
+
+            SyncWorldStateRpc(ToFixedName(weather), timescale);
+        }
+
+        internal void ApplyOwnerAdminLocal(AdminCommand command, float value)
+        {
+            ApplyOwnerAdminState(command, value);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+        private void SubmitAdminRpc(byte command, FixedString64Bytes target, float value, RpcParams rpcParams = default)
+        {
+            AdminSession.ExecuteOnServer(
+                (AdminCommand)command,
+                target.ToString(),
+                value,
+                rpcParams.Receive.SenderClientId,
+                this);
+        }
+
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
+        private void ApplyWorldAdminRpc(byte command, FixedString64Bytes payload, float value)
+        {
+            switch ((AdminCommand)command)
+            {
+                case AdminCommand.Weather:
+                    WeatherManager.Instance?.TrySetWeather(payload.ToString());
+                    break;
+                case AdminCommand.Timescale:
+                    Time.timeScale = Mathf.Clamp(value, 0f, 8f);
+                    break;
+            }
+        }
+
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        private void ApplyOwnerAdminRpc(byte command, float value)
+        {
+            ApplyOwnerAdminState((AdminCommand)command, value);
+        }
+
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        private void SyncWorldStateRpc(FixedString64Bytes weather, float timescale)
+        {
+            if (weather.Length > 0)
+            {
+                WeatherManager weatherManager = WeatherManager.Instance;
+                string name = weather.ToString();
+                if (weatherManager != null
+                    && !string.Equals(weatherManager.CurrentWeatherName, name, StringComparison.OrdinalIgnoreCase))
+                    weatherManager.TrySetWeather(name);
+            }
+
+            Time.timeScale = Mathf.Clamp(timescale, 0f, 8f);
+        }
+
+        private void ApplyOwnerAdminState(AdminCommand command, float value)
+        {
+            switch (command)
+            {
+                case AdminCommand.Heal:
+                    GetComponent<AircraftVitality>()?.Restore();
+                    break;
+                case AdminCommand.Reload:
+                    if (_weapons == null || _weapons.Guns == null)
+                        break;
+                    for (int i = 0; i < _weapons.Guns.Length; i++)
+                    {
+                        if (_weapons.Guns[i])
+                            _weapons.Guns[i].RefillAmmo();
+                    }
+
+                    break;
+                case AdminCommand.Speed:
+                    if (_controller && _controller.Engine)
+                        _controller.Engine.SetMaxThrust((int)value);
+                    break;
+            }
+        }
+
+        private void HandleScaleChanged(float previous, float current)
+        {
+            float scale = Mathf.Clamp(current, 0f, 50f);
+            transform.localScale = new Vector3(scale, scale, scale);
         }
     }
 }

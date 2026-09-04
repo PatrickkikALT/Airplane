@@ -96,6 +96,7 @@ namespace Airplane.Multiplayer
                 return;
             Manager.Shutdown();
             _status = "Offline";
+            AdminSession.Reset();
         }
 
         private bool ApplyConnectionData(bool listening)
@@ -138,6 +139,7 @@ namespace Airplane.Multiplayer
 
             string reason = Manager.DisconnectReason;
             _status = string.IsNullOrEmpty(reason) ? "Disconnected" : $"Disconnected: {reason}";
+            AdminSession.Reset();
         }
 
         private void Update()
