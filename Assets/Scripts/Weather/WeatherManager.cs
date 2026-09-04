@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using Airplane.Extensions;
 using Airplane.FlightSimulation;
+using Airplane.Multiplayer;
+using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -442,6 +444,12 @@ namespace Airplane.Weather
         }
 
         public void UpdateWeather()
+        {
+            NetworkedWeather.Instance.UpdateWeatherClientRpc();
+            UpdateWeatherInternal();
+        }
+
+        public void UpdateWeatherInternal()
         {
             if (!TryGetTarget(out WeatherPreset target))
                 return;
