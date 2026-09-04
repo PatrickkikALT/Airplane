@@ -1,0 +1,122 @@
+#pragma kernel Simulate
+
+#include "TornadoFunnel.hlsl"
+
+struct Particle
+{
+    float3 position;
+    float3 velocity;
+    float scale;
+    float seed;
+};
+
+struct Tornado
+{
+    float3 basePosition;
+    float radius;
+    float height;
+    float spin;
+    float seed;
+    float pad;
+};
+
+RWStructuredBuffer<Particle> _Particles;
+StructuredBuffer<Tornado> _Tornadoes;
+
+float _DeltaTime;
+float _SimTime;
+uint _ParticleCount;
+uint _TornadoCount;
+float3 _Gravity;
+float3 _Wind;
+float _Turbulence;
+float _SpinSpeed;
+float _Updraft;
+float _InflowSpeed;
+float _NeckScale;
+float _Taper;
+float _GroundFlare;
+float _WobbleAmplitude;
+float _WobbleFrequency;
+
+float3 Turb(float3 p, float seed, float t)
+{
+    float3 f;
+    f.x = sin(p.y * 0.31 + t * 1.37 + seed);
+    f.y = sin(p.x * 0.19 + t * 0.91 + seed * 2.17) * 0.6;
+    f.z = cos(p.x * 0.27 + t * 1.13 + seed * 0.73);
+    f += sin(float3(p.z, p.x, p.y) * 0.44 + t * 0.55 + seed) * 0.4;
+    return f;
+}
+
+// Drop a particle back near the ground intake of its tornado.
+void Respawn(inout Particle p, Tornado t, uint index)
+{
+    float s = p.seed + _SimTime * 7.31 + index * 0.6180339;
+    float angle = TornadoHash11(s) * 6.2831853;
+    float wall = TornadoFunnelRadius(0.0, t.radius, _NeckScale, _Taper, _GroundFlare);
+    float r = wall * (0.35 + TornadoHash11(s + 1.7) * 1.85);
+    float h = TornadoHash11(s + 3.1) * t.height * 0.05;
+
+    float2 wobble = TornadoWobble(0.0, t.radius, _WobbleAmplitude, _WobbleFrequency, t.seed, _SimTime);
+    p.position = t.basePosition + float3(cos(angle) * r + wobble.x, h, sin(angle) * r + wobble.y);
+    p.velocity = float3(0.0, _Updraft * 0.45, 0.0);
+    p.scale = 0.35 + TornadoHash11(s + 5.3) * 1.5;
+    p.seed = TornadoHash11(s + 9.7) * 999.173;
+}
+
+[numthreads(256, 1, 1)]
+void Simulate(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _ParticleCount || _TornadoCount == 0)
+        return;
+
+    Particle p = _Particles[id.x];
+    Tornado t = _Tornadoes[id.x % _TornadoCount];
+    float dt = _DeltaTime;
+
+    float3 rel = p.position - t.basePosition;
+    float h01 = saturate(rel.y / max(t.height, 1.0));
+
+    // measure the radius against the wobbled centre line, not the anchor
+    float2 wobble = TornadoWobble(h01, t.radius, _WobbleAmplitude, _WobbleFrequency, t.seed, _SimTime);
+    float2 radial = rel.xz - wobble;
+    float r = max(length(radial), 1e-3);
+    float2 radialDir = radial / r;
+    float2 tangentDir = float2(-radialDir.y, radialDir.x) * t.spin;
+
+    float wall = TornadoFunnelRadius(h01, t.radius, _NeckScale, _Taper, _GroundFlare);
+    float core = max(wall, 1.0);
+
+    // Rankine vortex: solid body rotation inside the core, 1/r falloff outside
+    float tangential = _SpinSpeed * (r < core ? r / core : core / r);
+    // suck everything toward the wall
+    float inflow = clamp((wall - r) * _InflowSpeed, -_SpinSpeed, _SpinSpeed);
+    // updraft is strongest in the sheath and dies off with altitude
+    float sheath = saturate(1.0 - abs(r - wall) / max(core * 1.5, 1.0));
+    float lift = _Updraft * sheath * (1.0 - 0.4 * h01);
+
+    float3 desired;
+    desired.xz = tangentDir * tangential + radialDir * inflow;
+    desired.y = lift;
+    desired += _Wind * 0.3;
+    desired += Turb(p.position, p.seed, _SimTime) * _Turbulence;
+
+    p.velocity = lerp(p.velocity, desired, saturate(dt * 3.0));
+    p.velocity += _Gravity * dt;
+
+    float speed = length(p.velocity);
+    float cap = _SpinSpeed * 2.0 + _Updraft + 10.0;
+    if (speed > cap && speed > 1e-4)
+        p.velocity *= cap / speed;
+
+    p.position += p.velocity * dt;
+
+    // thrown clear, spat out the top, or buried: feed it back into the intake
+    rel = p.position - t.basePosition;
+    bool escaped = rel.y > t.height || rel.y < -2.0 || r > t.radius * 7.0;
+    if (escaped)
+        Respawn(p, t, id.x);
+
+    _Particles[id.x] = p;
+}

@@ -7,6 +7,8 @@ namespace Airplane.Weather.Editor
     public class WeatherManagerEditor : UnityEditor.Editor
     {
         private SerializedProperty weatherSystemProp;
+        private SerializedProperty tornadoSystemProp;
+        private SerializedProperty lightningSystemProp;
         private SerializedProperty weatherPresetProp;
         private SerializedProperty currentPresetProp;
         private SerializedProperty volumeProp;
@@ -15,6 +17,8 @@ namespace Airplane.Weather.Editor
         {
             volumeProp = serializedObject.FindProperty("volume");
             weatherSystemProp = serializedObject.FindProperty("weatherSystem");
+            tornadoSystemProp = serializedObject.FindProperty("tornadoSystem");
+            lightningSystemProp = serializedObject.FindProperty("lightningSystem");
             weatherPresetProp = serializedObject.FindProperty("presets");
             currentPresetProp = serializedObject.FindProperty("currentPreset");
             transitionDurationProp = serializedObject.FindProperty("transitionDuration");
@@ -24,6 +28,8 @@ namespace Airplane.Weather.Editor
             serializedObject.Update();
             EditorGUILayout.PropertyField(volumeProp);
             EditorGUILayout.PropertyField(weatherSystemProp);
+            EditorGUILayout.PropertyField(tornadoSystemProp);
+            EditorGUILayout.PropertyField(lightningSystemProp);
             EditorGUILayout.PropertyField(transitionDurationProp);
             EditorGUILayout.PropertyField(weatherPresetProp);
 

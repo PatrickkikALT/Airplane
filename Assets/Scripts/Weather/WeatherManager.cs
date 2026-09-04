@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Airplane.Extensions;
+using Airplane.FlightSimulation;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -10,14 +11,37 @@ public class WeatherPreset
 {
     public string Name;
     public int RainCount;
-    public Vector3 Wind;
-    public bool Thunder;
+
+    [Header("Thunder")]
+    public bool LightningEnabled;
+    public float StrikesPerMinute;
+    public float LightningFlashIntensity = 1f;
+    [Range(0f, 1f)] public float LightningBranchiness = 0.6f;
+    public Color LightningCoreColor = Color.white;
+    public Color LightningGlowColor = new(0.55f, 0.7f, 1f, 1f);
+    [Range(0f, 1f)] public float ThunderVolume = 1f;
+
+    [Header("Tornado")]
+    [Range(0, 150)] public int TornadoCount;
+    public int TornadoDebrisCount = 40000;
+    public float TornadoRadius = 45f;
+    public float TornadoHeight = 900f;
+    public float TornadoSpinSpeed = 85f;
+    public float TornadoUpdraft = 40f;
 
     [Header("General")]
     public bool CloudsEnabled = true;
     public bool LocalClouds;
     public VolumetricClouds.CloudPresets CloudPreset = VolumetricClouds.CloudPresets.Custom;
 
+    [Header("Fog")]
+    public bool FogEnabled = true;
+    public Color FogColor = Color.white;
+    public float FogDensity = 1.0f;
+    public float FogStart = 50f;
+    public float FogEnd = 50f;
+    public FogMode Mode = FogMode.Linear;
+    
     [Header("Shape")]
     [Range(0f, 1f)] public float DensityMultiplier = 0.4f;
     public AnimationCurve DensityCurve = new(new Keyframe(0f, 0f), new Keyframe(0.15f, 1.0f), new Keyframe(1.0f, 0.1f));
@@ -171,7 +195,9 @@ public class WeatherPreset
             Overcast(),
             Rain(),
             Storm(),
-            Thunderstorm()
+            Thunderstorm(),
+            Thunder(),
+            Tornado()
         };
     }
 
@@ -179,7 +205,6 @@ public class WeatherPreset
     {
         WeatherPreset p = Base("Clear", VolumetricClouds.CloudPresets.Sparse);
         p.RainCount = 0;
-        p.Wind = Vector3.zero;
         p.DensityMultiplier = 0.12f;
         p.ShapeFactor = 0.97f;
         p.BottomAltitude = 4000.0f;
@@ -195,7 +220,6 @@ public class WeatherPreset
     {
         WeatherPreset p = Base("Fair", VolumetricClouds.CloudPresets.Sparse);
         p.RainCount = 0;
-        p.Wind = new Vector3(2f, 0f, 1f);
         p.GlobalSpeed = 20.0f;
         p.Shadows = false;
         return p;
@@ -205,7 +229,6 @@ public class WeatherPreset
     {
         WeatherPreset p = Base("Cloudy", VolumetricClouds.CloudPresets.Cloudy);
         p.RainCount = 0;
-        p.Wind = new Vector3(4f, 0f, 1f);
         p.GlobalSpeed = 35.0f;
         p.Shadows = true;
         p.ShadowOpacity = 0.45f;
@@ -216,7 +239,6 @@ public class WeatherPreset
     {
         WeatherPreset p = Base("Overcast", VolumetricClouds.CloudPresets.Overcast);
         p.RainCount = 0;
-        p.Wind = new Vector3(6f, 0f, 2f);
         p.GlobalSpeed = 45.0f;
         p.SunLightDimmer = 0.7f;
         p.AmbientLightProbeDimmer = 0.85f;
@@ -230,7 +252,6 @@ public class WeatherPreset
     {
         WeatherPreset p = Base("Rain", VolumetricClouds.CloudPresets.Overcast);
         p.RainCount = 80000;
-        p.Wind = new Vector3(8f, 0f, 3f);
         p.GlobalSpeed = 55.0f;
         p.SunLightDimmer = 0.55f;
         p.AmbientLightProbeDimmer = 0.7f;
@@ -245,7 +266,6 @@ public class WeatherPreset
     {
         WeatherPreset p = Base("Storm", VolumetricClouds.CloudPresets.Stormy);
         p.RainCount = 180000;
-        p.Wind = new Vector3(16f, 0f, 6f);
         p.GlobalSpeed = 90.0f;
         p.AltitudeDistortion = 0.45f;
         p.SunLightDimmer = 0.4f;
@@ -255,15 +275,18 @@ public class WeatherPreset
         p.Shadows = true;
         p.ShadowOpacity = 0.95f;
         p.ShadowDistance = 10000.0f;
+        p.LightningEnabled = true;
+        p.StrikesPerMinute = 4.0f;
+        p.LightningFlashIntensity = 0.8f;
+        p.LightningBranchiness = 0.45f;
+        p.ThunderVolume = 0.7f;
         return p;
     }
 
     public static WeatherPreset Thunderstorm()
     {
         WeatherPreset p = Base("Thunderstorm", VolumetricClouds.CloudPresets.Stormy);
-        p.Thunder = true;
         p.RainCount = 280000;
-        p.Wind = new Vector3(22f, 0f, 8f);
         p.GlobalSpeed = 120.0f;
         p.AltitudeDistortion = 0.6f;
         p.VerticalShapeWindSpeed = 8.0f;
@@ -278,6 +301,77 @@ public class WeatherPreset
         p.DensityMultiplier = 0.42f;
         p.BottomAltitude = 700.0f;
         p.AltitudeRange = 5500.0f;
+        p.LightningEnabled = true;
+        p.StrikesPerMinute = 14.0f;
+        p.LightningFlashIntensity = 1.0f;
+        p.LightningBranchiness = 0.65f;
+        p.ThunderVolume = 1.0f;
+        return p;
+    }
+
+    public static WeatherPreset Tornado()
+    {
+        WeatherPreset p = Base("Tornado", VolumetricClouds.CloudPresets.Stormy);
+        p.RainCount = 220000;
+        p.TornadoCount = 2;
+        p.TornadoDebrisCount = 60000;
+        p.TornadoRadius = 55.0f;
+        p.TornadoHeight = 1100.0f;
+        p.TornadoSpinSpeed = 110.0f;
+        p.TornadoUpdraft = 55.0f;
+        p.GlobalSpeed = 150.0f;
+        p.AltitudeDistortion = 0.75f;
+        p.VerticalShapeWindSpeed = 14.0f;
+        p.VerticalErosionWindSpeed = 6.0f;
+        p.SunLightDimmer = 0.22f;
+        p.AmbientLightProbeDimmer = 0.35f;
+        p.ScatteringTint = new Color(0.26f, 0.2f, 0.14f, 1f);
+        p.MultiScattering = 0.8f;
+        p.PowderEffectIntensity = 0.1f;
+        p.Shadows = true;
+        p.ShadowOpacity = 1.0f;
+        p.ShadowDistance = 14000.0f;
+        p.DensityMultiplier = 0.48f;
+        // wall cloud sits low so the funnels visually reach it
+        p.BottomAltitude = 600.0f;
+        p.AltitudeRange = 6000.0f;
+        p.FogEnabled = true;
+        p.FogColor = new Color(0.35f, 0.3f, 0.24f, 1f);
+        p.FogDensity = 0.012f;
+        p.Mode = FogMode.ExponentialSquared;
+        p.LightningEnabled = true;
+        p.StrikesPerMinute = 20.0f;
+        p.LightningFlashIntensity = 1.1f;
+        p.LightningBranchiness = 0.7f;
+        p.ThunderVolume = 1.0f;
+        return p;
+    }
+
+    public static WeatherPreset Thunder()
+    {
+        WeatherPreset p = Base("Thunder", VolumetricClouds.CloudPresets.Stormy);
+        p.RainCount = 120000;
+        p.GlobalSpeed = 70.0f;
+        p.AltitudeDistortion = 0.5f;
+        p.VerticalShapeWindSpeed = 10.0f;
+        p.SunLightDimmer = 0.25f;
+        p.AmbientLightProbeDimmer = 0.38f;
+        p.ScatteringTint = new Color(0.2f, 0.19f, 0.26f, 1f);
+        p.MultiScattering = 0.7f;
+        p.Shadows = true;
+        p.ShadowOpacity = 1.0f;
+        p.ShadowDistance = 12000.0f;
+        p.DensityMultiplier = 0.45f;
+        p.BottomAltitude = 900.0f;
+        p.AltitudeRange = 5000.0f;
+        // the whole point of this one: near-constant strikes, mostly cloud to ground
+        p.LightningEnabled = true;
+        p.StrikesPerMinute = 36.0f;
+        p.LightningFlashIntensity = 1.25f;
+        p.LightningBranchiness = 0.8f;
+        p.LightningCoreColor = Color.white;
+        p.LightningGlowColor = new Color(0.62f, 0.72f, 1f, 1f);
+        p.ThunderVolume = 1.0f;
         return p;
     }
 
@@ -298,6 +392,8 @@ namespace Airplane.Weather
 
         [SerializeField] private Volume volume;
         [SerializeField] private WeatherSystem weatherSystem;
+        [SerializeField] private TornadoSystem tornadoSystem;
+        [SerializeField] private LightningSystem lightningSystem;
         [SerializeField] private WeatherPreset[] presets;
         [SerializeField] private int currentPreset;
         [SerializeField] [Min(0f)] private float transitionDuration = 10f;
@@ -312,7 +408,15 @@ namespace Airplane.Weather
         private CloudSnapshot _toClouds;
         private int _toRain;
         private Vector3 _toWind;
-        private bool _blendingRain;
+        private float _toDensity;
+        private int _fromTornadoes;
+        private int _toTornadoes;
+        private int _fromDebris;
+        private int _toDebris;
+        private TornadoShape _fromTornadoShape;
+        private TornadoShape _toTornadoShape;
+        private LightningSnapshot _fromLightning;
+        private LightningSnapshot _toLightning;
 
         private void Reset()
         {
@@ -382,7 +486,20 @@ namespace Airplane.Weather
             CaptureFrom();
             CaptureTo(target);
             PrepareRainCapacity();
+            PrepareTornadoCapacity();
             ApplyBlend(1f);
+        }
+
+        private void ApplyWind(WeatherPreset target)
+        {
+            _toWind = WindFromPreset(target);
+        }
+
+        private Vector3 WindFromPreset(WeatherPreset preset)
+        {
+            float theta = preset.GlobalOrientation * Mathf.Deg2Rad;
+            float speedMs = preset.GlobalSpeed * (1000f / 3600f);
+            return new Vector3(Mathf.Cos(theta), 0f, Mathf.Sin(theta)) * speedMs;
         }
 
         private void BeginBlend(WeatherPreset target)
@@ -390,6 +507,8 @@ namespace Airplane.Weather
             CaptureFrom();
             CaptureTo(target);
             PrepareRainCapacity();
+            PrepareTornadoCapacity();
+            SetFog(target.FogEnabled, target.FogColor, target.FogStart, target.FogEnd, target.Mode);
             _blend = 0f;
             _blending = true;
             ApplyBlend(0f);
@@ -403,10 +522,22 @@ namespace Airplane.Weather
             weatherSystem.EnsureCapacity(Mathf.Max(_fromRain, _toRain, 1));
         }
 
+        private void PrepareTornadoCapacity()
+        {
+            if (tornadoSystem == null)
+                return;
+
+            tornadoSystem.EnsureDebrisCapacity(Mathf.Max(_fromDebris, _toDebris, 1));
+        }
+
         private void CaptureFrom()
         {
             _fromRain = weatherSystem != null ? weatherSystem.ParticleCount : 0;
-            _fromWind = weatherSystem != null ? weatherSystem.Wind : Vector3.zero;
+            _fromTornadoes = tornadoSystem != null ? tornadoSystem.TornadoCount : 0;
+            _fromDebris = tornadoSystem != null ? tornadoSystem.DebrisCount : 0;
+            _fromTornadoShape = TornadoShape.FromSystem(tornadoSystem);
+            _fromLightning = LightningSnapshot.FromSystem(lightningSystem);
+            _fromWind = weatherSystem != null ? weatherSystem.Wind : AtmosphericModel.SampleWind();
             _fromClouds = TryGetClouds(out VolumetricClouds clouds)
                 ? CloudSnapshot.FromVolume(clouds)
                 : CloudSnapshot.FromPreset(new WeatherPreset());
@@ -415,16 +546,23 @@ namespace Airplane.Weather
         private void CaptureTo(WeatherPreset target)
         {
             _toRain = Mathf.Max(0, target.RainCount);
-            _toWind = target.Wind;
+            _toTornadoes = Mathf.Clamp(target.TornadoCount, 0, TornadoSystem.MaxTornadoes);
+            _toDebris = _toTornadoes > 0 ? Mathf.Max(0, target.TornadoDebrisCount) : 0;
+            _toTornadoShape = TornadoShape.FromPreset(target);
+            _toLightning = LightningSnapshot.FromPreset(target);
             _toCloudPreset = target.CloudPreset;
             _toClouds = CloudSnapshot.FromPreset(target);
+            _toDensity = target.FogDensity;
+            ApplyWind(target);
         }
 
         private void ApplyBlend(float t)
         {
+            Vector3 wind = Vector3.Lerp(_fromWind, _toWind, t);
+            AtmosphericModel.Instance?.SetWind(wind);
+
             if (weatherSystem != null)
             {
-                Vector3 wind = Vector3.Lerp(_fromWind, _toWind, t);
                 weatherSystem.SetWind(wind);
                 if (t > 0.5f)
                 {
@@ -433,16 +571,20 @@ namespace Airplane.Weather
                 }
             }
 
+            ApplyTornadoBlend(t, wind);
+            ApplyLightningBlend(t);
+
             if (!TryGetClouds(out VolumetricClouds clouds))
                 return;
 
             CloudSnapshot.Lerp(_fromClouds, _toClouds, t, _curveKeys, clouds);
             OverrideCloudParams(clouds);
-
+            float fogT = GetRainT(t);
+            LerpFog(_toDensity, fogT);
+            
             if (t >= 1f - Mathf.Epsilon)
             {
                 clouds.cloudPreset = _toCloudPreset;
-                _blendingRain = false;
             }
 
 #if UNITY_EDITOR
@@ -456,9 +598,78 @@ namespace Airplane.Weather
 #endif
         }
 
+        private void ApplyTornadoBlend(float t, Vector3 wind)
+        {
+            if (tornadoSystem == null)
+                return;
+
+            tornadoSystem.SetWind(wind);
+
+            TornadoShape shape = TornadoShape.Lerp(_fromTornadoShape, _toTornadoShape, t);
+            tornadoSystem.SetShape(shape.Radius, shape.Height);
+            tornadoSystem.SetForces(shape.SpinSpeed, shape.Updraft);
+
+            // Funnels only swap over at the halfway point, same as the rain count does.
+            float fadeIn = GetRainT(t);
+            float fadeOut = 1f - Mathf.Clamp01(t * 2f);
+            bool showing = t > 0.5f;
+
+            tornadoSystem.SetTornadoCount(showing ? _toTornadoes : _fromTornadoes);
+            tornadoSystem.SetDebrisCount(Mathf.RoundToInt(Mathf.Lerp(_fromDebris, _toDebris,
+                showing ? fadeIn : 0f)));
+
+            float intensity;
+            if (_fromTornadoes > 0 && _toTornadoes > 0)
+                intensity = 1f;
+            else if (_toTornadoes > 0)
+                intensity = fadeIn;
+            else
+                intensity = fadeOut;
+
+            tornadoSystem.SetIntensity(intensity);
+        }
+
+        private void ApplyLightningBlend(float t)
+        {
+            if (lightningSystem == null)
+                return;
+
+            LightningSnapshot lightning = LightningSnapshot.Lerp(_fromLightning, _toLightning, t);
+            lightningSystem.SetStrikeRate(lightning.Rate);
+            lightningSystem.SetFlashIntensity(lightning.FlashIntensity);
+            lightningSystem.SetBranchiness(lightning.Branchiness);
+            lightningSystem.SetColors(lightning.CoreColor, lightning.GlowColor);
+            lightningSystem.SetThunderVolume(lightning.ThunderVolume);
+            lightningSystem.SetIntensity(1f);
+        }
+
         private float GetRainT(float t)
         {
             return Mathf.Max(0, Mathf.Min(1, (t - 0.5f) * 2.0f));
+        }
+
+        public void LerpFog(float density, float t)
+        {
+            RenderSettings.fogDensity = Mathf.Lerp(RenderSettings.fogDensity, density, t);
+        }
+        public void SetFog(bool enabled, Color fogColor, float fogStart, float fogEnd, FogMode fogMode)
+        {
+            if (fogMode == FogMode.Linear)
+            {
+                RenderSettings.fog = enabled;
+                RenderSettings.fogColor = fogColor;
+                RenderSettings.fogEndDistance = 0;
+                RenderSettings.fogStartDistance = 0;
+                RenderSettings.fogMode = fogMode;
+            }
+            else
+            {
+                RenderSettings.fog = enabled;
+                RenderSettings.fogColor = fogColor;
+                RenderSettings.fogEndDistance = fogStart;
+                RenderSettings.fogStartDistance = fogEnd;
+                RenderSettings.fogMode = fogMode;
+            }
         }
 
         private bool TryGetClouds(out VolumetricClouds clouds)
@@ -529,11 +740,156 @@ namespace Airplane.Weather
             return presets.Select(preset => preset.Name.ToLower()).ToArray();
         }
 
+        public string CurrentWeatherName
+        {
+            get
+            {
+                if (presets == null || presets.Length == 0)
+                    return "";
+
+                int index = Mathf.Clamp(currentPreset, 0, presets.Length - 1);
+                WeatherPreset preset = presets[index];
+                return preset != null && !string.IsNullOrEmpty(preset.Name)
+                    ? preset.Name.ToLowerInvariant()
+                    : "";
+            }
+        }
+
+        public bool HasWeather(string name)
+        {
+            return TryFindPreset(name, out _);
+        }
+
+        public bool TrySetWeather(string name)
+        {
+            if (!TryFindPreset(name, out int index))
+                return false;
+
+            currentPreset = index;
+            UpdateWeather();
+            return true;
+        }
+
         public void SetWeather(string name)
         {
-            WeatherPreset preset = presets.FirstOrDefault(x => x.Name.ToLower() == name);
-            currentPreset = Array.IndexOf(presets, preset);
-            UpdateWeather();
+            TrySetWeather(name);
+        }
+
+        private bool TryFindPreset(string name, out int index)
+        {
+            index = -1;
+            if (presets == null || string.IsNullOrWhiteSpace(name))
+                return false;
+
+            for (int i = 0; i < presets.Length; i++)
+            {
+                WeatherPreset preset = presets[i];
+                if (preset == null || string.IsNullOrEmpty(preset.Name))
+                    continue;
+                if (!string.Equals(preset.Name, name, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                index = i;
+                return true;
+            }
+
+            return false;
+        }
+
+        private struct LightningSnapshot
+        {
+            public float Rate;
+            public float FlashIntensity;
+            public float Branchiness;
+            public Color CoreColor;
+            public Color GlowColor;
+            public float ThunderVolume;
+
+            public static LightningSnapshot FromPreset(WeatherPreset preset)
+            {
+                return new LightningSnapshot
+                {
+                    Rate = preset.LightningEnabled ? Mathf.Max(0f, preset.StrikesPerMinute) : 0f,
+                    FlashIntensity = preset.LightningFlashIntensity,
+                    Branchiness = preset.LightningBranchiness,
+                    CoreColor = preset.LightningCoreColor,
+                    GlowColor = preset.LightningGlowColor,
+                    ThunderVolume = preset.ThunderVolume
+                };
+            }
+
+            public static LightningSnapshot FromSystem(LightningSystem system)
+            {
+                if (system == null)
+                    return FromPreset(new WeatherPreset());
+
+                return new LightningSnapshot
+                {
+                    Rate = system.StrikeRate,
+                    FlashIntensity = system.FlashIntensity,
+                    Branchiness = system.Branchiness,
+                    CoreColor = system.CoreColor,
+                    GlowColor = system.GlowColor,
+                    ThunderVolume = system.ThunderVolume
+                };
+            }
+
+            public static LightningSnapshot Lerp(in LightningSnapshot a, in LightningSnapshot b, float t)
+            {
+                return new LightningSnapshot
+                {
+                    Rate = Mathf.Lerp(a.Rate, b.Rate, t),
+                    FlashIntensity = Mathf.Lerp(a.FlashIntensity, b.FlashIntensity, t),
+                    Branchiness = Mathf.Lerp(a.Branchiness, b.Branchiness, t),
+                    CoreColor = Color.Lerp(a.CoreColor, b.CoreColor, t),
+                    GlowColor = Color.Lerp(a.GlowColor, b.GlowColor, t),
+                    ThunderVolume = Mathf.Lerp(a.ThunderVolume, b.ThunderVolume, t)
+                };
+            }
+        }
+
+        private struct TornadoShape
+        {
+            public float Radius;
+            public float Height;
+            public float SpinSpeed;
+            public float Updraft;
+
+            public static TornadoShape FromPreset(WeatherPreset preset)
+            {
+                return new TornadoShape
+                {
+                    Radius = preset.TornadoRadius,
+                    Height = preset.TornadoHeight,
+                    SpinSpeed = preset.TornadoSpinSpeed,
+                    Updraft = preset.TornadoUpdraft
+                };
+            }
+
+            public static TornadoShape FromSystem(TornadoSystem system)
+            {
+                if (system == null)
+                    return FromPreset(new WeatherPreset());
+
+                return new TornadoShape
+                {
+                    Radius = system.Radius,
+                    Height = system.Height,
+                    SpinSpeed = system.SpinSpeed,
+                    Updraft = system.Updraft
+                };
+            }
+
+            public static TornadoShape Lerp(in TornadoShape a, in TornadoShape b, float t)
+            {
+                return new TornadoShape
+                {
+                    Radius = Mathf.Lerp(a.Radius, b.Radius, t),
+                    Height = Mathf.Lerp(a.Height, b.Height, t),
+                    SpinSpeed = Mathf.Lerp(a.SpinSpeed, b.SpinSpeed, t),
+                    Updraft = Mathf.Lerp(a.Updraft, b.Updraft, t)
+                };
+            }
         }
 
         private struct CloudSnapshot
@@ -692,8 +1048,6 @@ namespace Airplane.Weather
                 {
                     Name = p.Name,
                     RainCount = p.RainCount,
-                    Wind = p.Wind,
-                    Thunder = p.Thunder,
                     CloudsEnabled = p.CloudsEnabled,
                     LocalClouds = p.LocalClouds,
                     CloudPreset = p.CloudPreset,

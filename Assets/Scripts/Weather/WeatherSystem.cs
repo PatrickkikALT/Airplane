@@ -308,6 +308,8 @@ namespace Airplane.Weather
             _drawCount = _particles != null ? Mathf.Min(count, _gpuCount) : count;
         }
 
+ 
+
         [StructLayout(LayoutKind.Sequential)]
         private struct WeatherParticle
         {

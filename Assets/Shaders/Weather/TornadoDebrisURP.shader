@@ -1,17 +1,19 @@
-Shader "Airplane/Weather/Weather Instance URP"
+Shader "Airplane/Weather/Tornado Debris URP"
 {
     Properties
     {
-        [MainColor] _BaseColor("Color", Color) = (0.75, 0.82, 0.9, 0.45)
+        [MainColor] _BaseColor("Color", Color) = (0.32, 0.28, 0.23, 0.75)
+        _TopColor("Top Color", Color) = (0.5, 0.5, 0.54, 0.5)
         [MainTexture] _BaseMap("Albedo", 2D) = "white" {}
-        _Size("Size", Float) = 0.08
-        _VelocityStretch("Velocity Stretch", Float) = 8
-        _DepthFade("Depth Fade", Float) = 0.4
+        _Size("Size", Float) = 0.9
+        _VelocityStretch("Velocity Stretch", Float) = 2.5
+        _GroundY("Ground Y", Float) = 0
+        _TintHeight("Tint Height", Float) = 400
+        _Softness("Softness", Range(0.01, 4)) = 1.4
+        _DepthFade("Depth Fade", Float) = 1.5
         _DepthBias("Depth Bias", Float) = 0.05
-        _NearFade("Near Fade", Float) = 1.5
-        _FarFade("Far Fade", Float) = 40
-        [HideInInspector] _CloudCeiling("Cloud Ceiling", Float) = 10000000
-        [HideInInspector] _CloudFade("Cloud Fade", Float) = 120
+        _NearFade("Near Fade", Float) = 3
+        _FarFade("Far Fade", Float) = 900
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Float) = 5
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Float) = 10
     }
@@ -28,7 +30,7 @@ Shader "Airplane/Weather/Weather Instance URP"
 
         Pass
         {
-            Name "WeatherForward"
+            Name "TornadoDebrisForward"
             Tags { "LightMode" = "UniversalForward" }
 
             Cull Off
@@ -41,6 +43,7 @@ Shader "Airplane/Weather/Weather Instance URP"
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile_instancing
+            #pragma multi_compile_fog
             #pragma instancing_options procedural:setup
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -58,15 +61,17 @@ Shader "Airplane/Weather/Weather Instance URP"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _TopColor;
                 float4 _BaseMap_ST;
                 float _Size;
                 float _VelocityStretch;
+                float _GroundY;
+                float _TintHeight;
+                float _Softness;
                 float _DepthFade;
                 float _DepthBias;
                 float _NearFade;
                 float _FarFade;
-                float _CloudCeiling;
-                float _CloudFade;
             CBUFFER_END
 
             TEXTURE2D(_BaseMap);
@@ -84,6 +89,7 @@ Shader "Airplane/Weather/Weather Instance URP"
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
                 float4 color : TEXCOORD1;
+                float fogFactor : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -92,7 +98,7 @@ Shader "Airplane/Weather/Weather Instance URP"
             {
                 Particle p;
                 p.position = 0;
-                p.velocity = float3(0, -1, 0);
+                p.velocity = float3(0, 1, 0);
                 p.scale = 1;
                 p.seed = 0;
                 #ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
@@ -129,40 +135,43 @@ Shader "Airplane/Weather/Weather Instance URP"
                 Particle p = FetchParticle();
                 float2 corner = input.positionOS.xy;
                 float size = max(p.scale * _Size, 1e-4);
-                float stretch = max(_VelocityStretch, 0.0);
 
                 float3 camRight = UNITY_MATRIX_I_V._m00_m10_m20;
                 float3 camUp = UNITY_MATRIX_I_V._m01_m11_m21;
+
+                // Debris is thrown sideways by the vortex, so smear along velocity
+                // rather than straight down like precipitation does.
                 float3 vel = p.velocity;
                 float velLen = length(vel);
-                float3 velDir = velLen > 0.01 ? vel / velLen : float3(0, -1, 0);
-
+                float3 velDir = velLen > 0.01 ? vel / velLen : camUp;
                 float3 view = _WorldSpaceCameraPos - p.position;
                 float3 side = cross(velDir, view);
                 float sideLen = length(side);
                 side = sideLen > 1e-5 ? side / sideLen : camRight;
 
-                // stretch the quad along velocity so rain looks like streaks
-                float rainMix = saturate(stretch);
-                float3 axisX = normalize(lerp(camRight, side, rainMix));
-                float3 axisY = normalize(lerp(camUp, velDir, rainMix));
-                float width = size * lerp(1.0, 0.22, rainMix);
-                float height = size * (1.0 + stretch);
+                float smear = saturate(velLen / max(_VelocityStretch * 20.0, 1e-4));
+                float3 axisX = normalize(lerp(camRight, side, smear));
+                float3 axisY = normalize(lerp(camUp, velDir, smear));
+                float width = size;
+                float height = size * (1.0 + _VelocityStretch * smear);
 
-                // keep a couple pixels of width or it vanishes in the sky
+                // never let a chunk shrink below a pixel or the column looks empty
                 float3 viewPos = TransformWorldToView(p.position);
                 float pixelWs = abs(viewPos.z) / max(abs(UNITY_MATRIX_P._m11) * _ScaledScreenParams.y * 0.5, 1e-4);
-                width = max(width, pixelWs * 1.5);
+                width = max(width, pixelWs * 1.2);
+                height = max(height, pixelWs * 1.2);
 
                 float3 worldPos = p.position + axisX * (corner.x * width) + axisY * (corner.y * height);
 
                 output.positionCS = TransformWorldToHClip(worldPos);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
 
-                float flicker = lerp(0.65, 1.0, frac(p.seed * 0.173));
-                float cloudFade = saturate((_CloudCeiling - p.position.y) / max(_CloudFade, 1e-3));
-                output.color = _BaseColor * flicker;
-                output.color.a *= cloudFade;
+                // heavy dirt near the intake, pale vapour once it is lofted
+                float lift = saturate((p.position.y - _GroundY) / max(_TintHeight, 1e-3));
+                float4 tint = lerp(_BaseColor, _TopColor, lift);
+                float flicker = lerp(0.7, 1.0, frac(p.seed * 0.173));
+                output.color = tint * float4(flicker.xxx, 1.0);
+                output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
             }
 
@@ -171,34 +180,24 @@ Shader "Airplane/Weather/Weather Instance URP"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float2 uv = input.uv;
-                float2 centered = uv * 2.0 - 1.0;
-                // sharp slab, fills the thin quad instead of rounding it off
-                float ax = abs(centered.x);
-                float rainMask = saturate((0.85 - ax) / max(fwidth(ax), 1e-4));
-                float ay = abs(centered.y);
-                rainMask *= saturate((0.98 - ay) / max(fwidth(ay), 1e-4));
-                float snowMask = saturate(1.0 - dot(centered, centered));
-                snowMask = pow(max(snowMask, 0.0), 1.45);
-                float shape = lerp(snowMask, rainMask, saturate(_VelocityStretch));
+                float2 centered = input.uv * 2.0 - 1.0;
+                float shape = saturate(1.0 - dot(centered, centered));
+                shape = pow(shape, _Softness);
 
-                float4 tex = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
-                float4 col = input.color * tex;
+                float4 col = input.color * SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
                 col.a *= shape;
 
                 float2 screenUV = GetNormalizedScreenSpaceUV(input.positionCS);
-                // grab depth from urp (turn on depth texture on the urp asset)
-                float sceneRaw = SampleSceneDepth(screenUV);
-                float sceneEye = LinearEyeDepth(sceneRaw, _ZBufferParams);
+                float sceneEye = LinearEyeDepth(SampleSceneDepth(screenUV), _ZBufferParams);
                 float particleEye = LinearEyeDepth(input.positionCS.z, _ZBufferParams);
-                float occlude = saturate((sceneEye - particleEye - _DepthBias) / max(_DepthFade, 1e-4));
-                col.a *= occlude;
+                col.a *= saturate((sceneEye - particleEye - _DepthBias) / max(_DepthFade, 1e-4));
 
                 float nearFade = saturate((particleEye - _NearFade) / max(_NearFade, 1e-4));
-                float farFade = 1.0 - saturate((particleEye - _FarFade * 0.65) / max(_FarFade * 0.35, 1e-4));
+                float farFade = 1.0 - saturate((particleEye - _FarFade * 0.7) / max(_FarFade * 0.3, 1e-4));
                 col.a *= nearFade * farFade;
 
                 clip(col.a - 0.003);
+                col.rgb = MixFog(col.rgb, input.fogFactor);
                 return col;
             }
             ENDHLSL
