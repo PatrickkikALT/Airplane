@@ -1,0 +1,69 @@
+#pragma kernel Simulate
+
+struct Particle
+{
+    float3 position;
+    float3 velocity;
+    float scale;
+    float seed;
+};
+
+RWStructuredBuffer<Particle> _Particles;
+
+float _DeltaTime;
+float _SimTime;
+float _Turbulence;
+uint _ParticleCount;
+float3 _Gravity;
+float3 _Wind;
+float3 _CameraPosition;
+float3 _BoundsSize;
+float _CloudCeiling;
+
+float3 Turb(float3 p, float seed, float t)
+{
+    float n = seed;
+    float3 f;
+    f.x = sin(p.y * 0.23 + t * 1.37 + n);
+    f.y = sin(p.x * 0.19 + t * 0.91 + n * 2.17) * 0.4;
+    f.z = cos(p.x * 0.21 + t * 1.13 + n * 0.73);
+    f += sin(float3(p.z, p.x, p.y) * 0.41 + t * 0.55 + n) * 0.35;
+    return f;
+}
+
+float3 WrapToCam(float3 pos, float3 center, float3 size)
+{
+    // wrap stuff around the camera
+    float3 s = max(size, 0.01);
+    float3 rel = pos - center;
+    rel -= s * round(rel / s);
+    return center + rel;
+}
+
+[numthreads(256, 1, 1)]
+void Simulate(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= _ParticleCount)
+        return;
+
+    Particle p = _Particles[id.x];
+    float dt = _DeltaTime;
+
+    float3 accel = _Gravity + Turb(p.position, p.seed, _SimTime) * _Turbulence;
+    p.velocity += accel * dt;
+    p.velocity.x = lerp(p.velocity.x, _Wind.x, saturate(dt * 1.6));
+    p.velocity.z = lerp(p.velocity.z, _Wind.z, saturate(dt * 1.6));
+    p.velocity.y += _Wind.y * dt;
+
+    float spd = length(p.velocity);
+    float cap = max(length(_Gravity) * 2.5, length(_Wind) + 8.0);
+    if (spd > cap && spd > 1e-4)
+        p.velocity *= cap / spd;
+
+    p.position += p.velocity * dt;
+    p.position = WrapToCam(p.position, _CameraPosition, _BoundsSize);
+    // rain lives under the clouds, not above them
+    p.position.y = min(p.position.y, _CloudCeiling);
+
+    _Particles[id.x] = p;
+}

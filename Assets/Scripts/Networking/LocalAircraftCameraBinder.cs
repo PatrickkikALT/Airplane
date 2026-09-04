@@ -1,4 +1,5 @@
 using Airplane.FlightSimulation;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace Airplane.Multiplayer
@@ -64,6 +65,13 @@ namespace Airplane.Multiplayer
         {
             if (!chaseCamera)
                 return;
+
+            NetworkManager manager = NetworkManager.Singleton;
+            if (!Application.isPlaying || manager == null || manager.ShutdownInProgress)
+            {
+                chaseCamera.SetTarget(null);
+                return;
+            }
 
             if (!holdLastPositionOnDespawn || !aircraft)
             {

@@ -94,6 +94,7 @@ namespace Airplane.Multiplayer
         private int _nextDummyIndex;
         private int _desiredBots;
         private bool _subscribed;
+        private NetworkManager _manager;
 
         /// <summary>The spawner in the active scene, if any.</summary>
         public static AircraftNetworkSpawner Instance { get; private set; }
@@ -113,19 +114,22 @@ namespace Airplane.Multiplayer
         private void Start()
         {
             Instance = this;
+            _manager = Manager;
 
             if (!aircraftPrefab)
                 Debug.LogError("no aircraft prefab assigned, nobody will spawn.");
 
-            if (clearPlayerPrefab && Manager.NetworkConfig != null && Manager.NetworkConfig.PlayerPrefab != null)
-            {
-                Manager.NetworkConfig.PlayerPrefab = null;
-            }
+            if (clearPlayerPrefab && _manager != null && _manager.NetworkConfig != null && _manager.NetworkConfig.PlayerPrefab != null)
+                _manager.NetworkConfig.PlayerPrefab = null;
 
-            Manager.OnServerStarted += HandleServerStarted;
-            Manager.OnServerStopped += HandleServerStopped;
-            Manager.OnClientConnectedCallback += HandleClientConnected;
-            Manager.OnClientDisconnectCallback += HandleClientDisconnected;
+            if (_manager == null)
+                return;
+
+            _manager.OnServerStarted += HandleServerStarted;
+            _manager.OnServerStopped += HandleServerStopped;
+            _manager.OnClientConnectedCallback += HandleClientConnected;
+            _manager.OnClientDisconnectCallback += HandleClientDisconnected;
+            _manager.OnPreShutdown += HandlePreShutdown;
             _subscribed = true;
 
             if (IsServerActive)
@@ -134,17 +138,29 @@ namespace Airplane.Multiplayer
 
         private void OnDestroy()
         {
-            if (_subscribed && Manager != null)
+            // Singleton is already cleared by the time scene objects are destroyed on Play-stop,
+            // so unsubscribe from the instance we actually bound to.
+            if (_subscribed && _manager)
             {
-                Manager.OnServerStarted -= HandleServerStarted;
-                Manager.OnServerStopped -= HandleServerStopped;
-                Manager.OnClientConnectedCallback -= HandleClientConnected;
-                Manager.OnClientDisconnectCallback -= HandleClientDisconnected;
-                _subscribed = false;
+                _manager.OnServerStarted -= HandleServerStarted;
+                _manager.OnServerStopped -= HandleServerStopped;
+                _manager.OnClientConnectedCallback -= HandleClientConnected;
+                _manager.OnClientDisconnectCallback -= HandleClientDisconnected;
+                _manager.OnPreShutdown -= HandlePreShutdown;
             }
+
+            _subscribed = false;
+            _manager = null;
 
             if (Instance == this)
                 Instance = null;
+        }
+
+        private void HandlePreShutdown()
+        {
+            if (!this)
+                return;
+            StopAllCoroutines();
         }
 
         private void HandleServerStarted()
@@ -180,10 +196,18 @@ namespace Airplane.Multiplayer
 
         private void HandleClientDisconnected(ulong clientId)
         {
-            if (_aircraftByClient.Remove(clientId, out NetworkObject aircraft) && aircraft && aircraft.IsSpawned)
-                aircraft.Despawn();
-
             _slotByClient.Remove(clientId);
+
+            if (!_aircraftByClient.Remove(clientId, out NetworkObject aircraft))
+                return;
+
+            // NGO is already tearing spawned objects down. A second Despawn here races
+            // NetworkSpawnManager.DespawnAndDestroyNetworkObjects on Play-stop.
+            if (Manager != null && Manager.ShutdownInProgress)
+                return;
+
+            if (aircraft && aircraft.IsSpawned)
+                aircraft.Despawn();
         }
 
         /// <summary>
@@ -239,7 +263,7 @@ namespace Airplane.Multiplayer
             if (!IsServerActive)
                 return;
 
-            _desiredBots = Mathf.Clamp(count, 0, 32);
+            _desiredBots = Mathf.Clamp(count, 0, 9999);
 
             while (_bots.Count > _desiredBots)
                 DespawnLastBot();

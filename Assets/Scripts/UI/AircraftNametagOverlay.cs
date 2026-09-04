@@ -84,7 +84,7 @@ namespace Airplane.UI
 
         private void OnGUI()
         {
-            if (!Enabled)
+            if (!Enabled || !HudVisibility.Visible)
                 return;
 
             var aircraft = NetworkedAircraft.All;

@@ -671,10 +671,6 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
                 cloudsMaterial.SetVector(sunColor, mainLightColor);
             }
 
-            // Update preset values
-            VolumetricClouds.CloudPresets cloudPreset = cloudsVolume.cloudPreset;
-            cloudsVolume.cloudPreset = cloudPreset;
-
             UpdateMaterialProperties(camera);
             denoiseClouds = cloudsVolume.temporalAccumulationFactor.value >= 0.01f;
         }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Airplane.Multiplayer;
 using Airplane.Weapons;
+using Airplane.Weather;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -459,6 +460,7 @@ namespace Airplane.UI
             Add("scale", "scale [scale]", "Change your aircraft's scale", CmdScale);
             Add("destroy", "destroy [displayName]", "Destroys the targeted aircraft", CmdDestroy);
             Add("speed", "speed [speed]", "Sets your aircraft's speed, base is 60000.",  CmdSpeed);
+            Add("weather", "weather [weather]", "Use just 'weather' for a list of possible weathers.", CmdWeather);
         }
 
         private void Add(string name, string usage, string help, Func<string[], string> handler)
@@ -472,6 +474,20 @@ namespace Airplane.UI
             });
         }
 
+        private string CmdWeather(string[] args)
+        {
+            WeatherManager manager = WeatherManager.Instance;
+            string[] possibleWeathers = manager.GetWeathers();
+            if (args == null || args.Length == 0)
+                return string.Join(", ", possibleWeathers);
+
+            if (possibleWeathers.Contains(args[0].ToLower()))
+            {
+                manager.SetWeather(args[0].ToLower());
+                return "";
+            }
+            return "Invalid weather, run weather for possible weathers.";
+        }
         private string CmdSpeed(string[] args)
         {
             NetworkedAircraft aircraft = NetworkedAircraft.Local;

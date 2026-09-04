@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: b50dba31548e6827cbbe154a6c7080e4, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -290,13 +290,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 304367248}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
-  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalRotation: {x: 0.73058915, y: -0.4998135, z: 0.03375529, w: 0.46398997}
+  m_LocalPosition: {x: -47.5, y: 25.2, z: -45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+  m_LocalEulerAnglesHint: {x: 45.375, y: -143.839, z: -95.703}
 --- !u!114 &304367251
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -470,6 +470,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &964454195
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 964454197}
+  - component: {fileID: 964454196}
+  m_Layer: 0
+  m_Name: Weather
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &964454196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964454195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed5d4b262eebd374093c8fb931efd716, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weather.GPUWeatherSystem
+  simulationCompute: {fileID: 7200000, guid: 7e88763507268dbfcb1be539f0b42038, type: 3}
+  particleCount: 6000
+  mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  material: {fileID: 2100000, guid: 8dd8742ae1e464cc8ad717359ad247e4, type: 2}
+  wind: {x: 0, y: 0, z: 0}
+  gravity: {x: 0, y: -18, z: 0}
+  turbulence: 6
+  volumeBounds: {x: 50, y: 40, z: 50}
+  cloudFade: 120
+  cameraOverride: {fileID: 1585690287}
+  color: {r: 0.37864897, g: 0.49508813, b: 0.6320754, a: 0.45}
+  particleSize: 0.05
+  velocityStretch: 4
+--- !u!4 &964454197
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964454195}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -31287.906, y: -0.00002, z: -5913.901}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1232413903
 GameObject:
   m_ObjectHideFlags: 0
@@ -573,7 +630,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1303509917}
-  - component: {fileID: 1303509915}
   - component: {fileID: 1303509916}
   m_Layer: 0
   m_Name: GameObject (1)
@@ -582,32 +638,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1303509915
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1303509914}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1439822167
-  InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  m_InScenePlaced: 1
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &1303509916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -853,7 +883,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -948,6 +978,484 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!1 &1801246298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1801246300}
+  - component: {fileID: 1801246299}
+  m_Layer: 0
+  m_Name: GameObject (6)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1801246299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801246298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c33c43c106fbd2c23a8dcb585716396b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  volume: {fileID: 79364323}
+  weatherSystem: {fileID: 964454196}
+  presets:
+  - Name: Dry
+    RainCount: 0
+    Wind: {x: 3.09, y: 1.36, z: 0}
+    Thunder: 0
+    CloudsEnabled: 1
+    LocalClouds: 1
+    CloudPreset: 4
+    DensityMultiplier: 0.191
+    DensityCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.15
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ShapeFactor: 0.899
+    ShapeScale: 5
+    ErosionFactor: 0.8
+    ErosionScale: 107
+    ErosionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.1
+        value: 0.9
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    AmbientOcclusionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.25
+        value: 0.4
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MicroErosion: 0
+    MicroErosionFactor: 0.5
+    MicroErosionScale: 200
+    BottomAltitude: 1200
+    AltitudeRange: 2000
+    ShapeOffset: {x: 0, y: 0, z: 0}
+    EarthCurvature: 0
+    GlobalSpeed: 150
+    GlobalOrientation: 24.5
+    ShapeSpeedMultiplier: 1
+    ErosionSpeedMultiplier: 0.25
+    AltitudeDistortion: 0.25
+    VerticalShapeWindSpeed: 0
+    VerticalErosionWindSpeed: 0
+    AmbientLightProbeDimmer: 1
+    SunLightDimmer: 1
+    ErosionOcclusion: 0.1
+    ScatteringTint: {r: 0, g: 0, b: 0, a: 1}
+    PowderEffectIntensity: 0.25
+    MultiScattering: 0.5
+    Shadows: 0
+    ShadowResolution: 256
+    ShadowDistance: 8000
+    ShadowOpacity: 1
+    ShadowOpacityFallback: 0
+    TemporalAccumulationFactor: 0.95
+    PerceptualBlending: 1
+    NumPrimarySteps: 32
+    NumLightSteps: 2
+    FadeInMode: 0
+    FadeInStart: 0
+    FadeInDistance: 5000
+  - Name: Rain
+    RainCount: 6000
+    Wind: {x: 3.09, y: 1.36, z: 0}
+    Thunder: 0
+    CloudsEnabled: 1
+    LocalClouds: 1
+    CloudPreset: 2
+    DensityMultiplier: 0.787
+    DensityCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.15
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ShapeFactor: 0.9
+    ShapeScale: 5
+    ErosionFactor: 0.8
+    ErosionScale: 107
+    ErosionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.1
+        value: 0.9
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    AmbientOcclusionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.25
+        value: 0.4
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MicroErosion: 0
+    MicroErosionFactor: 0.5
+    MicroErosionScale: 200
+    BottomAltitude: 1200
+    AltitudeRange: 2000
+    ShapeOffset: {x: 0, y: 0, z: 0}
+    EarthCurvature: 0
+    GlobalSpeed: 150
+    GlobalOrientation: 27.8
+    ShapeSpeedMultiplier: 1
+    ErosionSpeedMultiplier: 0.25
+    AltitudeDistortion: 0.25
+    VerticalShapeWindSpeed: 0
+    VerticalErosionWindSpeed: 0
+    AmbientLightProbeDimmer: 1
+    SunLightDimmer: 1
+    ErosionOcclusion: 0.1
+    ScatteringTint: {r: 0, g: 0, b: 0, a: 1}
+    PowderEffectIntensity: 0.25
+    MultiScattering: 0.5
+    Shadows: 1
+    ShadowResolution: 256
+    ShadowDistance: 8000
+    ShadowOpacity: 1
+    ShadowOpacityFallback: 0
+    TemporalAccumulationFactor: 0.95
+    PerceptualBlending: 1
+    NumPrimarySteps: 32
+    NumLightSteps: 2
+    FadeInMode: 0
+    FadeInStart: 0
+    FadeInDistance: 5000
+  - Name: death
+    RainCount: 600000
+    Wind: {x: 0, y: 0, z: 0}
+    Thunder: 0
+    CloudsEnabled: 1
+    LocalClouds: 1
+    CloudPreset: 4
+    DensityMultiplier: 1
+    DensityCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.15
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ShapeFactor: 0
+    ShapeScale: 5
+    ErosionFactor: 0
+    ErosionScale: 107
+    ErosionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.1
+        value: 0.9
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    AmbientOcclusionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.25
+        value: 0.4
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MicroErosion: 0
+    MicroErosionFactor: 0.5
+    MicroErosionScale: 200
+    BottomAltitude: 1200
+    AltitudeRange: 2000
+    ShapeOffset: {x: 0, y: 0, z: 0}
+    EarthCurvature: 0
+    GlobalSpeed: 53.3
+    GlobalOrientation: 0
+    ShapeSpeedMultiplier: 1
+    ErosionSpeedMultiplier: 0.25
+    AltitudeDistortion: 0.25
+    VerticalShapeWindSpeed: 0
+    VerticalErosionWindSpeed: 0
+    AmbientLightProbeDimmer: 1
+    SunLightDimmer: 1
+    ErosionOcclusion: 0.1
+    ScatteringTint: {r: 0, g: 0, b: 0, a: 1}
+    PowderEffectIntensity: 0.25
+    MultiScattering: 0.5
+    Shadows: 1
+    ShadowResolution: 256
+    ShadowDistance: 8000
+    ShadowOpacity: 1
+    ShadowOpacityFallback: 0
+    TemporalAccumulationFactor: 0.95
+    PerceptualBlending: 1
+    NumPrimarySteps: 32
+    NumLightSteps: 2
+    FadeInMode: 0
+    FadeInStart: 0
+    FadeInDistance: 5000
+  currentPreset: 0
+  transitionDuration: 30
+--- !u!4 &1801246300
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801246298}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6289.414, y: 2632.4653, z: 3752.3398}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -963,3 +1471,5 @@ SceneRoots:
   - {fileID: 1585690288}
   - {fileID: 1232413906}
   - {fileID: 79364324}
+  - {fileID: 1801246300}
+  - {fileID: 964454197}

@@ -157,7 +157,7 @@ namespace Airplane.Multiplayer
 
         private void OnGUI()
         {
-            if (CheatFlags.BlockPlayerInput)
+            if (CheatFlags.BlockPlayerInput || !HudVisibility.Visible)
                 return;
 
             float x = panelPosition.x;

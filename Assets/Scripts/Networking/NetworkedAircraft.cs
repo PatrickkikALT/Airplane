@@ -181,7 +181,8 @@ namespace Airplane.Multiplayer
             if (Local == this)
             {
                 Local = null;
-                LocalAircraftDespawned?.Invoke(this);
+                if (NetworkManager != null && !NetworkManager.ShutdownInProgress)
+                    LocalAircraftDespawned?.Invoke(this);
             }
 
             _buffer.Clear();

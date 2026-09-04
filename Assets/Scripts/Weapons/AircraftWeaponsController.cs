@@ -154,7 +154,7 @@ namespace Airplane.Weapons
 
         private void OnGUI()
         {
-            if (!drawHud || !_body)
+            if (!drawHud || !HudVisibility.Visible || !_body)
                 return;
 
             _hudClock += Time.unscaledDeltaTime;

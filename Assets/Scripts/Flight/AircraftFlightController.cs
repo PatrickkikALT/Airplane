@@ -62,6 +62,9 @@ namespace Airplane.FlightSimulation
         [Tooltip("Stiffening gain k in  limit = 1 / (1 + k · max(0, q/q_ref − 1)). Keep this low; high values let the tails overpower the stick.")]
         [SerializeField] private float qStiffeningGain = 0.25f;
 
+        [Tooltip("IAS in km/h where pitch, elevator trim, roll and yaw stick reach zero. Scale = 1 − clamp01(IAS / this).")]
+        [SerializeField] private float highSpeedIasKmh = 230f;
+
         [Tooltip("Seconds for aileron/elevator/rudder to catch the stick. 0 = immediate. The old hinge limiter made press and release feel late.")]
         [SerializeField] private float stickFollowSeconds;
 
@@ -282,11 +285,12 @@ namespace Airplane.FlightSimulation
             float pitchCmd = pitchStickBackNoseUp ? pitch : -pitch;
             UpdateAutoTrim(pitchCmd, dt);
 
+            float iasScale = HighSpeedStickScale();
             float rollSens = rollSpeed > 0.01f ? rollSpeed : 1f;
             float yawSens = yawSpeed > 0.01f ? yawSpeed : 1f;
-            float aileronT = Clamp11(roll * rollSens);
-            float elevatorT = Clamp11(pitchCmd + elevatorTrim);
-            float rudderT = Clamp11(yaw * yawSens + CoordinatedRudder(aileronT, yaw));
+            float aileronT = Clamp11(roll * rollSens * iasScale);
+            float elevatorT = Clamp11((pitchCmd + elevatorTrim) * iasScale);
+            float rudderT = Clamp11(yaw * yawSens * iasScale + CoordinatedRudder(aileronT, yaw));
 
             // Aircraft inertia is the smoothing. Rate-limiting the stick here is what
             // made input start late and keep going after release.
@@ -383,6 +387,24 @@ namespace Airplane.FlightSimulation
             return 1f / (1f + qStiffeningGain * excess);
         }
 
+        /// <summary>
+        /// Stick scale 1 − clamp01(IAS_km/h / 550). Pitch, elevator trim, roll and yaw share it
+        /// so high-speed aiming is not fighting full-deflection rates.
+        /// </summary>
+        private float HighSpeedStickScale()
+        {
+            if (_body == null)
+                return 1f;
+
+            AtmosphereSample atmo = AtmosphericModel.SampleAt(_body.Position);
+            float tas = _body.TrueAirspeed;
+            float density = Mathf.Max(0.05f, AtmosphericModel.StandardSeaLevelDensity);
+            float iasMs = tas * Mathf.Sqrt(atmo.Density / density);
+            float iasKmh = iasMs * FlightSimMath.AirSpeedToKnots * FlightSimMath.KnotsToKmh;
+            float refKmh = highSpeedIasKmh > 1f ? highSpeedIasKmh : 550f;
+            return 1f - FlightSimMath.Saturate(iasKmh / refKmh);
+        }
+
         private void CacheStickActions()
         {
             if (!_playerInput)
@@ -456,7 +478,7 @@ namespace Airplane.FlightSimulation
 
         private void OnGUI()
         {
-            if (!drawHud || !_body)
+            if (!drawHud || !HudVisibility.Visible || !_body)
                 return;
 
             _hudClock += Time.unscaledDeltaTime;

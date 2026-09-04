@@ -26,7 +26,7 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
     public CloudPresets cloudPreset
     {
         get { return m_CloudPreset.value; }
-        set { m_CloudPreset.value = value; ApplyCurrentCloudPreset(); }
+        set { m_CloudPreset.Override(value); ApplyCurrentCloudPreset(); }
     }
 
     [Header("Shape"), InspectorName("Cloud Preset"), SerializeField, Tooltip("Specifies the weather preset in Simple mode.")]
@@ -354,6 +354,15 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
     static readonly AnimationCurve s_StormyErosionCurve = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.05f, 0.8f), new Keyframe(0.2438f, 0.9498f), new Keyframe(0.5f, 1.0f), new Keyframe(0.93f, 0.9268f), new Keyframe(1.0f, 1.0f));
     static readonly AnimationCurve s_StormyAmbientOcclusionCurve = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.1f, 0.4f), new Keyframe(1.0f, 0.0f));
 
+    static AnimationCurve CloneCurve(AnimationCurve curve)
+    {
+        return new AnimationCurve(curve.keys)
+        {
+            preWrapMode = curve.preWrapMode,
+            postWrapMode = curve.postWrapMode
+        };
+    }
+
     void ApplyCurrentCloudPreset()
     {
         // Apply the currently set preset
@@ -380,13 +389,9 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
                     erosionScale.value = 107.0f;
                 }
 
-                // Curves
-                //densityCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.05f, 1.0f), new Keyframe(0.75f, 1.0f), new Keyframe(1.0f, 0.0f));
-                //erosionCurve.value = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.1f, 0.9f), new Keyframe(1.0f, 1.0f));
-                //ambientOcclusionCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.25f, 0.5f), new Keyframe(1.0f, 0.0f));
-                densityCurve.value = s_SparseDensityCurve;
-                erosionCurve.value = s_SparseErosionCurve;
-                ambientOcclusionCurve.value = s_SparseAmbientOcclusionCurve;
+                densityCurve.value = CloneCurve(s_SparseDensityCurve);
+                erosionCurve.value = CloneCurve(s_SparseErosionCurve);
+                ambientOcclusionCurve.value = CloneCurve(s_SparseAmbientOcclusionCurve);
 
                 // Layer properties
                 bottomAltitude.value = 3000.0f;
@@ -414,13 +419,9 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
                     erosionScale.value = 107.0f;
                 }
 
-                // Curves
-                //densityCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.15f, 1.0f), new Keyframe(1.0f, 0.1f));
-                //erosionCurve.value = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.1f, 0.9f), new Keyframe(1.0f, 1.0f));
-                //ambientOcclusionCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.25f, 0.4f), new Keyframe(1.0f, 0.0f));
-                densityCurve.value = s_CloudyDensityCurve;
-                erosionCurve.value = s_CloudyErosionCurve;
-                ambientOcclusionCurve.value = s_CloudyAmbientOcclusionCurve;
+                densityCurve.value = CloneCurve(s_CloudyDensityCurve);
+                erosionCurve.value = CloneCurve(s_CloudyErosionCurve);
+                ambientOcclusionCurve.value = CloneCurve(s_CloudyAmbientOcclusionCurve);
 
                 // Layer properties
                 bottomAltitude.value = 1200.0f;
@@ -448,13 +449,9 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
                     erosionScale.value = 107.0f;
                 }
 
-                // Curves
-                //densityCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.05f, 1.0f), new Keyframe(0.9f, 0.0f), new Keyframe(1.0f, 0.0f));
-                //erosionCurve.value = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.1f, 0.9f), new Keyframe(1.0f, 1.0f));
-                //ambientOcclusionCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(1.0f, 0.0f));
-                densityCurve.value = s_OvercastDensityCurve;
-                erosionCurve.value = s_OvercastErosionCurve;
-                ambientOcclusionCurve.value = s_OvercastAmbientOcclusionCurve;
+                densityCurve.value = CloneCurve(s_OvercastDensityCurve);
+                erosionCurve.value = CloneCurve(s_OvercastErosionCurve);
+                ambientOcclusionCurve.value = CloneCurve(s_OvercastAmbientOcclusionCurve);
 
                 // Layer properties
                 bottomAltitude.value = 1500.0f;
@@ -482,13 +479,9 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
                     erosionScale.value = 107.0f;
                 }
 
-                // Curves
-                //densityCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.037f, 1.0f), new Keyframe(0.6f, 1.0f), new Keyframe(1.0f, 0.0f));
-                //erosionCurve.value = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(0.05f, 0.8f), new Keyframe(0.2438f, 0.9498f), new Keyframe(0.5f, 1.0f), new Keyframe(0.93f, 0.9268f), new Keyframe(1.0f, 1.0f));
-                //ambientOcclusionCurve.value = new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.1f, 0.4f), new Keyframe(1.0f, 0.0f));
-                densityCurve.value = s_StormyDensityCurve;
-                erosionCurve.value = s_StormyErosionCurve;
-                ambientOcclusionCurve.value = s_StormyAmbientOcclusionCurve;
+                densityCurve.value = CloneCurve(s_StormyDensityCurve);
+                erosionCurve.value = CloneCurve(s_StormyErosionCurve);
+                ambientOcclusionCurve.value = CloneCurve(s_StormyAmbientOcclusionCurve);
 
                 // Layer properties
                 bottomAltitude.value = 1000.0f;

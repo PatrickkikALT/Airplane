@@ -982,6 +982,7 @@ MonoBehaviour:
   airbrakeRate: 1.2
   referenceDynamicPressure: 3900
   qStiffeningGain: 0.25
+  highSpeedIasKmh: 1000
   stickFollowSeconds: 0
   aileronRudderMix: 1
   sideslipYawGain: 1.2
