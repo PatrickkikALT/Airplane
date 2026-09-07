@@ -163,6 +163,10 @@ namespace Airplane.UI
             if (!bestBody)
                 return false;
 
+            NetworkedAircraft networked = bestBody.GetComponent<NetworkedAircraft>();
+            if (networked && networked.TryGetFireControlKinematics(out position, out velocity))
+                return true;
+
             position = bestBody.Position;
             velocity = bestBody.Velocity;
             return true;
@@ -287,7 +291,7 @@ namespace Airplane.UI
             if (_camera && _camera.isActiveAndEnabled)
                 return true;
             _camera = Camera.main;
-            return _camera != null;
+            return _camera;
         }
 
         private bool TryProject(Vector3 world, out Vector2 gui, out bool onScreen)

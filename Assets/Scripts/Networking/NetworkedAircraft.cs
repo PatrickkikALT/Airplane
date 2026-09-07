@@ -101,6 +101,82 @@ namespace Airplane.Multiplayer
         public PlaneRigidbody Body => _body;
         public AircraftEngine Engine => _controller.Engine;
 
+        /// <summary>
+        /// Pose a gunsight should lead. Local simulated aircraft are returned as-is. Remote proxies
+        /// are sampled at current server time plus one-way latency so the pipper sits on where the
+        /// owner is now, not on the interpolated ghost that lags by <see cref="interpolationDelay"/>.
+        /// </summary>
+        public bool TryGetFireControlKinematics(out Vector3 position, out Vector3 velocity)
+        {
+            position = Vector3.zero;
+            velocity = Vector3.zero;
+            if (!_body)
+                return false;
+
+            position = _body.Position;
+            velocity = _body.Velocity;
+
+            if (!IsSpawned || IsOwner || _body.SimulationEnabled)
+                return true;
+
+            NetworkManager manager = NetworkManager;
+            if (manager == null || !manager.IsListening)
+                return true;
+
+            float oneWay = EstimateOneWayLatency(manager);
+            double present = manager.ServerTime.Time + oneWay;
+            if (_buffer.Sample(present, maxExtrapolation, out AircraftStateSnapshot state))
+            {
+                DeadReckon(in state, present, out position, out velocity);
+                return true;
+            }
+
+            float ahead = Mathf.Min(interpolationDelay + oneWay, maxExtrapolation);
+            DeadReckon(_body.Position, _body.Velocity, _body.Orientation, _body.AngularVelocityBody, ahead, out position, out velocity);
+            return true;
+        }
+
+        private float EstimateOneWayLatency(NetworkManager manager)
+        {
+            Unity.Netcode.NetworkTransport transport = manager.NetworkConfig?.NetworkTransport;
+            if (transport == null)
+                return 0f;
+
+            ulong peer = manager.IsServer ? OwnerClientId : manager.LocalClientId;
+            if (peer == manager.LocalClientId)
+                return 0f;
+
+            ulong rttMs = transport.GetCurrentRtt(peer);
+            return 0.5f * rttMs * 0.001f;
+        }
+
+        private static void DeadReckon(in AircraftStateSnapshot state, double present, out Vector3 position, out Vector3 velocity)
+        {
+            float ahead = Mathf.Max(0f, (float)(present - state.ServerTime));
+            DeadReckon(state.Position, state.Velocity, state.Orientation, state.AngularVelocityBody, ahead, out position, out velocity);
+        }
+
+        private static void DeadReckon(
+            Vector3 position0,
+            Vector3 velocity0,
+            Quaternion orientation,
+            Vector3 angularVelocityBody,
+            float ahead,
+            out Vector3 position,
+            out Vector3 velocity)
+        {
+            if (ahead <= 1e-4f)
+            {
+                position = position0;
+                velocity = velocity0;
+                return;
+            }
+
+            Quaternion next = FlightSimMath.IntegrateQuaternionEuler(orientation, angularVelocityBody, ahead);
+            velocity = next * Quaternion.Inverse(orientation) * velocity0;
+            position = position0 + 0.5f * (velocity0 + velocity) * ahead;
+        }
+
         public int CrashCount => _crashCount.Value;
 
         /// <summary>True for a server-flown aircraft with an <c>AircraftBotPilot</c> at the controls.</summary>
