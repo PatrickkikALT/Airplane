@@ -10,7 +10,6 @@ namespace Airplane.Multiplayer
         public void UpdateWeatherClientRpc()
         {
             WeatherManager.Instance.UpdateWeatherInternal();
-            
         }
         
     }

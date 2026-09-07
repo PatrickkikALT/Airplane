@@ -14,10 +14,10 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
-  m_Fog: 0
+  m_Fog: 1
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogMode: 2
+  m_FogDensity: 0
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -163,6 +163,78 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -2512.165, y: 7403.9897, z: 8068.2554}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &126043893
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 126043896}
+  - component: {fileID: 126043894}
+  - component: {fileID: 126043895}
+  m_Layer: 0
+  m_Name: NetworkedWeather
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &126043894
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126043893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 638377645
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &126043895
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126043893}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f55d9453d83b4dd59f91cb46bf7593f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.NetworkedWeather
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!4 &126043896
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 126043893}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1829.7339, y: -4.43391, z: 2232.4983}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -480,6 +552,8 @@ GameObject:
   m_Component:
   - component: {fileID: 964454197}
   - component: {fileID: 964454196}
+  - component: {fileID: 964454198}
+  - component: {fileID: 964454199}
   m_Layer: 0
   m_Name: Weather
   m_TagString: Untagged
@@ -527,6 +601,98 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &964454198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964454195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d911ca8418cfff139a33a6ac7f870aa7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weather.TornadoSystem
+  simulationCompute: {fileID: 7200000, guid: 898769a1f6d95d3a3a3f1f123c9bdc7b, type: 3}
+  funnelMaterial: {fileID: 2100000, guid: b550de39668078f7bbcff8e505ed2deb, type: 2}
+  debrisMaterial: {fileID: 2100000, guid: d6bb568b031a7bd4eb9cf37a93c8bf2e, type: 2}
+  debrisMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+  cameraOverride: {fileID: 0}
+  tornadoCount: 1
+  debrisCount: 40000
+  baseRadius: 45
+  height: 900
+  neckScale: 0.22
+  taper: 0.65
+  groundFlare: 0.55
+  wobbleAmplitude: 0.55
+  wobbleFrequency: 3.1
+  radiusVariance: 0.3
+  shellCount: 5
+  shellSpacing: 0.35
+  funnelSlices: 40
+  funnelRings: 32
+  spinSpeed: 85
+  updraft: 40
+  inflowSpeed: 1.4
+  turbulence: 5
+  gravity: {x: 0, y: -9.81, z: 0}
+  wind: {x: 8, y: 0, z: 3}
+  driftScale: 0.35
+  groundY: 0
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundRayHeight: 3000
+  spawnRadiusMin: 600
+  spawnRadiusMax: 2500
+  despawnRadius: 6000
+  funnelColor: {r: 0.28, g: 0.25, b: 0.22, a: 1}
+  funnelTopColor: {r: 0.45, g: 0.46, b: 0.5, a: 1}
+  debrisColor: {r: 0.32, g: 0.28, b: 0.23, a: 0.75}
+  debrisTopColor: {r: 0.5, g: 0.5, b: 0.54, a: 0.5}
+  debrisSize: 0.9
+  debrisStretch: 2.5
+  intensity: 1
+--- !u!114 &964454199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964454195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 517a5e5a02e8eb149a99b2a866e8bd7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weather.LightningSystem
+  boltMaterialOverride: {fileID: 0}
+  cameraOverride: {fileID: 0}
+  strikesPerMinute: 0
+  maxLiveStrikes: 896
+  groundStrikeChance: 0.55
+  boltWidth: 14.08
+  jitter: 0.075
+  branchiness: 0.6
+  branchSpread: 0.85
+  coreColor: {r: 1, g: 1, b: 1, a: 1}
+  glowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+  minDistance: 500
+  maxDistance: 6000
+  cloudAltitudeFallback: 1500
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 8
+  groundRayLength: 6000
+  flashIntensity: 13.3
+  lightIntensity: 1300.5
+  lightRange: 4000
+  strikeLifetime: 5.4
+  drawTime: 0.04
+  closeThunderClips: []
+  distantThunderClips: []
+  thunderVolume: 1
+  closeThunderDistance: 1200
 --- !u!1 &1232413903
 GameObject:
   m_ObjectHideFlags: 0
@@ -538,7 +704,7 @@ GameObject:
   - component: {fileID: 1232413906}
   - component: {fileID: 1232413905}
   - component: {fileID: 1232413904}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Terrain_(0.00, 0.00, -1000.00)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1009,14 +1175,33 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   volume: {fileID: 79364323}
   weatherSystem: {fileID: 964454196}
+  tornadoSystem: {fileID: 964454198}
+  lightningSystem: {fileID: 964454199}
   presets:
   - Name: Dry
     RainCount: 0
-    Wind: {x: 3.09, y: 1.36, z: 0}
-    Thunder: 0
+    LightningEnabled: 0
+    StrikesPerMinute: 0
+    LightningFlashIntensity: 1
+    LightningBranchiness: 0.6
+    LightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
+    LightningGlowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+    ThunderVolume: 1
+    TornadoCount: 0
+    TornadoDebrisCount: 40000
+    TornadoRadius: 45
+    TornadoHeight: 900
+    TornadoSpinSpeed: 85
+    TornadoUpdraft: 40
     CloudsEnabled: 1
     LocalClouds: 1
     CloudPreset: 4
+    FogEnabled: 0
+    FogColor: {r: 1, g: 1, b: 1, a: 1}
+    FogDensity: 0
+    FogStart: 0
+    FogEnd: 0
+    Mode: 1
     DensityMultiplier: 0.191
     DensityCurve:
       serializedVersion: 2
@@ -1155,11 +1340,28 @@ MonoBehaviour:
     FadeInDistance: 5000
   - Name: Rain
     RainCount: 6000
-    Wind: {x: 3.09, y: 1.36, z: 0}
-    Thunder: 0
+    LightningEnabled: 0
+    StrikesPerMinute: 0
+    LightningFlashIntensity: 1
+    LightningBranchiness: 0.6
+    LightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
+    LightningGlowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+    ThunderVolume: 1
+    TornadoCount: 0
+    TornadoDebrisCount: 40000
+    TornadoRadius: 45
+    TornadoHeight: 900
+    TornadoSpinSpeed: 85
+    TornadoUpdraft: 40
     CloudsEnabled: 1
     LocalClouds: 1
     CloudPreset: 2
+    FogEnabled: 1
+    FogColor: {r: 0.5660378, g: 0.5660378, b: 0.5660378, a: 1}
+    FogDensity: 0.0001
+    FogStart: 177.3
+    FogEnd: 5000
+    Mode: 2
     DensityMultiplier: 0.787
     DensityCurve:
       serializedVersion: 2
@@ -1272,7 +1474,7 @@ MonoBehaviour:
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
     GlobalSpeed: 150
-    GlobalOrientation: 27.8
+    GlobalOrientation: 17
     ShapeSpeedMultiplier: 1
     ErosionSpeedMultiplier: 0.25
     AltitudeDistortion: 0.25
@@ -1297,12 +1499,29 @@ MonoBehaviour:
     FadeInStart: 0
     FadeInDistance: 5000
   - Name: death
-    RainCount: 600000
-    Wind: {x: 0, y: 0, z: 0}
-    Thunder: 0
+    RainCount: 60000
+    LightningEnabled: 1
+    StrikesPerMinute: 60000
+    LightningFlashIntensity: 1
+    LightningBranchiness: 0.6
+    LightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
+    LightningGlowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+    ThunderVolume: 1
+    TornadoCount: 102
+    TornadoDebrisCount: 40000
+    TornadoRadius: 45
+    TornadoHeight: 900
+    TornadoSpinSpeed: 85
+    TornadoUpdraft: 40
     CloudsEnabled: 1
     LocalClouds: 1
     CloudPreset: 4
+    FogEnabled: 0
+    FogColor: {r: 1, g: 1, b: 1, a: 1}
+    FogDensity: 0.48
+    FogStart: 0
+    FogEnd: 0
+    Mode: 1
     DensityMultiplier: 1
     DensityCurve:
       serializedVersion: 2
@@ -1414,8 +1633,8 @@ MonoBehaviour:
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
-    GlobalSpeed: 53.3
-    GlobalOrientation: 0
+    GlobalSpeed: 60
+    GlobalOrientation: 180
     ShapeSpeedMultiplier: 1
     ErosionSpeedMultiplier: 0.25
     AltitudeDistortion: 0.25
@@ -1439,8 +1658,328 @@ MonoBehaviour:
     FadeInMode: 0
     FadeInStart: 0
     FadeInDistance: 5000
+  - Name: Tornado
+    RainCount: 0
+    LightningEnabled: 0
+    StrikesPerMinute: 0
+    LightningFlashIntensity: 1
+    LightningBranchiness: 0.6
+    LightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
+    LightningGlowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+    ThunderVolume: 1
+    TornadoCount: 150
+    TornadoDebrisCount: 2000
+    TornadoRadius: 124.8
+    TornadoHeight: 900
+    TornadoSpinSpeed: 191.8
+    TornadoUpdraft: 40
+    CloudsEnabled: 1
+    LocalClouds: 1
+    CloudPreset: 4
+    FogEnabled: 0
+    FogColor: {r: 1, g: 1, b: 1, a: 1}
+    FogDensity: 0
+    FogStart: 0
+    FogEnd: 0
+    Mode: 1
+    DensityMultiplier: 0.191
+    DensityCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.15
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ShapeFactor: 0.899
+    ShapeScale: 5
+    ErosionFactor: 0.8
+    ErosionScale: 107
+    ErosionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.1
+        value: 0.9
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    AmbientOcclusionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.25
+        value: 0.4
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MicroErosion: 0
+    MicroErosionFactor: 0.5
+    MicroErosionScale: 200
+    BottomAltitude: 1200
+    AltitudeRange: 2000
+    ShapeOffset: {x: 0, y: 0, z: 0}
+    EarthCurvature: 0
+    GlobalSpeed: 150
+    GlobalOrientation: 24.5
+    ShapeSpeedMultiplier: 1
+    ErosionSpeedMultiplier: 0.25
+    AltitudeDistortion: 0.25
+    VerticalShapeWindSpeed: 0
+    VerticalErosionWindSpeed: 0
+    AmbientLightProbeDimmer: 1
+    SunLightDimmer: 1
+    ErosionOcclusion: 0.1
+    ScatteringTint: {r: 0, g: 0, b: 0, a: 1}
+    PowderEffectIntensity: 0.25
+    MultiScattering: 0.5
+    Shadows: 0
+    ShadowResolution: 256
+    ShadowDistance: 8000
+    ShadowOpacity: 1
+    ShadowOpacityFallback: 0
+    TemporalAccumulationFactor: 0.95
+    PerceptualBlending: 1
+    NumPrimarySteps: 32
+    NumLightSteps: 2
+    FadeInMode: 0
+    FadeInStart: 0
+    FadeInDistance: 5000
+  - Name: Thunder
+    RainCount: 6000
+    LightningEnabled: 1
+    StrikesPerMinute: 36
+    LightningFlashIntensity: 7.43
+    LightningBranchiness: 0.6
+    LightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
+    LightningGlowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+    ThunderVolume: 1
+    TornadoCount: 0
+    TornadoDebrisCount: 40000
+    TornadoRadius: 45
+    TornadoHeight: 900
+    TornadoSpinSpeed: 85
+    TornadoUpdraft: 40
+    CloudsEnabled: 1
+    LocalClouds: 1
+    CloudPreset: 2
+    FogEnabled: 0
+    FogColor: {r: 1, g: 1, b: 1, a: 1}
+    FogDensity: 0
+    FogStart: 0
+    FogEnd: 0
+    Mode: 1
+    DensityMultiplier: 0.191
+    DensityCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.15
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0.1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    ShapeFactor: 0.899
+    ShapeScale: 5
+    ErosionFactor: 0.8
+    ErosionScale: 107
+    ErosionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.1
+        value: 0.9
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    AmbientOcclusionCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 0.25
+        value: 0.4
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    MicroErosion: 0
+    MicroErosionFactor: 0.5
+    MicroErosionScale: 200
+    BottomAltitude: 1200
+    AltitudeRange: 2000
+    ShapeOffset: {x: 0, y: 0, z: 0}
+    EarthCurvature: 0
+    GlobalSpeed: 80
+    GlobalOrientation: 24.5
+    ShapeSpeedMultiplier: 1
+    ErosionSpeedMultiplier: 0.25
+    AltitudeDistortion: 0.25
+    VerticalShapeWindSpeed: 0
+    VerticalErosionWindSpeed: 0
+    AmbientLightProbeDimmer: 1
+    SunLightDimmer: 1
+    ErosionOcclusion: 0.1
+    ScatteringTint: {r: 0, g: 0, b: 0, a: 1}
+    PowderEffectIntensity: 0.25
+    MultiScattering: 0.5
+    Shadows: 0
+    ShadowResolution: 256
+    ShadowDistance: 8000
+    ShadowOpacity: 1
+    ShadowOpacityFallback: 0
+    TemporalAccumulationFactor: 0.95
+    PerceptualBlending: 1
+    NumPrimarySteps: 32
+    NumLightSteps: 2
+    FadeInMode: 0
+    FadeInStart: 0
+    FadeInDistance: 5000
   currentPreset: 0
-  transitionDuration: 30
+  transitionDuration: 10
 --- !u!4 &1801246300
 Transform:
   m_ObjectHideFlags: 0
@@ -1473,3 +2012,4 @@ SceneRoots:
   - {fileID: 79364324}
   - {fileID: 1801246300}
   - {fileID: 964454197}
+  - {fileID: 126043896}
