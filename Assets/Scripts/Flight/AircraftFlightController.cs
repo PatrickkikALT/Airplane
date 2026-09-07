@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Airplane.UI;
 using System.Text;
+using Airplane.Weapons;
 
 namespace Airplane.FlightSimulation
 {
@@ -117,6 +118,7 @@ namespace Airplane.FlightSimulation
         private readonly StringBuilder _hudBuilder = new StringBuilder(512);
         private string _hudText = "";
         private float _hudClock;
+        private AircraftVitality _aircraftVitality;
 
         public AircraftEngine Engine => _engine;
         public float Throttle01 => _throttle01;
@@ -240,6 +242,7 @@ namespace Airplane.FlightSimulation
             _body = GetComponent<PlaneRigidbody>();
             _engine = GetComponentInChildren<AircraftEngine>(true);
             _playerInput = GetComponent<PlayerInput>();
+            _aircraftVitality = GetComponent<AircraftVitality>();
             _throttle01 = FlightSimMath.Saturate(initialThrottle);
             CacheStickActions();
         }
@@ -490,7 +493,7 @@ namespace Airplane.FlightSimulation
 
             float x = hudPosition.x;
             float y = hudPosition.y;
-            GUI.Box(new Rect(x, y, 320f, 210f), "6-DOF Flight");
+            GUI.Box(new Rect(x, y, 320f, 210f), "Debug Info");
             GUI.Label(new Rect(x + 10f, y + 24f, 300f, 180f), _hudText);
         }
 
@@ -525,7 +528,8 @@ namespace Airplane.FlightSimulation
             _hudBuilder.Append("A/E/R ").Append(_aileron01.ToString("F2")).Append("  ");
             _hudBuilder.Append(_elevator01.ToString("F2")).Append("  ").Append(_rudder01.ToString("F2")).Append('\n');
             _hudBuilder.Append("W/S pitch  A/D roll  Q/E yaw\n");
-            _hudBuilder.Append("R/F throttle  X/Z flaps  Shift airbrake  Space wheel");
+            _hudBuilder.Append("R/F throttle  X/Z flaps  Shift airbrake  Space wheel\n");
+            _hudBuilder.Append("Vitality   ").Append(_aircraftVitality.HitPoints.ToString("F0")).Append("  ");
             _hudText = _hudBuilder.ToString();
         }
     }
