@@ -70,6 +70,8 @@ namespace Airplane.FlightSimulation
         /// <summary>Scene chase camera, if one is enabled. Used so PlayerInput on the aircraft can forward Look.</summary>
         public static AircraftChaseCamera Active { get; private set; }
 
+        public Transform FollowTarget => target;
+
         public void SetTarget(Transform t)
         {
             target = t;

@@ -406,8 +406,16 @@ namespace Airplane.Weapons
             return true;
         }
 
-        private void GetMuzzleWorld(PlaneRigidbody body, out Vector3 point, out Vector3 axisWorld)
+        public void GetMuzzleWorld(PlaneRigidbody body, out Vector3 point, out Vector3 axisWorld)
         {
+            if (body == null)
+            {
+                Transform mount = Muzzle;
+                point = mount.position;
+                axisWorld = mount.TransformDirection(localMuzzleAxis.normalized);
+                return;
+            }
+
             if (!_muzzlePoseCached)
                 CacheMuzzlePose();
             point = body.TransformPoint(_muzzleLocalPos);
