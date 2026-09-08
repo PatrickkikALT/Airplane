@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 304367250}
   - component: {fileID: 304367249}
+  - component: {fileID: 304367251}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -216,6 +217,35 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &304367251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 304367248}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1572213124
 GameObject:
   m_ObjectHideFlags: 0
@@ -308,9 +338,127 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1799847876
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -73.489624
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 36.55
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 21.044748
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7918335002988649766, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 08ef08170c6732444aec1773e65776c7, type: 2}
+    - target: {fileID: -7029948723529949830, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Propeller
+      objectReference: {fileID: 0}
+    - target: {fileID: -6453420068151339113, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft 1A Fuselage
+      objectReference: {fileID: 0}
+    - target: {fileID: -5067374729850569353, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft 1A Left Horizontal Stabiliser
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: -4292154010595695564, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: -1341635676547358140, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft 1A Right Wing
+      objectReference: {fileID: 0}
+    - target: {fileID: 396017902307296066, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft 1A Left Wing
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft1A
+      objectReference: {fileID: 0}
+    - target: {fileID: 4582190644818387665, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft 1A Vertical Stabiliser
+      objectReference: {fileID: 0}
+    - target: {fileID: 8906112568274553320, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: m_Name
+      value: Aircraft 1A Right Horizontal Stabiliser
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1572213127}
   - {fileID: 304367250}
+  - {fileID: 1799847876}
