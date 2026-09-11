@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Airplane.Destruction;
 using UnityEngine;
 
 namespace Airplane.FlightSimulation
@@ -593,11 +592,7 @@ namespace Airplane.FlightSimulation
 
             if (message == "OnPlaneCollisionEnter")
             {
-                DestructibleMesh destructible = hit.Collider.GetComponentInParent<DestructibleMesh>();
-                if (destructible)
-                    destructible.NotifyPlaneHit(hit);
-                else
-                    hit.Collider.SendMessageUpwards(message, hit, SendMessageOptions.DontRequireReceiver);
+                hit.Collider.SendMessageUpwards(message, hit, SendMessageOptions.DontRequireReceiver);
             }
         }
 
