@@ -5,11 +5,6 @@ using Random = UnityEngine.Random;
 
 namespace Airplane.Weather
 {
-    /// <summary>
-    /// Spawns lightning strikes around the camera: a procedural bolt drawn by
-    /// <c>Airplane/Weather/Lightning Bolt URP</c>, a flash light, and thunder delayed by
-    /// the real travel time of sound.
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Weather/Lightning System")]
     public sealed class LightningSystem : MonoBehaviour
@@ -158,7 +153,6 @@ namespace Airplane.Weather
             Mesh mesh = ResolveRibbon();
             Bounds bounds = strike.Bounds;
 
-            // index 0 is the trunk, the rest are branches hanging off it
             for (int i = 0; i <= strike.BranchCount; i++)
             {
                 bool trunk = i == 0;
@@ -225,7 +219,6 @@ namespace Airplane.Weather
             }
             else
             {
-                // intra-cloud: crawls sideways through the deck instead of reaching down
                 float spread = Random.Range(300f, 1400f);
                 float crawl = Random.value * Mathf.PI * 2f;
                 strike.End = strike.Start
@@ -264,12 +257,10 @@ namespace Airplane.Weather
         {
             Bounds bounds = new(strike.Start, Vector3.one);
             bounds.Encapsulate(strike.End);
-            // the shader pushes the channel sideways off the straight line
             bounds.Expand(Vector3.Distance(strike.Start, strike.End) * 0.6f);
             return bounds;
         }
 
-        /// <summary>Thunder trails the flash by however long sound needs to cover the distance.</summary>
         private void PlayThunder(Strike strike, Vector3 listener, bool toGround)
         {
             Vector3 origin = Vector3.Lerp(strike.Start, strike.End, 0.4f);
@@ -314,7 +305,8 @@ namespace Airplane.Weather
                 return cloudAltitudeFallback;
 
             float sea = AtmosphericModel.Instance ? AtmosphericModel.Instance.SeaLevelY : 0f;
-            float ceiling = sea + clouds.bottomAltitude.value;
+            clouds.GetCombinedAltitudeBounds(out float lowestBottom, out _);
+            float ceiling = sea + lowestBottom;
             return ceiling >= NoCloudCeiling ? cloudAltitudeFallback : ceiling;
         }
 
@@ -365,7 +357,6 @@ namespace Airplane.Weather
             return _boltMaterial;
         }
 
-        /// <summary>Flat ribbon: the shader bends it along the channel, so only the UVs matter.</summary>
         private Mesh ResolveRibbon()
         {
             if (_ribbon)
@@ -567,7 +558,6 @@ namespace Airplane.Weather
             public Light Flash;
             public MaterialPropertyBlock[] Props;
 
-            /// <summary>Real strikes are several return strokes down one channel, not a single fade.</summary>
             public void BuildPulses()
             {
                 PulseCount = Random.Range(2, MaxPulses + 1);

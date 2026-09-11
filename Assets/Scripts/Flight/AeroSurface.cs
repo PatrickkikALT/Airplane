@@ -2,20 +2,6 @@ using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Discrete lifting / drag surface. The airframe is a composition of these:
-    /// left/right wing, H-stab halves, V-stab, fuselage.
-    ///
-    /// Local airflow:
-    ///   v_surf = v_com + ω × r − wind + prop-wash(r)
-    ///
-    /// Lift / drag (q = ½ ρ V²):
-    ///   L = q S C_L ,  D = q S C_D
-    ///
-    /// C_L / C_D cover attached (linear + induced), stall, and post-stall (flat-plate) regimes
-    /// so the polar is defined over a full 360° angle of attack.
-    /// Control deflection changes camber (zero-lift α), C_L offset, stall boundaries, and C_D.
-    /// </summary>
     [AddComponentMenu("Airplane/Aero Surface")]
     public sealed class AeroSurface : MonoBehaviour
     {
@@ -31,6 +17,9 @@ namespace Airplane.FlightSimulation
 
         [Tooltip("If > 0, overrides AR = b² / S. Leave 0 to compute from span and area.")]
         [SerializeField] private float aspectRatioOverride;
+
+        [Tooltip("Euler offset (degrees) of the aerodynamic frame relative to this transform. Place the component on the visual mesh, then rotate so +X is chord toward the leading edge, +Z is span, +Y is the upper-surface normal.")]
+        [SerializeField] private Vector3 aeroFrameEuler;
 
         [Tooltip("Oswald efficiency e. 0.7–0.85 for a rectangular trainer wing, lower for a low-AR tail.")]
         [SerializeField] [Range(0.4f, 1f)] private float oswaldEfficiency = 0.8f;
@@ -152,6 +141,8 @@ namespace Airplane.FlightSimulation
         public float Area => area;
         public AeroControlType ControlType => controlType;
 
+        private Quaternion AeroFrameLocal => Quaternion.Euler(aeroFrameEuler);
+
         private void Awake()
         {
             _controller = GetComponentInParent<AircraftFlightController>();
@@ -172,7 +163,7 @@ namespace Airplane.FlightSimulation
                 return;
             Transform root = _body.transform;
             _localPos = root.InverseTransformPoint(transform.position);
-            _localRot = Quaternion.Inverse(root.rotation) * transform.rotation;
+            _localRot = Quaternion.Inverse(root.rotation) * transform.rotation * AeroFrameLocal;
             _localPoseCached = true;
         }
 
@@ -181,6 +172,8 @@ namespace Airplane.FlightSimulation
             area = Mathf.Max(0.01f, area);
             span = Mathf.Max(0.05f, span);
             chord = Mathf.Max(0.05f, chord);
+            if (_body != null)
+                CacheLocalPose();
         }
 
         public void ContributeForces(
@@ -192,8 +185,6 @@ namespace Airplane.FlightSimulation
             if (!_localPoseCached)
                 CacheLocalPose();
 
-            // Evaluate in the solver pose, not transform.position. The visible transform is
-            // interpolated in Update and is stale during FixedUpdate sub-steps.
             Quaternion worldRot = body.Orientation * _localRot;
             Vector3 center = body.TransformPoint(_localPos);
             _lastCenterWorld = center;
@@ -324,8 +315,6 @@ namespace Airplane.FlightSimulation
                            * FlightSimMath.Deg2Rad;
             float softness = stallSoftnessDeg * FlightSimMath.Deg2Rad;
 
-            // Control CL must survive stall blend. S (nose up) puts the wing past stallP; the
-            // separated polar used to ignore delta, so left and right ailerons cancelled out.
             float clControl = clPerRadianDeflection * delta;
             float clLin = cl0 + clAlpha * aEff * alphaRestoringScale + clControl + flapClIncrement * flaps;
 
@@ -365,9 +354,10 @@ namespace Airplane.FlightSimulation
                 return;
 
             Vector3 c = transform.position;
-            Vector3 chordDir = transform.right;
-            Vector3 spanDir = transform.forward;
-            Vector3 nrm = transform.up;
+            Quaternion aeroRot = transform.rotation * AeroFrameLocal;
+            Vector3 chordDir = aeroRot * Vector3.right;
+            Vector3 spanDir = aeroRot * Vector3.forward;
+            Vector3 nrm = aeroRot * Vector3.up;
             float halfSpan = span * 0.5f;
             float halfChord = chord * 0.5f;
 

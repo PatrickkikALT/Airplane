@@ -19,14 +19,35 @@ namespace Airplane.UI
         [SerializeField] private Color readyColor = new Color(0.45f, 1f, 0.55f, 0.95f);
         [SerializeField] private Color boresightColor = new Color(0.2f, 0.9f, 0.3f, 0.55f);
         [SerializeField] private Color offscreenColor = new Color(1f, 0.82f, 0.28f, 0.75f);
+        [SerializeField] private Color hitColor = new Color(1f, 0.12f, 0.1f, 1f);
+        [SerializeField] private float hitFlashSeconds = 0.45f;
 
         private static TargetLeadCrosshair _instance;
         private static Texture2D _pixel;
 
         private Camera _camera;
         private readonly PlaneRigidbody[] _bodyScratch = new PlaneRigidbody[32];
+        private float _hitFlashUntil;
 
         public static bool Enabled { get; set; } = true;
+
+        public static void NotifyShooterHit(PlaneRigidbody shooter)
+        {
+            if (_instance == null || !shooter)
+                return;
+            if (!IsLocalPlayerShooter(shooter))
+                return;
+            _instance._hitFlashUntil = Time.unscaledTime + _instance.hitFlashSeconds;
+        }
+
+        private static bool IsLocalPlayerShooter(PlaneRigidbody shooter)
+        {
+            NetworkedAircraft local = NetworkedAircraft.Local;
+            if (local)
+                return local.Body == shooter;
+            AircraftWeaponsController weapons = shooter.GetComponent<AircraftWeaponsController>();
+            return weapons && weapons.InputEnabled;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -94,11 +115,13 @@ namespace Airplane.UI
             }
 
             float errorDeg = Vector3.Angle(shotAxis, boresight);
-            Color leadTint = errorDeg <= readyConeDeg ? readyColor : pipperColor;
+            Color leadTint = BlendHitFlash(errorDeg <= readyConeDeg ? readyColor : pipperColor);
+            Color boreTint = BlendHitFlash(boresightColor);
+            Color edgeTint = BlendHitFlash(offscreenColor);
 
             Vector3 boreWorld = muzzle + shotAxis * FlightSimMath.SafeMagnitude(aimPoint - muzzle);
             if (TryProject(boreWorld, out Vector2 boreGui, out bool boreOnScreen) && boreOnScreen)
-                DrawCross(boreGui, boresightSize, boresightColor);
+                DrawCross(boreGui, boresightSize, boreTint);
 
             if (!TryProject(aimPoint, out Vector2 leadGui, out bool leadOnScreen))
                 return;
@@ -106,7 +129,7 @@ namespace Airplane.UI
             if (leadOnScreen)
                 DrawPipper(leadGui, pipperSize, leadTint);
             else
-                DrawOffscreenCaret(leadGui, offscreenColor);
+                DrawOffscreenCaret(leadGui, edgeTint);
         }
 
         private bool TryAcquireTarget(
@@ -174,7 +197,7 @@ namespace Airplane.UI
 
         private int GatherBodies()
         {
-            PlaneRigidbody[] found = Object.FindObjectsByType<PlaneRigidbody>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            PlaneRigidbody[] found = FindObjectsByType<PlaneRigidbody>();
             int n = Mathf.Min(found.Length, _bodyScratch.Length);
             for (int i = 0; i < n; i++)
                 _bodyScratch[i] = found[i];
@@ -284,6 +307,17 @@ namespace Airplane.UI
             }
 
             return false;
+        }
+
+        private Color BlendHitFlash(Color rest)
+        {
+            float remaining = _hitFlashUntil - Time.unscaledTime;
+            if (remaining <= 0f)
+                return rest;
+
+            float fade = 1f - remaining / Mathf.Max(0.01f, hitFlashSeconds);
+            fade = fade * fade;
+            return Color.Lerp(hitColor, rest, fade);
         }
 
         private bool ResolveCamera()

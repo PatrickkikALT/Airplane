@@ -5,10 +5,6 @@ using Random = UnityEngine.Random;
 
 namespace Airplane.Weather
 {
-    /// <summary>
-    /// Drives one or more tornadoes: a GPU vortex simulation for the debris and a
-    /// stack of noise shells for the funnel itself. Mirrors <see cref="WeatherSystem" />.
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Weather/Tornado System")]
     public sealed class TornadoSystem : MonoBehaviour
@@ -164,7 +160,6 @@ namespace Airplane.Weather
             DrawFunnels();
         }
 
-        /// <summary>Walks each funnel downwind and recycles the ones that have left the play area.</summary>
         private void UpdateAnchors(Camera cam, float dt)
         {
             Vector3 camPos = cam.transform.position;
@@ -384,8 +379,6 @@ namespace Airplane.Weather
             }
         }
 
-        // Materials are optional: without one wired up we build it from the shader, the same
-        // way AircraftExplosion does, so the component works as soon as it is added.
         private Material ResolveFunnelMaterial()
         {
             if (funnelMaterial)
@@ -433,7 +426,6 @@ namespace Airplane.Weather
             return Camera.current;
         }
 
-        /// <summary>Unit tube: xz on the unit circle, y in [0,1]. The shader gives it its shape.</summary>
         private Mesh ResolveFunnelMesh()
         {
             if (_funnelMesh)
@@ -489,7 +481,6 @@ namespace Airplane.Weather
             _funnelMesh.normals = normals;
             _funnelMesh.uv = uvs;
             _funnelMesh.triangles = triangles;
-            // the vertex shader expands this far past the unit tube
             _funnelMesh.bounds = new Bounds(Vector3.zero, Vector3.one * 10f);
             return _funnelMesh;
         }
@@ -549,7 +540,6 @@ namespace Airplane.Weather
             Camera cam = ResolveCamera();
             Vector3 camPos = cam != null ? cam.transform.position : transform.position;
 
-            // Reallocating for capacity must not teleport funnels that are already running.
             _activeTornadoes = Mathf.Clamp(hadBuffer ? _activeTornadoes : tornadoCount, 0, MaxTornadoes);
             for (int i = 0; i < MaxTornadoes; i++)
             {
@@ -562,7 +552,6 @@ namespace Airplane.Weather
             _tornadoes = new ComputeBuffer(MaxTornadoes, TornadoData.Stride, ComputeBufferType.Structured);
             _tornadoes.SetData(_tornadoData);
 
-            // The sim recycles anything that is out of range, so a rough seed is enough.
             var data = new DebrisParticle[_gpuDebris];
             Vector3 anchor = _activeTornadoes > 0 ? _tornadoData[0].basePosition : camPos;
             for (int i = 0; i < _gpuDebris; i++)

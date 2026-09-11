@@ -11,19 +11,6 @@ using UnityEngine.InputSystem;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// Multiplayer wrapper around one aircraft.
-    ///
-    /// Authority model: the owning peer is the only one that runs <see cref="PlaneRigidbody"/> for
-    /// this aircraft. It publishes its solver state on an unreliable channel; every other peer turns
-    /// its copy into a replay proxy that is posed from interpolated snapshots. The server stays
-    /// authoritative over spawning, ownership and crash validation, which is where cheating actually
-    /// matters, without having to reproduce a substepped aero solve for every client.
-    ///
-    /// Consequence for contact: a remote proxy is an immovable obstacle to the locally simulated
-    /// aircraft. Each peer resolves its own aircraft against the others, so a mid-air collision is
-    /// felt on both machines but the impulses are computed independently.
-    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlaneRigidbody))]
     [RequireComponent(typeof(NetworkObject))]
@@ -59,7 +46,6 @@ namespace Airplane.Multiplayer
         private readonly NetworkVariable<int> _crashCount = new NetworkVariable<int>(
             0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-        /// <summary>Replicated so every peer can label a nametag and skip a bot when picking a camera.</summary>
         private readonly NetworkVariable<bool> _isBot = new NetworkVariable<bool>(
             false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
@@ -83,29 +69,17 @@ namespace Airplane.Multiplayer
         private bool _isAlive;
         private string _pendingPilotName;
 
-        /// <summary>Raised when the aircraft this client owns finishes spawning.</summary>
         public static event Action<NetworkedAircraft> LocalAircraftSpawned;
 
-        /// <summary>Raised when the aircraft this client owns is despawned, for any reason.</summary>
         public static event Action<NetworkedAircraft> LocalAircraftDespawned;
 
-        /// <summary>The aircraft owned by this peer, or null between a crash and the respawn.</summary>
         public static NetworkedAircraft Local { get; private set; }
 
-        /// <summary>
-        /// Every spawned aircraft on this peer, human or bot. Bot pilots search it instead of doing
-        /// their own scene queries, and the nametag overlay draws from it.
-        /// </summary>
         public static IReadOnlyList<NetworkedAircraft> All => Registry;
 
         public PlaneRigidbody Body => _body;
         public AircraftEngine Engine => _controller.Engine;
 
-        /// <summary>
-        /// Pose a gunsight should lead. Local simulated aircraft are returned as-is. Remote proxies
-        /// are sampled at current server time plus one-way latency so the pipper sits on where the
-        /// owner is now, not on the interpolated ghost that lags by <see cref="interpolationDelay"/>.
-        /// </summary>
         public bool TryGetFireControlKinematics(out Vector3 position, out Vector3 velocity)
         {
             position = Vector3.zero;
@@ -179,16 +153,10 @@ namespace Airplane.Multiplayer
 
         public int CrashCount => _crashCount.Value;
 
-        /// <summary>True for a server-flown aircraft with an <c>AircraftBotPilot</c> at the controls.</summary>
         public bool IsBot => _botLocally || (IsSpawned && _isBot.Value);
 
-        /// <summary>False from the moment the wreck is concealed until the replacement spawns.</summary>
         public bool IsAlive => _isAlive;
 
-        /// <summary>
-        /// Name shown on this aircraft's nametag. Humans submit their own on spawn, bots are named by
-        /// the server; the serialized fallback only matters before either has arrived.
-        /// </summary>
         public string DisplayName
         {
             get
@@ -209,10 +177,6 @@ namespace Airplane.Multiplayer
             }
         }
 
-        /// <summary>
-        /// Server-side, called before <c>Spawn</c>. Marks the aircraft as bot-flown so the input path
-        /// and the local-player hooks stay switched off even though the server owns it.
-        /// </summary>
         internal void ConfigureAsBot(string callsign)
         {
             _botLocally = true;
@@ -246,8 +210,6 @@ namespace Airplane.Multiplayer
 
             ApplyAuthorityRoles();
 
-            // A bot is owned by the server, so IsOwner is true for it on the host. Claiming Local
-            // would hand the chase camera and the session UI to a bot instead of the player.
             if (IsOwner && !IsBot)
             {
                 Local = this;
@@ -255,8 +217,6 @@ namespace Airplane.Multiplayer
                 SubmitPilotNameRpc(ToFixedName(LocalPlayerIdentity.PilotName));
             }
 
-            // Late joiners missed the weather/timescale broadcast. Push the current world state
-            // onto the new human's owner, not onto bots (the host would get it every respawn).
             if (IsServer && !IsBot && OwnerClientId != NetworkManager.LocalClientId)
                 AdminSession.SyncToAircraft(this);
         }
@@ -327,16 +287,10 @@ namespace Airplane.Multiplayer
             return new FixedString64Bytes(trimmed);
         }
 
-        /// <summary>
-        /// Turns the local copy into either a simulated aircraft or a replay proxy. Everything that
-        /// consumes input or integrates forces is switched off on a proxy; visuals and colliders stay.
-        /// </summary>
         private void ApplyAuthorityRoles()
         {
             bool simulate = IsOwner;
 
-            // A bot simulates but takes no human input: the pilot component is the only writer of
-            // its deflections and triggers, exactly like a remote proxy is written by the wire.
             bool humanInput = simulate && !IsBot;
 
             if (_body)
@@ -473,10 +427,6 @@ namespace Airplane.Multiplayer
         [Rpc(SendTo.Server, Delivery = RpcDelivery.Unreliable, InvokePermission = RpcInvokePermission.Owner)]
         private void SubmitStateRpc(AircraftStateSnapshot snapshot)
         {
-            // Restamp on the server so every consumer interpolates against one clock. A client's
-            // NetworkManager.ServerTime runs behind the real server tick, so honouring the sender's
-            // stamp would leave the host permanently extrapolating stale client states while clients
-            // saw the host's aircraft interpolate cleanly.
             snapshot.ServerTime = NetworkManager.ServerTime.Time;
 
             if (!IsOwner)
@@ -493,10 +443,6 @@ namespace Airplane.Multiplayer
             _buffer.Insert(snapshot);
         }
 
-        /// <summary>
-        /// Called by <see cref="CollisionTest"/> on the simulating peer. The impact speed travels with
-        /// the report so the server can reject a client claiming a crash it could not have had.
-        /// </summary>
         public void ReportCrash(Vector3 point, float impactSpeedKmh)
         {
             if (!IsSpawned || !IsOwner || _crashReported)
@@ -510,13 +456,8 @@ namespace Airplane.Multiplayer
             SubmitCrashRpc(point, impactSpeedKmh);
         }
 
-        /// <summary>Threshold the owner compares impact speed against, km/h.</summary>
         public float CrashSpeedKmh => crashSpeedKmh;
 
-        /// <summary>
-        /// Called by <see cref="AircraftGun"/> on the firing owner when a round hits a remote
-        /// aircraft. The server forwards the impulse to the victim's owner so their solver feels it.
-        /// </summary>
         public void ReportWeaponHit(NetworkedAircraft victim, Vector3 point, Vector3 impulse, float damage)
         {
             if (!IsSpawned || !IsOwner || !victim)
@@ -567,10 +508,6 @@ namespace Airplane.Multiplayer
             AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
         }
 
-        /// <summary>
-        /// Server-only. Plays the crash explosion on every peer and hides this airframe until despawn.
-        /// Must run before <see cref="NetworkObject.Despawn"/> so the RPC still has an object to travel on.
-        /// </summary>
         internal void PlayCrashExplosion(Vector3 origin)
         {
             if (!IsSpawned || !IsServer)
@@ -624,10 +561,6 @@ namespace Airplane.Multiplayer
                 _playerInput.enabled = false;
         }
 
-        /// <summary>
-        /// Server-side reset used after a respawn or a teleport. Runs on every peer so proxies drop
-        /// their stale interpolation window instead of sliding the aircraft across the map.
-        /// </summary>
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         public void TeleportRpc(Vector3 comWorld, Quaternion orientation, Vector3 velocityWorld, Vector3 angularVelocityBody)
         {
@@ -637,11 +570,6 @@ namespace Airplane.Multiplayer
             _body.Teleport(comWorld, orientation, velocityWorld, angularVelocityBody);
         }
 
-        /// <summary>
-        /// Server-only. Crashes this aircraft regardless of who owns it, which is what the admin
-        /// destroy command needs for a remote human. God mode does not apply: an admin kill is
-        /// not an impact.
-        /// </summary>
         internal void ForceDestroyFromServer()
         {
             if (!IsSpawned || !IsServer || _crashReported)
@@ -764,6 +692,9 @@ namespace Airplane.Multiplayer
                 case AdminCommand.Speed:
                     if (_controller && _controller.Engine)
                         _controller.Engine.SetMaxThrust((int)value);
+                    break;
+                case AdminCommand.Mass:
+                    _body?.SetMass(value);
                     break;
             }
         }

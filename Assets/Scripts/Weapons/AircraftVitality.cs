@@ -6,10 +6,6 @@ using UnityEngine;
 
 namespace Airplane.Weapons
 {
-    /// <summary>
-    /// Hit-point pool on an aircraft. <see cref="AircraftGun"/> delivers damage through
-    /// <c>OnGunHit</c> 
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Weapons/Aircraft Vitality")]
     public sealed class AircraftVitality : MonoBehaviour
@@ -45,10 +41,6 @@ namespace Airplane.Weapons
             _hp = hitPoints;
         }
 
-        /// <summary>
-        /// Gets called by <see cref="AircraftGun"/>'s SendMessage on a locally simulated victim.
-        /// Remote proxies never run this: the owning peer applies the hit after the weapon RPC.
-        /// </summary>
         private void OnGunHit(GunHit hit)
         {
             if (hit.Damage <= 0f)

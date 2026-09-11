@@ -40,7 +40,6 @@ namespace Airplane.UI
         private GUIStyle _hintStyle;
         private Texture2D _panelTex;
 
-        /// <summary>True while the console is on screen and eating keyboard input.</summary>
         public static bool IsOpen => _instance != null && _instance._open;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -193,7 +192,6 @@ namespace Airplane.UI
             string typed = _input ?? "";
             if (_openedThisFrame)
             {
-                // The toggle key would otherwise land in the field on the same frame.
                 if (typed == ";" || typed == ":")
                     typed = "";
             }
@@ -460,6 +458,7 @@ namespace Airplane.UI
             Add("destroy", "destroy [name|*]", "Crash an aircraft by nametag, or * for everyone.", CmdDestroy);
             Add("speed", "speed [speed] [name|*]", "Set max thrust. Base is 60000. Default is you.", CmdSpeed);
             Add("weather", "weather [weather]", "Set the shared weather. No argument lists presets.", CmdWeather);
+            Add("mass", "mass [mass] [name|*]", "Set an aircraft's mass in kg. Base is 1500. Default is you.", CmdMass);
         }
 
         private void Add(string name, string usage, string help, Func<string[], string> handler)
@@ -471,6 +470,19 @@ namespace Airplane.UI
                 Help = help,
                 Handler = handler
             });
+        }
+
+        private string CmdMass(string[] args)
+        {
+            if (args == null || args.Length == 0 || !float.TryParse(args[0], out float mass))
+                return "usage: mass [mass] [name|*]";
+            
+            string target = args.Length > 1 ? args[1] : "";
+            if (!string.IsNullOrEmpty(target) && target != "*" && !AdminSession.AnyMatch(target))
+                return "no aircraft named '" + target + "'";
+
+            string error = AdminSession.Send(AdminCommand.Mass, target, mass);
+            return string.IsNullOrEmpty(error) ? "mass " + mass.ToString("0.###") : error;
         }
 
         private string CmdWeather(string[] args)

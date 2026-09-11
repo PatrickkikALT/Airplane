@@ -3,10 +3,6 @@ using UnityEngine.Rendering;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// One-shot crash blast that lives in the world, not on the aircraft, so it survives despawn.
-    /// Built at runtime so a crash still looks like an explosion without a wired particle prefab.
-    /// </summary>
     public sealed class AircraftExplosion : MonoBehaviour
     {
         private const float Lifetime = 2.4f;

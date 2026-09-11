@@ -3,11 +3,6 @@ using UnityEngine;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// Stick, lever and control-surface positions quantised to one byte per channel.
-    /// Remote peers feed these straight into the flight controller for visuals and audio;
-    /// they never re-run the aero solver, so precision only has to survive the eye.
-    /// </summary>
     public struct AircraftControlPacket : INetworkSerializable
     {
         public sbyte Aileron;
@@ -89,17 +84,8 @@ namespace Airplane.Multiplayer
         }
     }
 
-    /// <summary>
-    /// One published rigid-body state from the aircraft's owner. <see cref="Position"/> is the
-    /// centre of mass in world space (what <see cref="FlightSimulation.PlaneRigidbody"/> integrates),
-    /// not <c>transform.position</c>.
-    /// </summary>
     public struct AircraftStateSnapshot : INetworkSerializable
     {
-        /// <summary>
-        /// Server time the state is treated as belonging to, seconds. The owner fills in its own
-        /// estimate, then the server overwrites it on arrival so all peers share one clock.
-        /// </summary>
         public double ServerTime;
 
         public Vector3 Position;
@@ -119,13 +105,6 @@ namespace Airplane.Multiplayer
         }
     }
 
-    /// <summary>
-    /// Time-ordered ring of snapshots for one remote aircraft, sampled a fixed delay behind
-    /// server time so jitter and reordering on the unreliable channel stay invisible.
-    ///
-    /// Position uses a cubic Hermite through the published velocities, which keeps a banking
-    /// turn curved instead of cutting the corner the way a straight lerp does.
-    /// </summary>
     public sealed class AircraftSnapshotBuffer
     {
         private readonly AircraftStateSnapshot[] _items;
@@ -155,10 +134,6 @@ namespace Airplane.Multiplayer
             _count = 0;
         }
 
-        /// <summary>
-        /// Inserts a snapshot keeping the buffer sorted by <see cref="AircraftStateSnapshot.ServerTime"/>.
-        /// Duplicates and states older than the whole window are dropped.
-        /// </summary>
         public void Insert(in AircraftStateSnapshot snapshot)
         {
             if (_count == _items.Length)
@@ -187,11 +162,6 @@ namespace Airplane.Multiplayer
             _count++;
         }
 
-        /// <summary>
-        /// Samples the buffer at <paramref name="renderTime"/>. Past the newest snapshot the state is
-        /// dead-reckoned from its velocity for at most <paramref name="maxExtrapolation"/> seconds so a
-        /// dropped burst of packets coasts instead of freezing.
-        /// </summary>
         public bool Sample(double renderTime, float maxExtrapolation, out AircraftStateSnapshot result)
         {
             if (_count == 0)
@@ -243,8 +213,6 @@ namespace Airplane.Multiplayer
             return true;
         }
 
-        // interpolate network position via a hermite curve
-        // https://en.wikibooks.org/wiki/Cg_Programming/Unity/Hermite_Curves
         private static Vector3 Hermite(Vector3 p0, Vector3 v0, Vector3 p1, Vector3 v1, float t, float dt)
         {
             float t2 = t * t;

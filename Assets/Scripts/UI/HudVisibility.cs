@@ -3,10 +3,6 @@ using UnityEngine.InputSystem;
 
 namespace Airplane.UI
 {
-    /// <summary>
-    /// Session-local overlay switch for screenshots and cinematics. Does not change per-aircraft HUD
-    /// flags, so bots and remote proxies stay hidden when overlays come back on.
-    /// </summary>
     public static class HudVisibility
     {
         public static bool Visible { get; set; } = true;

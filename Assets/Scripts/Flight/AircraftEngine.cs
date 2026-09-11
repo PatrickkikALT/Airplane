@@ -2,10 +2,6 @@ using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Slipstream field produced by the propeller. Downstream surfaces add this velocity
-    /// to their local airflow when they lie inside the wash cylinder.
-    /// </summary>
     public readonly struct PropWashState
     {
         public readonly bool Active;
@@ -25,9 +21,6 @@ namespace Airplane.FlightSimulation
             ExcessSpeed = excessSpeed;
         }
 
-        /// <summary>
-        /// Excess axial velocity at <paramref name="worldPoint"/> (m/s). Zero outside the wash cone.
-        /// </summary>
         public Vector3 VelocityAt(Vector3 worldPoint)
         {
             if (!Active || ExcessSpeed <= 0.01f)
@@ -52,11 +45,6 @@ namespace Airplane.FlightSimulation
         }
     }
 
-    /// <summary>
-    /// Propulsion model. Thrust depends on throttle, airspeed (propeller "ram" / advance-ratio lapse)
-    /// and atmospheric density. Also emits engine torque reaction and a momentum-theory slipstream
-    /// consumed by downstream <see cref="AeroSurface"/> components.
-    /// </summary>
     [AddComponentMenu("Airplane/Aircraft Engine")]
     public sealed class AircraftEngine : MonoBehaviour
     {
@@ -180,20 +168,15 @@ namespace Airplane.FlightSimulation
 
         private void LateUpdate()
         {
-            // Tracked here as well as in ContributeForces so the disc still spins on an aircraft whose
-            // solver is off because another peer owns it.
             if (_controller)
                 _throttle01 = _controller.Throttle01;
 
             if (!propellerVisual)
                 return;
             float rpm = Mathf.Lerp(400f, fullThrottleRpm, _throttle01);
-            propellerVisual.Rotate(new Vector3(0, 1, 0), rpm * 6f * Time.deltaTime, Space.Self);
+            propellerVisual.Rotate(localThrustAxis, rpm * 6f * Time.deltaTime, Space.Self);
         }
 
-        /// <summary>
-        /// Called by <see cref="PlaneRigidbody"/> once per sub-step. Reads throttle from the controller.
-        /// </summary>
         public void ContributeForces(PlaneRigidbody body, in AtmosphereSample atmo, float dt)
         {
             if (_controller)
@@ -208,7 +191,6 @@ namespace Airplane.FlightSimulation
             
             float tEff = idleThrottle + (1f - idleThrottle) * FlightSimMath.Saturate(_throttle01);
             float speedLapse = 1f - FlightSimMath.Saturate(tas / Mathf.Max(10f, zeroThrustAirspeed));
-            // Slight residual high-speed thrust so the model does not go strictly propeller-idle at Vmax.
             speedLapse = 0.08f + 0.92f * speedLapse;
             
             float thrust = maxStaticThrust * tEff * Mathf.Pow(densityRatio, densityExponent) * speedLapse;
@@ -232,8 +214,6 @@ namespace Airplane.FlightSimulation
                 body.AddTorqueWorld(tauGyro);
             }
 
-            // Momentum theory: T = 2 ρ A v_i (V + v_i)  →  v_i = 0.5 (−V + √(V² + T/(ρ A)))
-            // Far-wake excess is 2 v_i.
             float area = Mathf.PI * propellerRadius * propellerRadius;
             float vAxial = Vector3.Dot(body.GetPointVelocity(point) - AtmosphericModel.SampleWind(), axisWorld);
             if (vAxial < 0f)

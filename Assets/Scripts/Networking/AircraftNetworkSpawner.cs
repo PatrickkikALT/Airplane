@@ -7,15 +7,6 @@ using UnityEngine;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// Server-side owner of the aircraft population: one aircraft per connected client, spawned with
-    /// ownership so that client becomes the simulating peer, plus respawn after a validated crash.
-    ///
-    /// Deliberately a plain MonoBehaviour rather than a NetworkBehaviour. It sends no RPCs and holds
-    /// no NetworkVariables, and it is meant to live on the NetworkManager GameObject, which cannot
-    /// carry a NetworkObject. A NetworkBehaviour there would never spawn and would silently do
-    /// nothing at all.
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Networking/Aircraft Network Spawner")]
     public sealed class AircraftNetworkSpawner : MonoBehaviour
@@ -96,15 +87,12 @@ namespace Airplane.Multiplayer
         private bool _subscribed;
         private NetworkManager _manager;
 
-        /// <summary>The spawner in the active scene, if any.</summary>
         public static AircraftNetworkSpawner Instance { get; private set; }
 
         public IReadOnlyDictionary<ulong, NetworkObject> AircraftByClient => _aircraftByClient;
 
-        /// <summary>Bots currently in the air.</summary>
         public int LiveBotCount => _bots.Count;
 
-        /// <summary>Bots the server is trying to keep in the air, including any waiting to respawn.</summary>
         public int DesiredBotCount => _desiredBots;
 
         private static NetworkManager Manager => NetworkManager.Singleton;
@@ -138,8 +126,6 @@ namespace Airplane.Multiplayer
 
         private void OnDestroy()
         {
-            // Singleton is already cleared by the time scene objects are destroyed on Play-stop,
-            // so unsubscribe from the instance we actually bound to.
             if (_subscribed && _manager)
             {
                 _manager.OnServerStarted -= HandleServerStarted;
@@ -202,8 +188,6 @@ namespace Airplane.Multiplayer
             if (!_aircraftByClient.Remove(clientId, out NetworkObject aircraft))
                 return;
 
-            // NGO is already tearing spawned objects down. A second Despawn here races
-            // NetworkSpawnManager.DespawnAndDestroyNetworkObjects on Play-stop.
             if (Manager != null && Manager.ShutdownInProgress)
                 return;
 
@@ -211,10 +195,6 @@ namespace Airplane.Multiplayer
                 aircraft.Despawn();
         }
 
-        /// <summary>
-        /// Spawns an aircraft owned by <paramref name="clientId"/>. Does nothing if that client
-        /// already has one unless <paramref name="replaceExisting"/> is set.
-        /// </summary>
         public void SpawnFor(ulong clientId, bool replaceExisting = false)
         {
             if (!IsServerActive || !aircraftPrefab)
@@ -255,10 +235,6 @@ namespace Airplane.Multiplayer
                 networked.TeleportRpc(comWorld, rotation, velocity, Vector3.zero);
         }
 
-        /// <summary>
-        /// Server-only. Grows or trims the bot squadron. Safe to call while a session is running,
-        /// which is how the session UI adds and removes opposition mid-flight.
-        /// </summary>
         public void SetBotCount(int count)
         {
             if (!IsServerActive)
@@ -276,11 +252,6 @@ namespace Airplane.Multiplayer
             }
         }
 
-        /// <summary>
-        /// Spawns one bot: a stock aircraft, owned by the server so the server simulates it, with a
-        /// pilot component bolted on at runtime. The pilot deliberately does not live on the prefab,
-        /// so a client's replica of the same aircraft stays a brainless replay proxy.
-        /// </summary>
         public bool SpawnBot()
         {
             if (!IsServerActive || !aircraftPrefab)
@@ -328,20 +299,12 @@ namespace Airplane.Multiplayer
             return true;
         }
 
-        /// <summary>
-        /// Spawns a still, AI-less aircraft in front of the local player so gun hits can be tested
-        /// against a real networked victim. Server-only. Does not count toward the bot squadron.
-        /// </summary>
         public bool SpawnDummy()
         {
             ulong clientId = Manager != null ? Manager.LocalClientId : 0;
             return SpawnDummyFor(clientId);
         }
 
-        /// <summary>
-        /// Same as <see cref="SpawnDummy"/>, but places the dummy in front of
-        /// <paramref name="clientId"/>'s aircraft so a client admin sees it in their windscreen.
-        /// </summary>
         public bool SpawnDummyFor(ulong clientId)
         {
             if (!IsServerActive || !aircraftPrefab)
@@ -409,8 +372,6 @@ namespace Airplane.Multiplayer
             if (local && local.Body != null)
             {
                 rotation = local.Body.Orientation;
-                // Body +X is the nose. Sit it ahead and a little to the right so a host does not
-                // spawn it inside their own propeller.
                 position = local.Body.Position + rotation * new Vector3(140f, 0f, 25f);
                 return;
             }
@@ -431,10 +392,6 @@ namespace Airplane.Multiplayer
                 bot.Despawn();
         }
 
-        /// <summary>
-        /// Bots enter on a golden-angle ring, tangentially, so consecutive spawns are spread around
-        /// the circle instead of stacking on the handful of player spawn points.
-        /// </summary>
         private void ResolveBotSpawnPose(int index, out Vector3 position, out Quaternion rotation)
         {
             float angle = index * 137.508f + Random.Range(-10f, 10f);
@@ -446,7 +403,6 @@ namespace Airplane.Multiplayer
                 botSpawnAltitude + Random.Range(-botSpawnAltitudeJitter, botSpawnAltitudeJitter),
                 botPatrolCentre.z + Mathf.Cos(radians) * radius);
 
-            // Body +X is the nose, so this heading puts the bot on a tangent to the ring.
             rotation = Quaternion.Euler(0f, angle, 0f);
         }
 
@@ -467,9 +423,6 @@ namespace Airplane.Multiplayer
             rotation = Quaternion.Euler(0f, generatedHeadingDeg, 0f);
         }
 
-        /// <summary>
-        /// Server-side entry point for a crash the owner reported and the server accepted.
-        /// </summary>
         internal static void NotifyAircraftDestroyed(NetworkedAircraft aircraft, Vector3 point)
         {
             if (Instance == null || aircraft == null)
@@ -492,8 +445,6 @@ namespace Airplane.Multiplayer
                 return;
             }
 
-            // A bot is owned by the server, so its OwnerClientId collides with the host's own
-            // aircraft. It has to be tracked and replaced on its own list.
             if (aircraft.IsBot)
             {
                 _bots.Remove(netObject);
@@ -524,7 +475,6 @@ namespace Airplane.Multiplayer
             if (!IsServerActive)
                 yield break;
 
-            // Someone may have trimmed the squadron while this one was burning.
             if (_bots.Count < _desiredBots)
                 SpawnBot();
         }

@@ -3,11 +3,6 @@ using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Integration method used by <see cref="PlaneRigidbody"/>.
-    /// Semi-implicit Euler is the default: cheap, symplectic-ish, and stable with aero damping.
-    /// RK4 is more accurate for high-rate tumbling / large sub-steps at a higher CPU cost.
-    /// </summary>
     public enum IntegrationScheme
     {
         SemiImplicitEuler = 0,
@@ -15,9 +10,6 @@ namespace Airplane.FlightSimulation
     }
 
     
-    /// <summary>
-    /// Role of a lifting / drag surface. The flight controller maps stick axes onto these types.
-    /// </summary>
     public enum AeroControlType
     {
         None = 0,
@@ -28,21 +20,12 @@ namespace Airplane.FlightSimulation
         Airbrake = 5
     }
 
-    /// <summary>
-    /// Force model used by <see cref="AeroSurface"/>.
-    /// </summary>
     public enum AeroSurfaceMode
     {
-        /// <summary>Cambered airfoil with attached / stall / post-stall (flat-plate) blend, full 360°.</summary>
         LiftingAirfoil = 0,
-        /// <summary>Fuselage / bluff body: mostly parasitic drag plus weak α/β restoring forces.</summary>
         BluffBody = 1
     }
 
-    /// <summary>
-    /// Compact 3×3 matrix for the body-axis inertia tensor and its inverse.
-    /// Stored in row-major order. Allocations: none (value type).
-    /// </summary>
     public struct Mat3
     {
         public float m00, m01, m02;
@@ -64,12 +47,6 @@ namespace Airplane.FlightSimulation
             return new Mat3(xx, 0f, 0f, 0f, yy, 0f, 0f, 0f, zz);
         }
 
-        /// <summary>
-        /// Builds the inertia tensor in the standard rigid-body form:
-        /// [[ Ixx, -Ixy, -Ixz ],
-        ///  [-Ixy,  Iyy, -Iyz ],
-        ///  [-Ixz, -Iyz,  Izz ]].
-        /// </summary>
         public static Mat3 Inertia(float ixx, float iyy, float izz, float ixy, float ixz, float iyz)
         {
             return new Mat3(
@@ -112,9 +89,6 @@ namespace Airplane.FlightSimulation
         }
     }
     
-    /// <summary>
-    /// Snapshot of the state. Value type so RK4 can clone without GC.
-    /// </summary>
     public struct RigidBodyState
     {
         public Vector3 Position;
@@ -123,9 +97,6 @@ namespace Airplane.FlightSimulation
         public Vector3 AngularVelocityBody;
     }
 
-    /// <summary>
-    /// State derivatives used by RK4: dr/dt = v, dv/dt = a, dq/dt = qDot, dω/dt = α.
-    /// </summary>
     public struct RigidBodyDerivatives
     {
         public Vector3 Velocity;
@@ -134,9 +105,6 @@ namespace Airplane.FlightSimulation
         public Vector3 AngularAccelerationBody;
     }
 
-    /// <summary>
-    /// Allocation-free math used by the solver and aero.
-    /// </summary>
     public static class FlightSimMath
     {
         public const float Deg2Rad = Mathf.Deg2Rad;
@@ -164,7 +132,6 @@ namespace Airplane.FlightSimulation
             return magSqr < epsSqr ? 0f : (float)System.Math.Sqrt(magSqr);
         }
 
-        /// <summary>Wraps an angle in radians to (−π, π].</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float WrapPi(float a)
         {
@@ -193,10 +160,6 @@ namespace Airplane.FlightSimulation
             return x;
         }
 
-        /// <summary>
-        /// Body-frame quaternion derivative: dq/dt = 0.5 · q * ω, with ω = (ωx, ωy, ωz, 0).
-        /// Matches Unity's left-handed q * v body-to-world convention.
-        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Quaternion QuaternionDerivative(Quaternion q, Vector3 omegaBody)
         {
@@ -251,18 +214,12 @@ namespace Airplane.FlightSimulation
             return !float.IsNaN(x) && !float.IsInfinity(x);
         }
 
-        /// <summary>
-        /// Unity body axes: +X forward, +Y up, +Z right.
-        /// Angle of attack is the pitch of the velocity vector in the body X/Y plane.
-        /// Positive α = nose above the velocity vector.
-        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float AngleOfAttack(Vector3 velocityBody)
         {
             return Mathf.Atan2(-velocityBody.y, velocityBody.x);
         }
 
-        /// <summary>Positive β = velocity from the right</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Sideslip(Vector3 velocityBody)
         {

@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// Keeps the chase camera pointed at whichever aircraft this peer currently owns. Because a crash
-    /// despawns the aircraft and the server spawns a replacement a few seconds later, the camera has
-    /// to rebind rather than hold a reference from the scene.
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Networking/Local Aircraft Camera Binder")]
     public sealed class LocalAircraftCameraBinder : MonoBehaviour

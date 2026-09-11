@@ -104,7 +104,6 @@ namespace Airplane.Weather
             int groups = (_drawCount + ThreadGroupSize - 1) / ThreadGroupSize;
             simulationCompute.Dispatch(_kernel, groups, 1, 1);
 
-            // dry above the cloud deck
             if (camFade <= 0.001f)
                 return;
 
@@ -171,7 +170,8 @@ namespace Airplane.Weather
                 return NoCloudCeiling;
 
             float sea = AtmosphericModel.Instance ? AtmosphericModel.Instance.SeaLevelY : 0f;
-            return sea + clouds.bottomAltitude.value;
+            clouds.GetCombinedAltitudeBounds(out float lowestBottom, out _);
+            return sea + lowestBottom;
         }
 
         private Camera ResolveCamera()

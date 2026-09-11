@@ -123,6 +123,11 @@ namespace Airplane.AI
             _hasWaypoint = false;
             _vision.Clear();
             _autopilot.Reset();
+
+            if (!_controller)
+                _controller = GetComponent<AircraftFlightController>();
+            if (_controller)
+                _controller.SetElevatorTrim(-0.1f);
         }
 
         private void FixedUpdate()
@@ -151,9 +156,7 @@ namespace Airplane.AI
 
             BotFlightCommand command = BuildCommand(out bool wantsToShoot);
             command.Direction = ApplySeparation(command.Direction);
-
-            if (_controller && _state == BotState.Patrol)
-                _controller.TickAutoTrim(dt);
+            command.Direction = ApplyTerrainAvoid(command.Direction);
 
             float trim = _controller ? _controller.ElevatorTrim : -0.1f;
             BotControlOutput output = _autopilot.Tick(_body, in command, profile, trim, dt);
@@ -279,15 +282,18 @@ namespace Airplane.AI
 
         private bool NeedsRecovery()
         {
-            if (_altitudeAgl < profile.minSafeAltitude || _timeToTerrain < 4f)
+            if (_altitudeAgl < profile.minSafeAltitude)
+                return true;
+
+            // Last-moment pull-up for a slope they are already descending into. Long look-ahead
+            // climbs are handled by turning instead, so this does not ratchet them upstairs.
+            if (_timeToTerrain < 2.2f && _body.Velocity.y < 8f && _altitudeAgl < profile.minSafeAltitude * 3.5f)
                 return true;
 
             if (_state != BotState.Recover)
                 return false;
 
-            // Hysteresis: climb clear before handing control back to the fight, or a bot at the
-            // recovery boundary oscillates between pulling up and diving at the same patch of ground.
-            return _altitudeAgl < profile.minSafeAltitude * 1.8f || _timeToTerrain < 7f;
+            return _altitudeAgl < profile.minSafeAltitude * 1.8f;
         }
 
         private bool ShouldEvade()
@@ -315,7 +321,7 @@ namespace Airplane.AI
             _evadeUntil = Time.time + profile.evadeSeconds;
             _evadeSide = Random.value < 0.5f ? -1f : 1f;
 
-            bool roomBelow = _altitudeAgl > 900f;
+            bool roomBelow = _altitudeAgl > 900f && _body.Position.y > CombatFloor + 250f;
             bool roomAbove = _body.Position.y < CombatCeiling - 80f;
             bool fast = _body.TrueAirspeed > profile.cruiseSpeed;
 
@@ -357,10 +363,12 @@ namespace Airplane.AI
                 heading = Vector3.forward;
             heading.Normalize();
 
-            // Steeper the closer the ground is, but never so steep that the wing gives up. Wings
-            // level first: pulling while banked just turns the dive.
             float urgency = Mathf.Clamp01(1f - _altitudeAgl / Mathf.Max(1f, profile.minSafeAltitude * 2f));
-            float climb = Mathf.Lerp(0.25f, 0.8f, urgency);
+            float climb = Mathf.Lerp(0.45f, 1.1f, urgency);
+
+            bool highEnough = _altitudeAgl > profile.minSafeAltitude * 2f && _body.Position.y >= CombatCeiling;
+            if (highEnough)
+                return LevelCommand(heading, profile.cruiseSpeed, 30f, CombatCeiling, 10f);
 
             return new BotFlightCommand
             {
@@ -538,36 +546,40 @@ namespace Airplane.AI
                 Flatten(toWaypoint) + lateral,
                 profile.cruiseSpeed,
                 45f,
-                _waypoint.y,
-                8f);
+                ClampAimAltitude(_waypoint.y),
+                12f);
         }
 
         private void PickWaypoint()
         {
             Vector2 disc = Random.insideUnitCircle * patrolRadius;
-            // Stay near the current height so patrol is a cruise, not a climb to a random ceiling.
-            float alt = Mathf.Clamp(_body ? _body.Position.y : patrolCentre.y, CombatFloor, CombatCeiling);
-            alt += Random.Range(-80f, 80f);
+            float alt = Random.Range(CombatFloor, CombatCeiling);
             _waypoint = new Vector3(
                 patrolCentre.x + disc.x,
-                ClampAimAltitude(alt),
+                alt,
                 patrolCentre.z + disc.y);
             _hasWaypoint = true;
         }
 
-        private float CombatFloor => Mathf.Max(patrolMinAltitude, profile.minSafeAltitude + 80f);
-
-        private float CombatCeiling => Mathf.Max(CombatFloor + 100f, patrolMaxAltitude);
-
-        /// <summary>Hold current height if it is already in the band; otherwise drive back into it.</summary>
-        private float CruiseAltitude
+        private float GroundY
         {
             get
             {
-                float y = _body ? _body.Position.y : patrolCentre.y;
-                return Mathf.Clamp(y, CombatFloor, CombatCeiling);
+                if (_body == null || _altitudeAgl > 5000f)
+                    return 0f;
+                return _body.Position.y - _altitudeAgl;
             }
         }
+
+        private float CombatFloor => Mathf.Max(patrolMinAltitude, GroundY + profile.minSafeAltitude + 180f);
+
+        private float CombatCeiling => Mathf.Max(CombatFloor + 200f, patrolMaxAltitude);
+
+        /// <summary>
+        /// A stable cruise in the patrol band. Must not track current height: with a slight
+        /// nose-down bias that would walk the target into the dirt.
+        /// </summary>
+        private float CruiseAltitude => Mathf.Clamp(patrolCentre.y, CombatFloor, CombatCeiling);
 
         private float ClampAimAltitude(float y)
         {
@@ -636,6 +648,35 @@ namespace Airplane.AI
                 return direction;
 
             return (direction.normalized + avoidance * 1.5f).normalized;
+        }
+
+        /// <summary>
+        /// Hill or tower in the flight path: turn, do not climb. Recovery already handles being
+        /// too close to the ground.
+        /// </summary>
+        private Vector3 ApplyTerrainAvoid(Vector3 direction)
+        {
+            if (_state == BotState.Recover)
+                return direction;
+            if (_timeToTerrain > 6f)
+                return direction;
+
+            float urgency = 1f - FlightSimMath.Saturate(_timeToTerrain / 6f);
+            Vector3 right = Vector3.Cross(Vector3.up, Flatten(_body.Velocity));
+            if (right.sqrMagnitude < 1e-4f)
+                right = Vector3.Cross(Vector3.up, Flatten(direction));
+            if (right.sqrMagnitude < 1e-4f)
+                return direction;
+
+            right.Normalize();
+            float side = (_seed % 1f) >= 0.5f ? 1f : -1f;
+            Vector3 horiz = Flatten(direction);
+            if (horiz.sqrMagnitude < 1e-4f)
+                horiz = Flatten(_body.TransformDirection(BodyForward));
+            if (horiz.sqrMagnitude < 1e-4f)
+                return direction;
+
+            return (horiz.normalized + right * side * urgency * 1.4f).normalized;
         }
 
         /// <summary>

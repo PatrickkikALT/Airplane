@@ -5,10 +5,6 @@ using UnityEngine.Serialization;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Chase / orbit camera. The aircraft stays centered and the rig does not roll with the
-    /// airframe. Heading eases behind the nose; Look orbits, Zoom dollies, ResetOrbit recenters.
-    /// </summary>
     [AddComponentMenu("Airplane/Aircraft Chase Camera")]
     public sealed class AircraftChaseCamera : MonoBehaviour
     {
@@ -67,7 +63,6 @@ namespace Airplane.FlightSimulation
         private float _stickZoom;
         private bool _orbitHeld;
 
-        /// <summary>Scene chase camera, if one is enabled. Used so PlayerInput on the aircraft can forward Look.</summary>
         public static AircraftChaseCamera Active { get; private set; }
 
         public Transform FollowTarget => target;
@@ -144,7 +139,6 @@ namespace Airplane.FlightSimulation
                 return;
 
             ApplyOrbitInput();
-            //UpdateFollowHeading();
 
             if (_followFwd.sqrMagnitude < 1e-6f)
                 _followFwd = Vector3.forward;

@@ -7,11 +7,6 @@ using UnityEngine.InputSystem;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// Minimal direct-IP session front end: host, join or run a dedicated server, then show who is
-    /// connected. Deliberately IMGUI so it matches the existing debug HUD and needs no scene canvas.
-    /// Swap in Relay later by replacing <see cref="ApplyConnectionData"/>.
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Networking/Network Session UI")]
     public sealed class NetworkSessionUi : MonoBehaviour
@@ -144,8 +139,6 @@ namespace Airplane.Multiplayer
 
         private void Update()
         {
-            // F8 is a backup for the Dummy button: the session panel sits under the guns HUD in
-            // this scene, and a short Game view clips anything we add below the bot +/− row.
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.f8Key.wasPressedThisFrame)
                 return;
@@ -174,8 +167,6 @@ namespace Airplane.Multiplayer
 
             if (!listening)
             {
-                // The callsign is what everyone else sees on this aircraft's nametag, so it is the
-                // first thing on the panel rather than buried behind a settings screen.
                 GUI.Label(new Rect(x + 10f, row, 60f, 20f), "Callsign");
                 string typed = GUI.TextField(new Rect(x + 74f, row, inner - 64f, 20f), _callsignField ?? "", 24);
                 if (typed != _callsignField)

@@ -6,9 +6,6 @@ using UnityEngine;
 
 namespace Airplane.Weapons
 {
-    /// <summary>
-    /// Ballistic tracer. 
-    /// </summary>
     [DefaultExecutionOrder(110)]
     [AddComponentMenu("Airplane/Weapons/Aircraft Projectile")]
     public sealed class AircraftProjectile : MonoBehaviour
@@ -113,7 +110,6 @@ namespace Airplane.Weapons
             if (_lineMaterial)
                 return _lineMaterial;
 
-            //TODO: not this
             Shader shader = Shader.Find("Sprites/Default");
             if (!shader)
                 shader = Shader.Find("Universal Render Pipeline/Unlit");
@@ -127,11 +123,6 @@ namespace Airplane.Weapons
             return _lineMaterial;
         }
 
-        /// <summary>
-        /// Moving tracer whose velocity already includes the firing aircraft's point velocity.
-        /// Used for hitscan guns so the streak travels in the world frame instead of sitting still
-        /// while the airframe flies past it.
-        /// </summary>
         public void LaunchKinematic(Vector3 origin, Vector3 velocity, float lifetime)
         {
             EnsureLine();
@@ -153,10 +144,6 @@ namespace Airplane.Weapons
             _line.SetPosition(1, origin);
         }
 
-        /// <summary>
-        /// Instant streak from muzzle to hit / max range. No collision of its own.
-        /// Prefer <see cref="LaunchKinematic"/> — a frozen beam reads as lagging behind a moving aircraft.
-        /// </summary>
         public void LaunchHitscanVisual(Vector3 origin, Vector3 end, float lifetime)
         {
             Vector3 delta = end - origin;
@@ -167,9 +154,6 @@ namespace Airplane.Weapons
             LaunchKinematic(origin, velocity, lifetime);
         }
 
-        /// <summary>
-        /// Ballistic round. Velocity already includes the firing aircraft's point velocity at the muzzle.
-        /// </summary>
         public void LaunchBallistic(
             AircraftGun gun,
             PlaneRigidbody shooter,
@@ -295,7 +279,6 @@ namespace Airplane.Weapons
             Vector3 drag = Vector3.zero;
             if (speed > 0.5f && _mass > 1e-6f)
             {
-                // D = ½ ρ V² Cd A, opposite the relative flow.
                 float mag = 0.5f * atmo.Density * speed * speed * _cd * _area;
                 drag = -(vRel / speed) * mag;
             }

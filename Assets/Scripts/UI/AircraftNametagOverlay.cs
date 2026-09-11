@@ -4,16 +4,6 @@ using UnityEngine;
 
 namespace Airplane.UI
 {
-    /// <summary>
-    /// Draws a nametag over every other aircraft in the air, human or bot.
-    ///
-    /// IMGUI on purpose: it matches the flight, weapons and session HUDs this project already draws
-    /// that way, and it needs no canvas, font asset or prefab wiring, so nametags work in the scene
-    /// as it stands. When the premade canvas lands, the projection and culling here port across
-    /// unchanged; only the drawing calls change.
-    ///
-    /// Creates itself on load, so nothing has to be added to the scene.
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/UI/Aircraft Nametag Overlay")]
     public sealed class AircraftNametagOverlay : MonoBehaviour
@@ -51,7 +41,6 @@ namespace Airplane.UI
         private GUIStyle _style;
         private Camera _camera;
 
-        /// <summary>Global switch, in case a cinematic or a screenshot wants a clean frame.</summary>
         public static bool Enabled { get; set; } = true;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -115,7 +104,6 @@ namespace Airplane.UI
                 if (distance > maxDistance || distance < 1f)
                     continue;
 
-                // Behind the camera, or so far off-axis it would be drawn clamped to an edge.
                 if (Vector3.Dot(toTag, forward) <= 0f)
                     continue;
 
@@ -152,8 +140,6 @@ namespace Airplane.UI
             Color tint = target.IsBot ? botColor : playerColor;
             tint.a *= alpha;
 
-            // Cheap outline: the same text in near-black behind the label keeps it readable against
-            // both sky and terrain without needing a shader or a background sprite.
             Color shadow = new Color(0f, 0f, 0f, alpha * 0.85f);
             _style.normal.textColor = shadow;
             GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), label, _style);
@@ -184,8 +170,6 @@ namespace Airplane.UI
                 if (target && (t == target || t.IsChildOf(target)))
                     continue;
 
-                // The camera sits behind the player's own aircraft, which would otherwise mask every
-                // tag in front of it.
                 if (col.GetComponentInParent<PlaneRigidbody>() != null)
                     continue;
 

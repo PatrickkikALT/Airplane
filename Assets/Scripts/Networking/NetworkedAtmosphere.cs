@@ -4,11 +4,6 @@ using UnityEngine;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// Replicates the shared weather so every peer solves its own aircraft in the same air.
-    /// Wind enters the aero and propulsion models directly, so a client running unsynchronised wind
-    /// would hold a real performance advantage and its replicated track would look wrong to others.
-    /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkObject))]
     [AddComponentMenu("Airplane/Networking/Networked Atmosphere")]

@@ -1,0 +1,1770 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &831223259711450456
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9100413750255383032}
+  - component: {fileID: 669475946773431461}
+  - component: {fileID: 4868146114619066107}
+  - component: {fileID: 4396229658893783799}
+  m_Layer: 0
+  m_Name: Aircraft A1 Right Horizontal Stabiliser
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9100413750255383032
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 831223259711450456}
+  serializedVersion: 2
+  m_LocalRotation: {x: -6.123234e-17, y: 1, z: 6.123234e-17, w: 0.0000000754979}
+  m_LocalPosition: {x: 0.80331975, y: 0.8668807, z: -4.9323025}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &669475946773431461
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 831223259711450456}
+  m_Mesh: {fileID: 7114386106863984879, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &4868146114619066107
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 831223259711450456}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4396229658893783799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 831223259711450456}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b715a52a3f45cad589706d05b439c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAeroSurface
+  area: 1.55
+  span: 1.7
+  chord: 0.92
+  aspectRatioOverride: 3.4
+  aeroFrameEuler: {x: 0, y: 90, z: 0}
+  oswaldEfficiency: 0.8
+  zeroLiftAlphaDeg: 0
+  clAlphaPerRadian: 2.6
+  cl0: 0
+  cd0: 0.018
+  stallAlphaPositiveDeg: 14
+  stallAlphaNegativeDeg: -12
+  stallSoftnessDeg: 6
+  separatedClPeak: 1.05
+  separatedCd: 1.35
+  controlType: 2
+  controlSign: -1
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.15
+  cdPerDeflectionSq: 0.12
+  stallShiftPerDeflection: 0.35
+  flapClIncrement: 0
+  flapCdIncrement: 0
+  flapStallShiftDeg: 0
+  airbrakeCdIncrement: 0
+  surfaceMode: 0
+  cyBetaPerRadian: -0.6
+  bluffCdAlpha: 0.35
+  propWashInfluence: 0.95
+  wingDownwashFactor: 0.05
+  alphaRestoringScale: 0.18
+  minAirspeed: 0.6
+  compressibilityCorrection: 1
+  drawGizmos: 1
+  gizmoForceScale: 0.0008
+  gizmoColor: {r: 0.45, g: 0.9, b: 0.55, a: 0.9}
+--- !u!1 &932026622310087360
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 550822248987992186}
+  - component: {fileID: 8017395437323163379}
+  - component: {fileID: 744680742977573971}
+  - component: {fileID: 5144578163964603140}
+  - component: {fileID: 1818332600116113061}
+  - component: {fileID: 5139087127809357862}
+  - component: {fileID: 4251443454191989576}
+  - component: {fileID: 3457276733709705678}
+  - component: {fileID: 616250616785187137}
+  - component: {fileID: 4084390563703705177}
+  - component: {fileID: 256211251147507023}
+  m_Layer: 0
+  m_Name: Aircraft1A
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &550822248987992186
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8366974693194930849}
+  - {fileID: 5742563675005576429}
+  - {fileID: 8967265236911220046}
+  - {fileID: 9024708998902251913}
+  - {fileID: 9100413750255383032}
+  - {fileID: 8168572351818525029}
+  - {fileID: 4479781536174826066}
+  - {fileID: 2703945958684126719}
+  - {fileID: 771824037451099611}
+  - {fileID: 529765631917444837}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8017395437323163379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f19e7690ffeedb2a8c131fa8062200a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomRigidBody6DOF
+  mass: 1500
+  inertiaIxx: 2200
+  inertiaIyy: 5200
+  inertiaIzz: 3600
+  inertiaIxy: 0
+  inertiaIxz: 0
+  inertiaIyz: 0
+  centerOfMassBody: {x: 0, y: 0, z: 0.55}
+  integrationScheme: 0
+  substeps: 4
+  interpolateTransform: 1
+  maxLinearAcceleration: 2000
+  maxAngularAcceleration: 6
+  initialVelocityBody: {x: 0, y: 0, z: 50}
+  initialAngularVelocityBody: {x: 0, y: 0, z: 0}
+  enableLandingGear: 1
+  groundPlaneY: 0
+  raycastGround: 0
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  gearAttachBody:
+  - {x: -2.4, y: 0.2, z: 0}
+  - {x: 1, y: -0.35, z: -1.25}
+  - {x: 1, y: -0.35, z: 1.25}
+  gearRestLength: 0.95
+  gearSpring: 55000
+  gearDamper: 6500
+  rollingFriction: 0.025
+  brakingFriction: 0.75
+  noseGearIndex: 0
+  noseWheelSteerDeg: 35
+  noseSteerFadeSpeed: 25
+  enableColliderContact: 1
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionIterations: 4
+  collisionRestitution: 0.15
+  collisionFriction: 0.4
+  collisionSlop: 0.015
+  collisionBaumgarte: 0.7
+  createFallbackHull: 1
+  fallbackHullSize: {x: 7.5, y: 1.2, z: 10.5}
+  fallbackHullCenter: {x: 0, y: 0, z: 0}
+  angularDamping: {x: 8000, y: 7000, z: 7000}
+  dampingReferenceQ: 1800
+  maxAngularSpeedDeg: {x: 80, y: 28, z: 45}
+  idleRateDamping: 2.2
+  drawGizmos: 1
+  gizmoForceScale: 0.0004
+  gizmoVelocityScale: 0.15
+--- !u!114 &744680742977573971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07d5f440453bf3f40b239641fbee05ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.AircraftFlightController
+  rollSpeed: 1
+  yawSpeed: 1
+  pitchStickBackNoseUp: 1
+  invertPitch: 0
+  invertRoll: 1
+  invertYaw: 0
+  throttleIsRate: 1
+  throttleRate: 0.45
+  initialThrottle: 0.65
+  flapsIsRate: 1
+  flapsRate: 0.5
+  airbrakeRate: 1.2
+  referenceDynamicPressure: 3900
+  qStiffeningGain: 0.25
+  highSpeedIasKmh: 1000
+  stickFollowSeconds: 0
+  aileronRudderMix: 1.5
+  sideslipYawGain: 1.2
+  elevatorTrim: -0.1
+  autoElevatorTrim: 0
+  autoTrimRate: 0.4
+  autoTrimStickDeadzone: 0.08
+  drawHud: 1
+  hudPosition: {x: 16, y: 16}
+--- !u!114 &5144578163964603140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bceb3b538f3008ff8bf9b8b8135a84d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.AtmosphericModel
+  seaLevelY: 0
+  seaLevelDensity: 1.225
+  scaleHeight: 8500
+  seaLevelTemperature: 288.15
+  lapseRate: 0.0065
+  tropopauseTemperature: 216.65
+  windWorld: {x: 0, y: 0, z: 0}
+  overrideGravity: 0
+  gravityOverride: {x: 0, y: -9.80665, z: 0}
+--- !u!114 &1818332600116113061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60b8cd8c8b1b0983ebf46363119b6dab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAircraftEngine
+  maxStaticThrust: 60000
+  zeroThrustAirspeed: 125
+  densityExponent: 1
+  idleThrottle: 0.04
+  thrustTransform: {fileID: 529765631917444837}
+  localThrustAxis: {x: 0, y: 0, z: 1}
+  propellerRadius: 1.05
+  slipstreamLength: 11
+  torqueReactionPerNewton: 0.012
+  propellerSpinSign: 1
+  enableGyroPrecession: 0
+  propellerInertia: 8
+  fullThrottleRpm: 2700
+  propellerVisual: {fileID: 529765631917444837}
+  drawGizmos: 1
+  gizmoThrustScale: 0.0005
+--- !u!114 &5139087127809357862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: b4bbef9d4d836a138b11884b6e8ea42e, type: 3}
+  m_NotificationBehavior: 2
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents:
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnPitch
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 29446c21-2dd4-4135-a8f7-a725c64f8ef3
+    m_ActionName: 'Plane/Pitch[/Keyboard/w,/Keyboard/s,/Gamepad/leftStick/up,/Gamepad/leftStick/down]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnRoll
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 027d3fd3-8b77-4741-ac58-60163ef82338
+    m_ActionName: 'Plane/Roll[/Keyboard/d,/Keyboard/a,/Gamepad/leftStick/left,/Gamepad/leftStick/right]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnYaw
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 6c8d4fdb-070c-4ccf-8173-5af1076ab47a
+    m_ActionName: 'Plane/Yaw[/Keyboard/e,/Keyboard/q,/Gamepad/dpad/left,/Gamepad/dpad/right]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnThrottle
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 4a4ef0cf-b266-47f2-863b-bb68f7d91295
+    m_ActionName: 'Plane/Throttle[/Keyboard/f,/Keyboard/r,/Gamepad/dpad/down,/Gamepad/dpad/up]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnFlaps
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 7e1c9a2b-4d3f-4a8e-9c1b-2f6d8e0a4b17
+    m_ActionName: 'Plane/Flaps[/Keyboard/z,/Keyboard/x]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnAirbrakes
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: a3b5c7d9-e1f2-430b-8c9d-0e1f2a3b4c5d
+    m_ActionName: 'Plane/Airbrakes[/Keyboard/leftShift]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 744680742977573971}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnWheelBrakes
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: b4c6d8e0-f1a2-4b3c-9d0e-1f2a3b4c5d6e
+    m_ActionName: 'Plane/WheelBrakes[/Keyboard/space]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 616250616785187137}
+        m_TargetAssemblyTypeName: Airplane.Weapons.AircraftWeaponsController, Assembly-CSharp
+        m_MethodName: OnFire
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: c5d7e9f1-a2b3-4c5d-8e9f-0a1b2c3d4e5f
+    m_ActionName: 'Plane/Fire[/Mouse/leftButton,/Gamepad/rightTrigger]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 616250616785187137}
+        m_TargetAssemblyTypeName: Airplane.Weapons.AircraftWeaponsController, Assembly-CSharp
+        m_MethodName: OnFireSecondary
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: d6e8f0a2-b3c4-4d5e-9f0a-1b2c3d4e5f60
+    m_ActionName: 'Plane/FireSecondary[/Keyboard/leftCtrl,/Gamepad/leftShoulder]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3457276733709705678}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnLook
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: e1a2b3c4-d5e6-4f70-8a91-b2c3d4e5f607
+    m_ActionName: 'Plane/Look[/Mouse/delta,/Gamepad/rightStick]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3457276733709705678}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnOrbitHold
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: f2b3c4d5-e6f7-4081-9b02-c3d4e5f60718
+    m_ActionName: 'Plane/OrbitHold[/Mouse/rightButton]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3457276733709705678}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnZoom
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: a3c4d5e6-f708-4192-ac13-d4e5f6071829
+    m_ActionName: 'Plane/Zoom[/Mouse/scroll/y,/Gamepad/leftTrigger,/Gamepad/rightShoulder]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3457276733709705678}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnResetOrbit
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: b4d5e6f7-0819-42a3-bd24-e5f60718293a
+    m_ActionName: 'Plane/ResetOrbit[/Mouse/middleButton,/Gamepad/rightStickPress]'
+  m_NeverAutoSwitchControlSchemes: 1
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Plane
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
+--- !u!114 &4251443454191989576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3405298960
+  InScenePlacedSourceGlobalObjectIdHash: 1694393203
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &3457276733709705678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a64b2600fac3835de95ed19f2dd39259, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.NetworkedAircraft
+  ShowTopMostFoldoutHeaderGroup: 1
+  sendRate: 25
+  interpolationDelay: 0.12
+  maxExtrapolation: 0.35
+  positionSendThreshold: 0.01
+  rotationSendThresholdDeg: 0.05
+  crashSpeedKmh: 50
+  displayNameFallback: 
+--- !u!114 &616250616785187137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f3c1a9e2b4d6e80c7a5f193d4e6b208, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftWeaponsController
+  drawHud: 1
+  hudPosition: {x: 16, y: 236}
+--- !u!114 &4084390563703705177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b0d3f8c2e6a914f7d5b203e8f1a0c53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftVitality
+  hitPoints: 100
+  reportedCrashSpeedKmh: 80
+--- !u!114 &256211251147507023
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 932026622310087360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f27a02c00e0637b758dcce912b899f80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollisionTest
+--- !u!1 &1282816309756695658
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8967265236911220046}
+  - component: {fileID: 4073279844567961535}
+  - component: {fileID: 4953182642190606610}
+  - component: {fileID: 2125627064973737567}
+  m_Layer: 0
+  m_Name: Aircraft 1A Left Wing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8967265236911220046
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1282816309756695658}
+  serializedVersion: 2
+  m_LocalRotation: {x: -6.123234e-17, y: 1, z: 6.123234e-17, w: 0.0000000754979}
+  m_LocalPosition: {x: -2.5145688, y: -0.10156901, z: 0.45345202}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &4073279844567961535
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1282816309756695658}
+  m_Mesh: {fileID: -6905228691011222656, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &4953182642190606610
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1282816309756695658}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &2125627064973737567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1282816309756695658}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b715a52a3f45cad589706d05b439c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAeroSurface
+  area: 8
+  span: 5
+  chord: 1.6
+  aspectRatioOverride: 6.25
+  aeroFrameEuler: {x: 0, y: 90, z: 0}
+  oswaldEfficiency: 0.8
+  zeroLiftAlphaDeg: -2
+  clAlphaPerRadian: 4.9
+  cl0: 0.18
+  cd0: 0.022
+  stallAlphaPositiveDeg: 14
+  stallAlphaNegativeDeg: -12
+  stallSoftnessDeg: 6
+  separatedClPeak: 1.05
+  separatedCd: 1.35
+  controlType: 1
+  controlSign: 1
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.1
+  cdPerDeflectionSq: 0.12
+  stallShiftPerDeflection: 0.35
+  flapClIncrement: 0.55
+  flapCdIncrement: 0.045
+  flapStallShiftDeg: 3
+  airbrakeCdIncrement: 0.12
+  surfaceMode: 0
+  cyBetaPerRadian: -0.6
+  bluffCdAlpha: 0.35
+  propWashInfluence: 0.18
+  wingDownwashFactor: 0
+  alphaRestoringScale: 1
+  minAirspeed: 0.6
+  compressibilityCorrection: 1
+  drawGizmos: 1
+  gizmoForceScale: 0.0008
+  gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!1 &3552548447111574204
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7541430967385240009}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7541430967385240009
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3552548447111574204}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2703945958684126719}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3948655108127202224
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5742563675005576429}
+  - component: {fileID: 2619792076132251403}
+  - component: {fileID: 5196348396403886896}
+  - component: {fileID: 1652444585734452920}
+  m_Layer: 0
+  m_Name: Aircraft 1A Left Horizontal Stabiliser
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5742563675005576429
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3948655108127202224}
+  serializedVersion: 2
+  m_LocalRotation: {x: -6.123234e-17, y: 1, z: 6.123234e-17, w: 0.0000000754979}
+  m_LocalPosition: {x: -0.8033192, y: 0.8668807, z: -4.932302}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &2619792076132251403
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3948655108127202224}
+  m_Mesh: {fileID: 7510296588380267881, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &5196348396403886896
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3948655108127202224}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1652444585734452920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3948655108127202224}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b715a52a3f45cad589706d05b439c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAeroSurface
+  area: 1.55
+  span: 1.7
+  chord: 0.92
+  aspectRatioOverride: 3.4
+  aeroFrameEuler: {x: 0, y: 90, z: 0}
+  oswaldEfficiency: 0.8
+  zeroLiftAlphaDeg: 0
+  clAlphaPerRadian: 2.6
+  cl0: 0
+  cd0: 0.018
+  stallAlphaPositiveDeg: 14
+  stallAlphaNegativeDeg: -12
+  stallSoftnessDeg: 6
+  separatedClPeak: 1.05
+  separatedCd: 1.35
+  controlType: 2
+  controlSign: -1
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.15
+  cdPerDeflectionSq: 0.12
+  stallShiftPerDeflection: 0.35
+  flapClIncrement: 0
+  flapCdIncrement: 0
+  flapStallShiftDeg: 0
+  airbrakeCdIncrement: 0
+  surfaceMode: 0
+  cyBetaPerRadian: -0.6
+  bluffCdAlpha: 0.35
+  propWashInfluence: 0.95
+  wingDownwashFactor: 0.05
+  alphaRestoringScale: 0.18
+  minAirspeed: 0.6
+  compressibilityCorrection: 1
+  drawGizmos: 1
+  gizmoForceScale: 0.0008
+  gizmoColor: {r: 0.45, g: 0.9, b: 0.55, a: 0.9}
+--- !u!1 &3976527318996203798
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3583965363468420161}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3583965363468420161
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3976527318996203798}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.03, z: 0.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 771824037451099611}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4901424376545121119
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8168572351818525029}
+  - component: {fileID: 928777278674344429}
+  - component: {fileID: 1735447710853021641}
+  - component: {fileID: 1487109233474087170}
+  m_Layer: 0
+  m_Name: Aircraft A1 Right Wing
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8168572351818525029
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4901424376545121119}
+  serializedVersion: 2
+  m_LocalRotation: {x: -6.123234e-17, y: 1, z: 6.123234e-17, w: 0.0000000754979}
+  m_LocalPosition: {x: 2.514568, y: -0.10156903, z: 0.45345256}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &928777278674344429
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4901424376545121119}
+  m_Mesh: {fileID: -425540104745705511, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &1735447710853021641
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4901424376545121119}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1487109233474087170
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4901424376545121119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b715a52a3f45cad589706d05b439c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAeroSurface
+  area: 8
+  span: 5
+  chord: 1.6
+  aspectRatioOverride: 6.25
+  aeroFrameEuler: {x: 0, y: 90, z: 0}
+  oswaldEfficiency: 0.8
+  zeroLiftAlphaDeg: -2
+  clAlphaPerRadian: 4.9
+  cl0: 0.18
+  cd0: 0.022
+  stallAlphaPositiveDeg: 14
+  stallAlphaNegativeDeg: -12
+  stallSoftnessDeg: 6
+  separatedClPeak: 1.05
+  separatedCd: 1.35
+  controlType: 1
+  controlSign: -1
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.1
+  cdPerDeflectionSq: 0.12
+  stallShiftPerDeflection: 0.35
+  flapClIncrement: 0.55
+  flapCdIncrement: 0.045
+  flapStallShiftDeg: 3
+  airbrakeCdIncrement: 0.12
+  surfaceMode: 0
+  cyBetaPerRadian: -0.6
+  bluffCdAlpha: 0.35
+  propWashInfluence: 0.18
+  wingDownwashFactor: 0
+  alphaRestoringScale: 1
+  minAirspeed: 0.6
+  compressibilityCorrection: 1
+  drawGizmos: 1
+  gizmoForceScale: 0.0008
+  gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!1 &6147036510291110912
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 529765631917444837}
+  - component: {fileID: 3212079446338505907}
+  - component: {fileID: 6796413448379698843}
+  m_Layer: 0
+  m_Name: Propeller
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &529765631917444837
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6147036510291110912}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.00000017881393, y: 0.050462842, z: 3.5990696}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &3212079446338505907
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6147036510291110912}
+  m_Mesh: {fileID: -5925590898335423310, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &6796413448379698843
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6147036510291110912}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 08ef08170c6732444aec1773e65776c7, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6370780907235268947
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5784998408427389682}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5784998408427389682
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6370780907235268947}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.03, z: 0.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4479781536174826066}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6605069187371172449
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8366974693194930849}
+  - component: {fileID: 145937654876944325}
+  - component: {fileID: 8895039823700313588}
+  - component: {fileID: 4643625648664345470}
+  m_Layer: 0
+  m_Name: Aircraft 1A Fuselage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8366974693194930849
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605069187371172449}
+  serializedVersion: 2
+  m_LocalRotation: {x: -6.123234e-17, y: 1, z: 6.123234e-17, w: 0.0000000754979}
+  m_LocalPosition: {x: -0.00000017881393, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &145937654876944325
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605069187371172449}
+  m_Mesh: {fileID: 571325586488860036, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &8895039823700313588
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605069187371172449}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  - {fileID: -6478536213147159724, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &4643625648664345470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605069187371172449}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b715a52a3f45cad589706d05b439c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAeroSurface
+  area: 1.35
+  span: 1.2
+  chord: 7.2
+  aspectRatioOverride: 1.1
+  aeroFrameEuler: {x: 0, y: 90, z: 0}
+  oswaldEfficiency: 0.8
+  zeroLiftAlphaDeg: 0
+  clAlphaPerRadian: 0.8
+  cl0: 0
+  cd0: 0.11
+  stallAlphaPositiveDeg: 14
+  stallAlphaNegativeDeg: -12
+  stallSoftnessDeg: 6
+  separatedClPeak: 1.05
+  separatedCd: 1.35
+  controlType: 0
+  controlSign: 1
+  maxDeflectionDeg: 0
+  deflectionAlphaEffectiveness: 0.55
+  clPerRadianDeflection: 0.8
+  cdPerDeflectionSq: 0.12
+  stallShiftPerDeflection: 0.35
+  flapClIncrement: 0
+  flapCdIncrement: 0
+  flapStallShiftDeg: 0
+  airbrakeCdIncrement: 0.18
+  surfaceMode: 1
+  cyBetaPerRadian: -0.08
+  bluffCdAlpha: 0.4
+  propWashInfluence: 0.2
+  wingDownwashFactor: 0
+  alphaRestoringScale: 1
+  minAirspeed: 0.6
+  compressibilityCorrection: 1
+  drawGizmos: 1
+  gizmoForceScale: 0.0008
+  gizmoColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.5}
+--- !u!1 &8344242635420670364
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9024708998902251913}
+  - component: {fileID: 8568332019926630659}
+  - component: {fileID: 8552262039651437450}
+  - component: {fileID: 3675993046516421265}
+  m_Layer: 0
+  m_Name: Aircraft 1A Vertical Stabiliser
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9024708998902251913
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8344242635420670364}
+  serializedVersion: 2
+  m_LocalRotation: {x: -6.123234e-17, y: 1, z: 6.123234e-17, w: 0.0000000754979}
+  m_LocalPosition: {x: 0.00000024483396, y: 0.72819674, z: -4.822977}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &8568332019926630659
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8344242635420670364}
+  m_Mesh: {fileID: -4193405092515767053, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+--- !u!23 &8552262039651437450
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8344242635420670364}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: -876546973899608171, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &3675993046516421265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8344242635420670364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b715a52a3f45cad589706d05b439c5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAeroSurface
+  area: 2.05
+  span: 2.1
+  chord: 1
+  aspectRatioOverride: 2.15
+  aeroFrameEuler: {x: 90, y: 0, z: 90}
+  oswaldEfficiency: 0.8
+  zeroLiftAlphaDeg: 0
+  clAlphaPerRadian: 3.6
+  cl0: 0
+  cd0: 0.02
+  stallAlphaPositiveDeg: 14
+  stallAlphaNegativeDeg: -12
+  stallSoftnessDeg: 6
+  separatedClPeak: 1.05
+  separatedCd: 1.35
+  controlType: 3
+  controlSign: -1
+  maxDeflectionDeg: 20
+  deflectionAlphaEffectiveness: 0.75
+  clPerRadianDeflection: 1.15
+  cdPerDeflectionSq: 0.12
+  stallShiftPerDeflection: 0.35
+  flapClIncrement: 0
+  flapCdIncrement: 0
+  flapStallShiftDeg: 0
+  airbrakeCdIncrement: 0
+  surfaceMode: 0
+  cyBetaPerRadian: -0.6
+  bluffCdAlpha: 0.35
+  propWashInfluence: 1
+  wingDownwashFactor: 0
+  alphaRestoringScale: 0.18
+  minAirspeed: 0.6
+  compressibilityCorrection: 1
+  drawGizmos: 1
+  gizmoForceScale: 0.0008
+  gizmoColor: {r: 0.95, g: 0.8, b: 0.25, a: 0.9}
+--- !u!1 &8486606927633118608
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4479781536174826066}
+  - component: {fileID: 5072313341665468999}
+  m_Layer: 0
+  m_Name: Gun 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4479781536174826066
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8486606927633118608}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.20244847, y: 0.64724207, z: 2.4608264}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5784998408427389682}
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5072313341665468999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8486606927633118608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 5784998408427389682}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 1
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6
+--- !u!1 &8618599182943528491
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 771824037451099611}
+  - component: {fileID: 6384741087425428680}
+  m_Layer: 0
+  m_Name: Gun 3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &771824037451099611
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8618599182943528491}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.2024477, y: 0.64724207, z: 2.4608264}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3583965363468420161}
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6384741087425428680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8618599182943528491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 3583965363468420161}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 1
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6
+--- !u!1 &8626176279215261700
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2703945958684126719}
+  - component: {fileID: 2776582175120953900}
+  m_Layer: 0
+  m_Name: Gun 2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2703945958684126719
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8626176279215261700}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.0000005364418, y: 0.050462842, z: 4.0919003}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7541430967385240009}
+  m_Father: {fileID: 550822248987992186}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2776582175120953900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8626176279215261700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 7541430967385240009}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 1
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6

@@ -6,13 +6,6 @@ using UnityEngine.InputSystem;
 
 namespace Airplane.Weapons
 {
-    /// <summary>
-    /// Receives fire triggers from PlayerInput and fans them out to every child
-    /// <see cref="AircraftGun"/>. Recoil is applied through <see cref="PlaneRigidbody"/>.
-    ///
-    /// Input arrives from PlayerInput (Unity Events / Send Messages) via the On* CallbackContext
-    /// methods. This class never enables, disables, or resolves InputActions.
-    /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-50)]
     [RequireComponent(typeof(PlaneRigidbody))]
@@ -36,15 +29,10 @@ namespace Airplane.Weapons
         public float Fire01 => _fire01;
         public float FireSecondary01 => _fireSecondary01;
 
-        /// <summary>False when the trigger positions are being written by something else.</summary>
         public bool InputEnabled => _inputEnabled;
 
         public AircraftGun[] Guns => _guns;
 
-        /// <summary>
-        /// Disables the input path so <see cref="ApplyExternalFire"/> becomes the only writer.
-        /// Used for aircraft flown by a remote peer, where the trigger arrives over the wire.
-        /// </summary>
         public void SetInputEnabled(bool enable)
         {
             _inputEnabled = enable;
@@ -55,10 +43,6 @@ namespace Airplane.Weapons
             drawHud = visible;
         }
 
-        /// <summary>
-        /// Writes trigger positions from an outside source. No edge detection is applied: a remote
-        /// peer is showing the held state, and the guns' own rate-of-fire clocks do the rest.
-        /// </summary>
         public void ApplyExternalFire(float firePrimary, float fireSecondary)
         {
             _fire01 = FlightSimMath.Saturate(firePrimary);
@@ -100,20 +84,11 @@ namespace Airplane.Weapons
             _guns = GetComponentsInChildren<AircraftGun>(true);
         }
 
-        /// <summary>
-        /// Called by <see cref="PlaneRigidbody"/> once per FixedUpdate, before sub-steps.
-        /// Owner path: lets guns fire with recoil from the last PlayerInput trigger values.
-        /// </summary>
         public void PrePhysicsTick(float dt)
         {
             TickGuns(dt, visualOnly: false);
         }
 
-        /// <summary>
-        /// Visual-only tick for a remote proxy whose solver is off. Recoil and hit authority stay
-        /// with the owning peer; this only keeps tracers and muzzle flashes in sync with the
-        /// replicated trigger.
-        /// </summary>
         public void TickVisual(float dt)
         {
             TickGuns(dt, visualOnly: true);
@@ -121,8 +96,6 @@ namespace Airplane.Weapons
 
         private void LateUpdate()
         {
-            // Remotes write the trigger from interpolated snapshots in Update. Tick afterwards
-            // so tracers follow this frame's packet instead of last frame's.
             if (_inputEnabled)
                 return;
             if (!_body || _body.SimulationEnabled)

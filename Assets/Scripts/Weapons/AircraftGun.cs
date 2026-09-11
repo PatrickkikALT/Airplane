@@ -5,14 +5,6 @@ using UnityEngine;
 
 namespace Airplane.Weapons
 {
-    /// <summary>
-    /// One mount on the airframe. Drop as many as you want as children of the aircraft; the
-    /// <see cref="AircraftWeaponsController"/> finds them the same way <see cref="PlaneRigidbody"/>
-    /// finds <see cref="AeroSurface"/> components.
-    ///
-    /// Shot direction is evaluated in the solver pose, not <c>transform.position</c>, because the
-    /// visible transform is interpolated in Update and is stale during FixedUpdate sub-steps.
-    /// </summary>
     [AddComponentMenu("Airplane/Weapons/Aircraft Gun")]
     public sealed class AircraftGun : MonoBehaviour
     {
@@ -110,18 +102,12 @@ namespace Airplane.Weapons
             _reloadClock = 0f;
         }
 
-        /// <summary>Muzzle speed added on top of the airframe's point velocity, m/s.</summary>
         public float MuzzleSpeed => muzzleSpeed;
 
-        /// <summary>Hitscan / tracer range, metres.</summary>
         public float MaxRange => maxRange;
 
         public Vector3 MuzzlePosition => Muzzle.position;
 
-        /// <summary>
-        /// World-space shot axis. A fire-control solution has to steer this rather than the fuselage
-        /// axis, because a mount is free to be converged or offset.
-        /// </summary>
         public Vector3 ShotAxisWorld => Muzzle.TransformDirection(localMuzzleAxis.normalized);
 
         public void SetMuzzle(Transform t)
@@ -176,11 +162,6 @@ namespace Airplane.Weapons
             ammoCapacity = Mathf.Max(0, ammoCapacity);
         }
 
-        /// <summary>
-        /// Called by <see cref="AircraftWeaponsController"/> once per weapons tick.
-        /// <paramref name="visualOnly"/> is set on a remote proxy: tracers still spawn, but recoil
-        /// and hit authority stay with the owning peer.
-        /// </summary>
         public void Tick(AircraftWeaponsController controller, PlaneRigidbody body, float dt, bool visualOnly)
         {
             if (body == null)
@@ -263,9 +244,6 @@ namespace Airplane.Weapons
             Vector3 velocity,
             bool visualOnly)
         {
-            // World path is the inherited airframe velocity plus muzzle speed. Raycasting along
-            // shotDir alone leaves the tracer stuck in the ground frame, so a moving aircraft
-            // appears to outrun its own rounds.
             float speed = FlightSimMath.SafeMagnitude(velocity);
             Vector3 worldDir = speed > 0.01f ? velocity / speed : shotDir;
 
@@ -322,7 +300,13 @@ namespace Airplane.Weapons
             };
 
             if (!victim)
+            {
+                if (report.Collider)
+                    report.Collider.SendMessageUpwards("OnGunHit", report, SendMessageOptions.DontRequireReceiver);
                 return;
+            }
+
+            TargetLeadCrosshair.NotifyShooterHit(shooter);
 
             if (victim.SimulationEnabled)
             {
@@ -336,9 +320,6 @@ namespace Airplane.Weapons
                 shooterNet.ReportWeaponHit(victimNet, report.Point, report.Impulse, report.Damage);
         }
 
-        /// <summary>
-        /// Applies impulse and dispatches <c>OnGunHit</c> on a locally simulated victim.
-        /// </summary>
         public static void ApplyHit(PlaneRigidbody victim, in GunHit hit)
         {
             if (!victim)

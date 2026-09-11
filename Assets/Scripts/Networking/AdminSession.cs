@@ -16,14 +16,10 @@ namespace Airplane.Multiplayer
         Speed = 6,
         Timescale = 7,
         Bots = 8,
-        Dummy = 9
+        Dummy = 9,
+        Mass = 10
     }
 
-    /// <summary>
-    /// Server-routed admin console. The console itself is a local IMGUI overlay, so every command
-    /// that should be visible to other peers goes through a spawned <see cref="NetworkedAircraft"/>
-    /// (any one will do) and lands here on the server.
-    /// </summary>
     public static class AdminSession
     {
         private static string _weather = "";
@@ -78,7 +74,8 @@ namespace Airplane.Multiplayer
                 case AdminCommand.Heal:
                 case AdminCommand.Reload:
                 case AdminCommand.Scale:
-                case AdminCommand.Speed:
+                case AdminCommand.Speed: 
+                case AdminCommand.Mass:
                     return true;
                 default:
                     return false;
@@ -116,6 +113,7 @@ namespace Airplane.Multiplayer
                 case AdminCommand.Scale:
                     ScaleTargets(target, senderClientId, value);
                     return;
+                case AdminCommand.Mass:
                 case AdminCommand.Heal:
                 case AdminCommand.Reload:
                 case AdminCommand.Speed:
@@ -205,6 +203,7 @@ namespace Airplane.Multiplayer
                 case AdminCommand.Reload:
                 case AdminCommand.Speed:
                 case AdminCommand.Scale:
+                case AdminCommand.Mass:
                     ApplyLocalAircraft(command, target, value);
                     return "";
                 case AdminCommand.Bots:

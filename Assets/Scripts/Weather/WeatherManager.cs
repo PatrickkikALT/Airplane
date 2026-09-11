@@ -334,7 +334,6 @@ public class WeatherPreset
         p.ShadowOpacity = 1.0f;
         p.ShadowDistance = 14000.0f;
         p.DensityMultiplier = 0.48f;
-        // wall cloud sits low so the funnels visually reach it
         p.BottomAltitude = 600.0f;
         p.AltitudeRange = 6000.0f;
         p.FogEnabled = true;
@@ -366,7 +365,6 @@ public class WeatherPreset
         p.DensityMultiplier = 0.45f;
         p.BottomAltitude = 900.0f;
         p.AltitudeRange = 5000.0f;
-        // the whole point of this one: near-constant strikes, mostly cloud to ground
         p.LightningEnabled = true;
         p.StrikesPerMinute = 36.0f;
         p.LightningFlashIntensity = 1.25f;
@@ -617,7 +615,6 @@ namespace Airplane.Weather
             tornadoSystem.SetShape(shape.Radius, shape.Height);
             tornadoSystem.SetForces(shape.SpinSpeed, shape.Updraft);
 
-            // Funnels only swap over at the halfway point, same as the rain count does.
             float fadeIn = GetRainT(t);
             float fadeOut = 1f - Mathf.Clamp01(t * 2f);
             bool showing = t > 0.5f;

@@ -3,19 +3,6 @@ using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Custom rigid body. Aircraft dynamics are integrated here; PhysX is not the solver.
-    /// Collider contact uses PhysX only as a query / other-body back-end: overlaps are resolved
-    /// with sequential impulses so the aircraft can hit static colliders and exchange momentum
-    /// with Unity Rigidbodies (and other PlaneRigidbody instances).
-    /// You can also detect collisions with OnPlaneCollisionEnter, for example:
-    /// <code>
-    ///     private void OnPlaneCollisionEnter(PlaneCollision hit)
-    ///     {
-    ///         Debug.Log("Hit");
-    ///     }
-    /// </code>
-    /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(100)]
     [AddComponentMenu("Airplane/Rigidbody")]
@@ -168,21 +155,11 @@ namespace Airplane.FlightSimulation
         public bool AnyGearDown => _anyGearDown;
         public Vector3 CenterOfMassBody => centerOfMassBody;
 
-        /// <summary>
-        /// Instant change in linear and angular velocity from an impulse at a world point.
-        /// Recoil and projectile hits use this so they participate in the next integration sub-step.
-        /// </summary>
         public void ApplyImpulseAtPosition(Vector3 impulseWorld, Vector3 worldPoint)
         {
             ApplyImpulseAtWorldPoint(impulseWorld, worldPoint);
         }
 
-        /// <summary>
-        /// False while another peer owns this aircraft and the pose is being replayed from the network.
-        /// Integration, contact solving and controller ticks are all suppressed in that state; the
-        /// solver fields are still kept current so airspeed readouts and other bodies' contact maths
-        /// see sane values.
-        /// </summary>
         public bool SimulationEnabled => _simulationEnabled;
 
         public Vector3 AngularVelocityWorld => _orientation * _omegaBody;
@@ -202,15 +179,19 @@ namespace Airplane.FlightSimulation
             RebuildInertia();
         }
 
+        public void SetMass(float newMass)
+        {
+            mass = newMass;
+            if (_proxyBody)
+                _proxyBody.mass = mass;
+            RebuildInertia();
+        }
+
         public void SetCenterOfMassBody(Vector3 com)
         {
             centerOfMassBody = com;
         }
 
-        /// <summary>
-        /// Enables or suppresses the solver. Disable this on a body whose pose comes from elsewhere
-        /// (a network proxy, a cutscene) so it stops integrating and stops fighting the driver.
-        /// </summary>
         public void SetSimulationEnabled(bool enable)
         {
             if (_simulationEnabled == enable)
@@ -230,10 +211,6 @@ namespace Airplane.FlightSimulation
             _prevOrientation = _orientation;
         }
 
-        /// <summary>
-        /// Hard-sets the full state and snaps the transform, discarding any interpolation history.
-        /// Use for spawning, respawning and teleports.
-        /// </summary>
         public void Teleport(Vector3 comWorld, Quaternion orientation, Vector3 velocityWorld, Vector3 angularVelocityBody)
         {
             _orientation = FlightSimMath.Normalize(orientation);
@@ -251,10 +228,6 @@ namespace Airplane.FlightSimulation
             ApplyToTransform(_position, _orientation);
         }
 
-        /// <summary>
-        /// Drives a non-simulated body from an externally computed state, keeping the previous pose so
-        /// gizmos and airspeed readouts stay continuous. Intended for network proxies once per frame.
-        /// </summary>
         public void ApplyNetworkState(Vector3 comWorld, Quaternion orientation, Vector3 velocityWorld, Vector3 angularVelocityBody)
         {
             _prevPosition = _position;
@@ -294,17 +267,6 @@ namespace Airplane.FlightSimulation
             _velocity = _orientation * initialVelocityBody;
             _omegaBody = initialAngularVelocityBody;
             _initialized = true;
-        }
-
-        private void OnValidate()
-        {
-            mass = Mathf.Max(1f, mass);
-            inertiaIxx = Mathf.Max(0.01f, inertiaIxx);
-            inertiaIyy = Mathf.Max(0.01f, inertiaIyy);
-            inertiaIzz = Mathf.Max(0.01f, inertiaIzz);
-            substeps = Mathf.Clamp(substeps, 1, 16);
-            collisionIterations = Mathf.Clamp(collisionIterations, 1, 8);
-            _tensorDirty = true;
         }
 
         private void CacheSiblings()
@@ -523,8 +485,6 @@ namespace Airplane.FlightSimulation
 
         private void UpdateLoadFactor()
         {
-            // Seat-pad load factor Nz = (a − g) · bodyUp / g0, with g0 = 9.80665 m/s².
-            // Use the force-model acceleration, not Δv/Δt: contact impulses would spike this to tens of G.
             Vector3 g = AtmosphericModel.SampleGravity();
             Vector3 proper = _acceleration - g;
             Vector3 bodyUp = _orientation * Vector3.up;

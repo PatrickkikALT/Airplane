@@ -13,9 +13,6 @@ public class CollisionTest : MonoBehaviour
         _networked = GetComponent<NetworkedAircraft>();
     }
 
-    /// <summary>
-    /// Gets called by <see cref="PlaneRigidbody"/>'s SendMessage on collision.
-    /// </summary>
     private void OnPlaneCollisionEnter(PlaneCollision hit)
     {
         float impactKmh = _rigidbody.TrueAirspeed * FlightSimMath.AirSpeedToKnots * FlightSimMath.KnotsToKmh;

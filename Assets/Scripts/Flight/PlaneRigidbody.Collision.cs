@@ -1,20 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Airplane.Destruction;
 using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// One contact in a <see cref="PlaneCollision"/>. Mirrors Unity's <see cref="ContactPoint"/>.
-    /// </summary>
     public readonly struct PlaneContactPoint
     {
         public readonly Vector3 Point;
         public readonly Vector3 Normal;
         public readonly Collider ThisCollider;
         public readonly Collider OtherCollider;
-        /// <summary>Negative while overlapping.</summary>
         public readonly float Separation;
 
         public PlaneContactPoint(Vector3 point, Vector3 normal, Collider thisCollider, Collider otherCollider, float separation)
@@ -27,10 +24,6 @@ namespace Airplane.FlightSimulation
         }
     }
 
-    /// <summary>
-    /// Hit report from <see cref="PlaneRigidbody"/> collider contact.
-    /// Same role as Unity's <see cref="Collision"/> for <c>OnCollisionEnter</c>.
-    /// </summary>
     public struct PlaneCollision
     {
         public Collider Collider;
@@ -72,20 +65,12 @@ namespace Airplane.FlightSimulation
         private readonly HashSet<EntityId> _ignoredColliders = new HashSet<EntityId>();
         private readonly HashSet<ColliderPair> _ignoredPairs = new HashSet<ColliderPair>();
 
-        /// <summary>Fired once when contact with a collider begins. Same timing idea as <c>OnCollisionEnter</c>.</summary>
         public event Action<PlaneCollision> CollisionEnter;
 
-        /// <summary>Fired every physics tick while still overlapping that collider.</summary>
         public event Action<PlaneCollision> CollisionStay;
 
-        /// <summary>Fired once when contact with a collider ends.</summary>
         public event Action<PlaneCollision> CollisionExit;
 
-        /// <summary>
-        /// Ignore contact between this body and <paramref name="collider"/>, the same role as
-        /// <see cref="Physics.IgnoreCollision(Collider, Collider, bool)"/> for a whole aircraft hull.
-        /// Does not affect raycasts.
-        /// </summary>
         public void IgnoreCollision(Collider collider, bool ignore = true)
         {
             if (!collider)
@@ -106,10 +91,6 @@ namespace Airplane.FlightSimulation
             }
         }
 
-        /// <summary>
-        /// Ignore contact between a specific pair of colliders. Either collider may belong to this
-        /// body; the other is typically a projectile or another aircraft hull.
-        /// </summary>
         public void IgnoreCollision(Collider collider1, Collider collider2, bool ignore = true)
         {
             if (!collider1 || !collider2 || collider1 == collider2)
@@ -284,10 +265,6 @@ namespace Airplane.FlightSimulation
                     if (otherPlane && otherPlane.IsCollisionIgnored(other, own))
                         continue;
 
-                    // A plane that is not solving (a replicated proxy owned by another peer) cannot
-                    // absorb an impulse or push itself out of an overlap, so it acts as immovable
-                    // geometry. The lowest-id tie-break that stops a pair being solved twice only
-                    // makes sense when both bodies actually solve.
                     bool otherPlaneStatic = otherPlane && !otherPlane._simulationEnabled;
                     if (otherPlane && !otherPlaneStatic && otherPlane.GetEntityId() < GetEntityId())
                         continue;
@@ -341,8 +318,6 @@ namespace Airplane.FlightSimulation
                 bool otherPlaneResponds = c.OtherPlane && !c.OtherPlaneStatic;
                 if (c.OtherPlane)
                 {
-                    // A static proxy still contributes its velocity, so a head-on closing speed is
-                    // right even though only this aircraft reacts.
                     invMassB = otherPlaneResponds ? 1f / c.OtherPlane.mass : 0f;
                     rB = c.Point - c.OtherPlane._position;
                     vB = c.OtherPlane.GetPointVelocity(c.Point);
@@ -505,7 +480,6 @@ namespace Airplane.FlightSimulation
             public Collider OtherCollider;
             public Rigidbody OtherBody;
             public PlaneRigidbody OtherPlane;
-            /// <summary>Other plane exists but is not solving, so it takes no impulse and no correction.</summary>
             public bool OtherPlaneStatic;
         }
 
@@ -577,8 +551,6 @@ namespace Airplane.FlightSimulation
 
         private void DispatchCollisionEvents()
         {
-            // Snapshot first. A crash callback hides the wreck and calls SetSimulationEnabled(false),
-            // which Clears these dictionaries; enumerating the live maps would throw.
             CopyHits(_hitsThisTick, _dispatchThis);
             CopyHits(_hitsLastTick, _dispatchLast);
 
@@ -613,6 +585,20 @@ namespace Airplane.FlightSimulation
         {
             evt?.Invoke(hit);
             SendMessage(message, hit, SendMessageOptions.DontRequireReceiver);
+            if (!hit.Collider || hit.PlaneBody != null)
+                return;
+
+            if (!hit.Collider || hit.PlaneBody != null)
+                return;
+
+            if (message == "OnPlaneCollisionEnter")
+            {
+                DestructibleMesh destructible = hit.Collider.GetComponentInParent<DestructibleMesh>();
+                if (destructible)
+                    destructible.NotifyPlaneHit(hit);
+                else
+                    hit.Collider.SendMessageUpwards(message, hit, SendMessageOptions.DontRequireReceiver);
+            }
         }
 
         private bool RaycastIgnoringSelf(Vector3 origin, Vector3 direction, float maxDistance, out RaycastHit hit)

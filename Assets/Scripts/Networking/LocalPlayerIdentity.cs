@@ -2,11 +2,6 @@ using UnityEngine;
 
 namespace Airplane.Multiplayer
 {
-    /// <summary>
-    /// The name this machine flies under. Kept out of <see cref="NetworkSessionUi"/> so the aircraft
-    /// can read it the moment it spawns without caring whether a UI exists, and persisted so a pilot
-    /// does not have to retype it every session.
-    /// </summary>
     public static class LocalPlayerIdentity
     {
         private const string PrefsKey = "Airplane.PilotName";
@@ -14,10 +9,6 @@ namespace Airplane.Multiplayer
 
         private static string _pilotName;
 
-        /// <summary>
-        /// Chosen callsign, never empty. Falls back to a machine-derived name so an untouched install
-        /// still shows something more useful than "Pilot 3" on the nametag.
-        /// </summary>
         public static string PilotName
         {
             get
@@ -53,7 +44,6 @@ namespace Airplane.Multiplayer
             }
             catch (System.Exception)
             {
-                // Some platforms refuse to hand over a user name. A generic callsign is fine.
             }
 
             return "Pilot";

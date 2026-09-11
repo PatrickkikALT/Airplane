@@ -2,26 +2,16 @@ using UnityEngine;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Point sample of the atmosphere at a given geometric altitude.
-    /// Density follows the requested exponential model; temperature uses a tropospheric gradient
-    /// so Mach and speed of sound remain physically meaningful.
-    /// </summary>
     public readonly struct AtmosphereSample
     {
-        /// <summary>Geometric altitude above the model's sea-level datum, metres.</summary>
         public readonly float Altitude;
 
-        /// <summary>Static temperature, Kelvin.</summary>
         public readonly float Temperature;
 
-        /// <summary>Approximate static pressure, Pascals (ρ R T, not a full ISA hydrostatic integrate).</summary>
         public readonly float Pressure;
 
-        /// <summary>Air density ρ(h), kg/m³.</summary>
         public readonly float Density;
 
-        /// <summary>Speed of sound, m/s. a = √(γ R T).</summary>
         public readonly float SpeedOfSound;
 
         public AtmosphereSample(float altitude, float temperature, float pressure, float density, float speedOfSound)
@@ -33,20 +23,12 @@ namespace Airplane.FlightSimulation
             SpeedOfSound = speedOfSound;
         }
 
-        /// <summary>Dynamic pressure q = ½ ρ V² for true airspeed <paramref name="trueAirspeed"/> (m/s).</summary>
         public float DynamicPressure(float trueAirspeed)
         {
             return 0.5f * Density * trueAirspeed * trueAirspeed;
         }
     }
 
-    /// <summary>
-    /// Scene-level atmosphere. If none is present, <see cref="SampleAt"/> uses built-in ISA-like defaults
-    /// so a prefab can fly in an empty scene.
-    ///
-    /// Density: ρ(h) = ρ₀ exp(−h / h_scale).
-    /// Temperature: T(h) = max(T_tropopause, T₀ − L h)  (linear tropospheric lapse, then isothermal).
-    /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Airplane/Atmospheric Model")]
     public sealed class AtmosphericModel : MonoBehaviour
@@ -108,10 +90,6 @@ namespace Airplane.FlightSimulation
             }
         }
 
-        /// <summary>
-        /// Replaces the uniform wind at runtime. Wind feeds the aero and propulsion models, so in a
-        /// networked session this must be driven from one authority rather than per-peer.
-        /// </summary>
         public void SetWind(Vector3 windWorldMetresPerSecond)
         {
             windWorld = windWorldMetresPerSecond;
@@ -134,7 +112,6 @@ namespace Airplane.FlightSimulation
                 Instance = null;
         }
 
-        /// <summary>Sample the atmosphere at a world-space point (uses Instance or built-in defaults).</summary>
         public static AtmosphereSample SampleAt(Vector3 worldPosition)
         {
             AtmosphericModel model = Instance;
@@ -177,7 +154,6 @@ namespace Airplane.FlightSimulation
                 TropopauseTemperature);
         }
 
-        /// <summary>q = ½ ρ V² at the given world position and true airspeed.</summary>
         public static float DynamicPressure(Vector3 worldPosition, float trueAirspeed)
         {
             return SampleAt(worldPosition).DynamicPressure(trueAirspeed);

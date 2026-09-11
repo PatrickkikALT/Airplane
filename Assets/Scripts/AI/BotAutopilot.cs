@@ -8,13 +8,11 @@ namespace Airplane.AI
     ///
     /// The bots fly the same aerodynamic aircraft the player does, through the same control
     /// deflections, so this has to be a real controller rather than a lerp on the transform. It is a
-    /// conventional bank-to-turn autopilot: roll the lift vector toward the target, then pull. Both
-    /// loops close on angular error measured in the body frame, with the derivative taken from the
-    /// error signal itself so no assumption is made about the sign of the body rate channels.
+    /// conventional bank-to-turn autopilot: roll the lift vector toward the target, then pull.
     ///
-    /// Hands-off elevator is <see cref="AircraftFlightController.ElevatorTrim"/> (about −0.1 on this
-    /// airframe). The stick command here is only the extra needed to track a flight path; without
-    /// that trim offset the same airframe climbs forever with the stick at zero.
+    /// Altitude hold closes on flight-path angle. The PI owns the elevator, including the airframe's
+    /// hands-off bias, so a frozen −0.1 trim cannot drag them into the dirt. Attitude tracking is
+    /// only used when they are pointing at a gun solution or pulling up off the ground.
     /// </summary>
     public sealed class BotAutopilot
     {
@@ -27,8 +25,7 @@ namespace Airplane.AI
         private const float RudderCoordination = 1.4f;
         private const float ThrottleGain = 0.022f;
         private const float DerivativeSmoothing = 0.35f;
-        private const float AltitudeHoldGainDegPerMetre = 0.012f;
-        private const float DefaultMaxFlightPathDeg = 12f;
+        private const float DefaultMaxFlightPathDeg = 14f;
 
         private static readonly Vector3 BodyForward = new Vector3(1f, 0f, 0f);
         private static readonly Vector3 BodyUp = new Vector3(0f, 1f, 0f);
@@ -40,6 +37,7 @@ namespace Airplane.AI
         private float _pitchRate;
         private float _pitchIntegral;
         private bool _primed;
+        private bool _holdAltitudePrev;
 
         /// <summary>Bank angle right-wing-down positive, radians. Exposed for the debug overlay.</summary>
         public float BankAngle { get; private set; }
@@ -55,6 +53,7 @@ namespace Airplane.AI
             _pitchRate = 0f;
             _pitchIntegral = 0f;
             _primed = false;
+            _holdAltitudePrev = false;
         }
 
         public BotControlOutput Tick(
@@ -73,9 +72,6 @@ namespace Airplane.AI
                 desired = body.TransformDirection(BodyForward);
             desired.Normalize();
 
-            if (command.HoldAltitude)
-                desired = ShapeAltitude(body, desired, command);
-
             Vector3 worldUp = -AtmosphericModel.SampleGravity();
             if (worldUp.sqrMagnitude < 0.01f)
                 worldUp = Vector3.up;
@@ -89,11 +85,53 @@ namespace Airplane.AI
             float bank = Mathf.Atan2(-Vector3.Dot(rightWorld, worldUp), Vector3.Dot(upWorld, worldUp));
             BankAngle = bank;
 
-            Vector3 desiredBody = body.InverseTransformDirection(desired);
-            float horizontal = Mathf.Sqrt(desiredBody.x * desiredBody.x + desiredBody.z * desiredBody.z);
-            float yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
-            float pitchError = Mathf.Atan2(desiredBody.y, horizontal);
-            TrackingError = Vector3.Angle(body.TransformDirection(BodyForward), desired) * Mathf.Deg2Rad;
+            Vector3 flow = body.Velocity - AtmosphericModel.SampleWind();
+            float horizSpeed = Mathf.Sqrt(flow.x * flow.x + flow.z * flow.z);
+            float actualFpa = Mathf.Atan2(flow.y, Mathf.Max(1f, horizSpeed));
+
+            float yawError;
+            float pitchError;
+            if (command.HoldAltitude)
+            {
+                Vector3 horiz = desired;
+                horiz.y = 0f;
+                if (horiz.sqrMagnitude < 1e-4f)
+                {
+                    horiz = body.TransformDirection(BodyForward);
+                    horiz.y = 0f;
+                }
+
+                if (horiz.sqrMagnitude < 1e-4f)
+                    horiz = Vector3.forward;
+
+                horiz.Normalize();
+                Vector3 desiredBody = body.InverseTransformDirection(horiz);
+                yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
+
+                // Close altitude on the flight path, not the nose. Pointing the nose at the horizon
+                // with leftover thrust is still a 1G climb; pushing the path down is what actually
+                // stops them going upstairs.
+                float altError = command.TargetAltitude - body.Position.y;
+                float maxFpaDeg = command.MaxFlightPathDeg > 0.1f ? command.MaxFlightPathDeg : DefaultMaxFlightPathDeg;
+                // Climb is allowed to be steeper than a dive so leftover nose-down bias cannot
+                // walk them into the ground, and they cannot zoom-climb their way into space.
+                float desiredVs = Mathf.Clamp(altError * 0.4f, -22f, 55f);
+                float tas = Mathf.Max(30f, body.TrueAirspeed);
+                float desiredFpa = Mathf.Atan2(desiredVs, tas);
+                float maxFpa = maxFpaDeg * Mathf.Deg2Rad;
+                float minFpa = -Mathf.Min(maxFpa, 10f * Mathf.Deg2Rad);
+                desiredFpa = Mathf.Clamp(desiredFpa, minFpa, maxFpa);
+                pitchError = FlightSimMath.WrapPi(desiredFpa - actualFpa);
+                TrackingError = Mathf.Abs(pitchError);
+            }
+            else
+            {
+                Vector3 desiredBody = body.InverseTransformDirection(desired);
+                float horizontal = Mathf.Sqrt(desiredBody.x * desiredBody.x + desiredBody.z * desiredBody.z);
+                yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
+                pitchError = Mathf.Atan2(desiredBody.y, horizontal);
+                TrackingError = Vector3.Angle(body.TransformDirection(BodyForward), desired) * Mathf.Deg2Rad;
+            }
 
             float maxBank = Mathf.Clamp(command.MaxBankDeg > 0f ? command.MaxBankDeg : profile.maxBankDeg, 5f, 89f) * Mathf.Deg2Rad;
             float bankCommand = Mathf.Clamp(yawError * YawToBank, -maxBank, maxBank);
@@ -119,14 +157,21 @@ namespace Airplane.AI
 
             output.Aileron = Clamp11(RollP * bankError + RollD * _bankRate);
 
-            // Stick only: extra nose to track the path. Trim is added after so a zero stick command
-            // is the same hands-off elevator the player uses, not a climbing aero default.
-            float stick = PitchP * pitchError + PitchD * _pitchRate;
-
-            if (Mathf.Abs(pitchError) < 0.35f)
+            if (command.HoldAltitude != _holdAltitudePrev)
             {
-                _pitchIntegral = Mathf.Clamp(_pitchIntegral + pitchError * dt, -0.35f, 0.35f);
-                stick += PitchI * _pitchIntegral;
+                _pitchIntegral = 0f;
+                _holdAltitudePrev = command.HoldAltitude;
+            }
+
+            float pitchP = command.HoldAltitude ? 2.1f : PitchP;
+            float pitchI = command.HoldAltitude ? 0.55f : PitchI;
+            float pitchILimit = command.HoldAltitude ? 0.9f : 0.35f;
+            float stick = pitchP * pitchError + PitchD * _pitchRate;
+
+            if (Mathf.Abs(pitchError) < 0.5f)
+            {
+                _pitchIntegral = Mathf.Clamp(_pitchIntegral + pitchError * dt, -pitchILimit, pitchILimit);
+                stick += pitchI * _pitchIntegral;
             }
             else
             {
@@ -134,11 +179,14 @@ namespace Airplane.AI
             }
 
             stick = ApplyEnvelopeLimits(body, profile, stick);
-            output.Elevator = Clamp11(stick + elevatorTrim);
+            // Altitude-hold PI includes the hands-off elevator. Adding the −0.1 trim on top of a
+            // zero path-error stick was a constant descent, and the old cruise target followed it.
+            output.Elevator = command.HoldAltitude
+                ? Clamp11(stick)
+                : Clamp11(stick + elevatorTrim);
 
             // Turn coordination by geometry: yaw the nose toward the velocity vector. Reading the
             // slip out of the flow this way needs no sign convention from the aero code.
-            Vector3 flow = body.Velocity - AtmosphericModel.SampleWind();
             float speed = FlightSimMath.SafeMagnitude(flow);
             if (speed > 5f)
             {
@@ -156,32 +204,6 @@ namespace Airplane.AI
                 : 0f;
 
             return output;
-        }
-
-        /// <summary>
-        /// Replaces a 3D point-at command with a shallow flight-path toward a target altitude.
-        /// Pointing at a waypoint 400 m above you from 2 km away is a 11° climb that overshoots;
-        /// this holds the band instead of treating every height difference as a zoom climb.
-        /// </summary>
-        private static Vector3 ShapeAltitude(PlaneRigidbody body, Vector3 desired, in BotFlightCommand command)
-        {
-            Vector3 horiz = desired;
-            horiz.y = 0f;
-            if (horiz.sqrMagnitude < 1e-4f)
-            {
-                horiz = body.TransformDirection(BodyForward);
-                horiz.y = 0f;
-            }
-
-            if (horiz.sqrMagnitude < 1e-4f)
-                return desired;
-
-            horiz.Normalize();
-
-            float altError = command.TargetAltitude - body.Position.y;
-            float maxFpaDeg = command.MaxFlightPathDeg > 0.1f ? command.MaxFlightPathDeg : DefaultMaxFlightPathDeg;
-            float fpaDeg = Mathf.Clamp(altError * AltitudeHoldGainDegPerMetre, -maxFpaDeg, maxFpaDeg);
-            return (horiz + Vector3.up * Mathf.Tan(fpaDeg * Mathf.Deg2Rad)).normalized;
         }
 
         /// <summary>

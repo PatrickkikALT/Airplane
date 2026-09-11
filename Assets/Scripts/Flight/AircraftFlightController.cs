@@ -6,14 +6,6 @@ using Airplane.Weapons;
 
 namespace Airplane.FlightSimulation
 {
-    /// <summary>
-    /// Converts PlayerInput stick axes into rate-limited, dynamic-pressure-scaled control
-    /// deflections and engine throttle.
-    ///
-    /// PlayerInput Unity Events still feed the On* methods, but stick axes are re-read from
-    /// device/action state each physics tick. Value-action <c>canceled</c> callbacks drop the
-    /// opposite WASD key when pitch is held, so latching those events leaves roll/yaw stuck.
-    /// </summary>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-50)]
     [RequireComponent(typeof(PlaneRigidbody))]
@@ -132,14 +124,13 @@ namespace Airplane.FlightSimulation
         public float RawPitch => invertPitch ? -_rawPitch : _rawPitch;
         public float RawRoll => invertRoll ? -_rawRoll : _rawRoll;
 
-        /// <summary>
-        /// Hands-off elevator offset, −1..1. Positive = nose up. Bots have to add this themselves
-        /// because <see cref="ApplyExternalControls"/> writes the surface, not the stick, and this
-        /// airframe climbs with the stick at zero (the prefab trims it to about −0.1).
-        /// </summary>
         public float ElevatorTrim => elevatorTrim;
 
-        /// <summary>False when the lever and surface positions are being written by something else.</summary>
+        public void SetElevatorTrim(float value)
+        {
+            elevatorTrim = Clamp11(value);
+        }
+
         public bool InputEnabled => _inputEnabled;
 
         public void SetInitialThrottle(float value)
@@ -148,10 +139,6 @@ namespace Airplane.FlightSimulation
             _throttle01 = initialThrottle;
         }
 
-        /// <summary>
-        /// Disables the input path so <see cref="ApplyExternalControls"/> becomes the only writer.
-        /// Used for aircraft flown by a remote peer, where the deflections arrive over the wire.
-        /// </summary>
         public void SetInputEnabled(bool enable)
         {
             _inputEnabled = enable;
@@ -162,21 +149,11 @@ namespace Airplane.FlightSimulation
             drawHud = visible;
         }
 
-        /// <summary>
-        /// Runs the 1G / 1-over-cosine-bank auto-trim as if the stick were released. Used by bot
-        /// pilots: their input path is off, so <see cref="PrePhysicsTick"/> never gets here, but they
-        /// still need the same hands-off elevator the player trimmed to −0.1 for.
-        /// </summary>
         public void TickAutoTrim(float dt)
         {
             UpdateAutoTrim(0f, dt);
         }
 
-        /// <summary>
-        /// Writes lever and surface positions from an outside source. No rate limiting is applied:
-        /// the values already went through the hinge model on the machine that owns the aircraft, and
-        /// limiting them twice would lag the visible surfaces behind the replicated attitude.
-        /// </summary>
         public void ApplyExternalControls(
             float aileron,
             float elevator,
@@ -258,9 +235,6 @@ namespace Airplane.FlightSimulation
                 PullStickAxes();
         }
 
-        /// <summary>
-        /// Called by <see cref="PlaneRigidbody"/> once per FixedUpdate, before sub-steps.
-        /// </summary>
         public void PrePhysicsTick(float dt)
         {
             if (!_inputEnabled)
@@ -295,8 +269,6 @@ namespace Airplane.FlightSimulation
             float elevatorT = Clamp11((pitchCmd + elevatorTrim) * iasScale);
             float rudderT = Clamp11(yaw * yawSens * iasScale + CoordinatedRudder(aileronT, yaw));
 
-            // Aircraft inertia is the smoothing. Rate-limiting the stick here is what
-            // made input start late and keep going after release.
             if (stickFollowSeconds > 0.001f)
             {
                 float maxStep = dt / stickFollowSeconds;
@@ -344,12 +316,6 @@ namespace Airplane.FlightSimulation
             elevatorTrim = Clamp11(elevatorTrim + autoTrimRate * err * dt);
         }
 
-        /// <summary>
-        /// Aileron drag yaws the nose off the roll axis, so A/D alone skids unless Q/E is held
-        /// with it. Mix the same rudder in automatically, then wash out leftover sideslip.
-        /// Stays off on the ground so A/D cannot steal nosewheel steering, and fades when the
-        /// player is already on the rudder so a slip is still possible.
-        /// </summary>
         private float CoordinatedRudder(float aileron, float manualYaw)
         {
             if (_body == null || _body.AnyGearDown)
@@ -371,10 +337,6 @@ namespace Airplane.FlightSimulation
             return mix + damper;
         }
 
-        /// <summary>
-        /// Dynamic-pressure-scaled deflection limit, radians. Surfaces call this so ailerons,
-        /// elevators and the rudder all share the same q-stiffening law.
-        /// </summary>
         public float GetLimitedDeflectionRad(float maxDeflectionRad, in AtmosphereSample atmo, float tas)
         {
             return maxDeflectionRad * ComputeQScale(atmo, tas);
@@ -390,10 +352,6 @@ namespace Airplane.FlightSimulation
             return 1f / (1f + qStiffeningGain * excess);
         }
 
-        /// <summary>
-        /// Stick scale 1 − clamp01(IAS_km/h / 550). Pitch, elevator trim, roll and yaw share it
-        /// so high-speed aiming is not fighting full-deflection rates.
-        /// </summary>
         private float HighSpeedStickScale()
         {
             if (_body == null)
@@ -420,10 +378,6 @@ namespace Airplane.FlightSimulation
             _yawAction = _playerInput.actions.FindAction("Yaw", false);
         }
 
-        /// <summary>
-        /// Keyboard WASD/QE is read from the device so swapping A/D while W/S is held cannot
-        /// get stuck on a missed PlayerInput event. Gamepad still comes from the actions.
-        /// </summary>
         private void PullStickAxes()
         {
             CacheStickActions();
@@ -497,7 +451,6 @@ namespace Airplane.FlightSimulation
             GUI.Label(new Rect(x + 10f, y + 24f, 300f, 180f), _hudText);
         }
 
-        // Temporary HUD. We will replace this with a premade canvas later.
         private void RebuildHudText()
         {
             AtmosphereSample atmo = AtmosphericModel.SampleAt(_body.Position);

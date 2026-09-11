@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
+  m_Sun: {fileID: 304367249}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -119,6 +119,341 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1001 &70450769
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 47666810834930807, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: b1cd2983e0fc4346aee672df66c0d145, type: 2}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalScale.x
+      value: -0.0067781
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalScale.y
+      value: -0.0067781
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: -0.0067781
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 819.9327
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.025283813
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.16755867
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.70743567
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.7067777
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.000031980682
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.00026811898
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 89.944
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 88123339251494151, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -0.043
+      objectReference: {fileID: 0}
+    - target: {fileID: 752878601312008125, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: m_Name
+      value: WorldTradeCenter
+      objectReference: {fileID: 0}
+    - target: {fileID: 2844574252165690218, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: c0b71aa1364b47fcbab0694de62988e3, type: 2}
+    - target: {fileID: 3435838106783198124, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 86f23930c0ba47e896ed2add2dbcb8bc, type: 2}
+    - target: {fileID: 3540094431767480373, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 8611fdf2a979400f8fb64deeb7faacb0, type: 2}
+    - target: {fileID: 6801710349023473691, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 9dae45325bef4005b3226c3ae963ca25, type: 2}
+    - target: {fileID: 7226308601896331339, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 9ce752c1655944c299ee750b90c14e3f, type: 2}
+    - target: {fileID: 7518355630000296655, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: eb4b995dd8064a4285af89a56233c275, type: 2}
+    - target: {fileID: 7831176099248167778, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 5d26cc181f654236988761f23f77e29c, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 993273523406227525, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 754277255}
+    - targetCorrespondingSourceObject: {fileID: 1450526099880271276, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1741822400}
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9053628726904378498, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 70450786}
+    - targetCorrespondingSourceObject: {fileID: 5787511152710682143, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 70450785}
+    - targetCorrespondingSourceObject: {fileID: 3366695038346761839, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 70450784}
+    - targetCorrespondingSourceObject: {fileID: 3302725349758184193, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 70450783}
+    - targetCorrespondingSourceObject: {fileID: 904584053984532582, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 70450782}
+    - targetCorrespondingSourceObject: {fileID: 1394452377653729270, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1855106837}
+    - targetCorrespondingSourceObject: {fileID: 5260095754506917341, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1751142696}
+    - targetCorrespondingSourceObject: {fileID: 5914056985634881274, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 990482034}
+    - targetCorrespondingSourceObject: {fileID: 4169916167540273695, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 284887921}
+    - targetCorrespondingSourceObject: {fileID: 854689864403770291, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1875715878}
+    - targetCorrespondingSourceObject: {fileID: 2141672940128430092, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 384346713}
+  m_SourcePrefab: {fileID: 100100000, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+--- !u!1 &70450771 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2141672940128430092, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450772 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 854689864403770291, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450773 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4169916167540273695, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450774 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5914056985634881274, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450775 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5260095754506917341, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450776 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1394452377653729270, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450777 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 904584053984532582, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450778 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3302725349758184193, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450779 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3366695038346761839, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450780 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5787511152710682143, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &70450781 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9053628726904378498, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &70450782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!114 &70450783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!114 &70450784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!114 &70450785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450780}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!114 &70450786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450781}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
 --- !u!1 &79364322
 GameObject:
   m_ObjectHideFlags: 0
@@ -271,6 +606,34 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &284887921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450773}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
 --- !u!1 &304367248
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,8 +706,8 @@ Light:
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
+  m_ColorTemperature: 6562
+  m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
@@ -363,7 +726,7 @@ Transform:
   m_GameObject: {fileID: 304367248}
   serializedVersion: 2
   m_LocalRotation: {x: 0.73058915, y: -0.4998135, z: 0.03375529, w: 0.46398997}
-  m_LocalPosition: {x: -47.5, y: 25.2, z: -45}
+  m_LocalPosition: {x: -47.5, y: 37, z: -45}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -429,6 +792,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &384346713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450771}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 10
+  chunkSize: 15
+  impactRadius: 8
+  radiusFromSpeed: 0.1393
+  maxImpactRadius: 199.5
+  maxDebrisPieces: 48
+  chunkThickness: 5.79
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!4 &384346715 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1450526099880271276, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &385144805
 GameObject:
   m_ObjectHideFlags: 0
@@ -542,6 +938,213 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &754277254
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 754277255}
+  - component: {fileID: 754277263}
+  - component: {fileID: 754277262}
+  - component: {fileID: 754277261}
+  - component: {fileID: 754277260}
+  - component: {fileID: 754277259}
+  - component: {fileID: 754277258}
+  - component: {fileID: 754277257}
+  - component: {fileID: 754277256}
+  m_Layer: 0
+  m_Name: _BakedColliders
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &754277255
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2062995315}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &754277256
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 466.66675, y: 1066.667, z: 4441.2227}
+  m_Center: {x: 5966.671, y: 1288.72, z: 51074.062}
+--- !u!65 &754277257
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1400.0002, y: 1600.0005, z: 4441.2227}
+  m_Center: {x: 6900.0044, y: 1288.72, z: 51074.062}
+--- !u!65 &754277258
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1866.667, y: 1600.0005, z: 2220.6113}
+  m_Center: {x: 6666.671, y: 1288.72, z: 47743.145}
+--- !u!65 &754277259
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1400.0002, y: 3200.001, z: 2220.6113}
+  m_Center: {x: 8766.672, y: 2088.7202, z: 45522.53}
+--- !u!65 &754277260
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4200.001, y: 5066.668, z: 2220.6113}
+  m_Center: {x: 5966.671, y: 1155.3865, z: 45522.53}
+--- !u!65 &754277261
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 7000.001, y: 6400.002, z: 39971.004}
+  m_Center: {x: 6900.0044, y: 1288.72, z: 24426.725}
+--- !u!65 &754277262
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10266.668, y: 1333.3337, z: 4441.2227}
+  m_Center: {x: 8533.338, y: 3822.054, z: 2220.6113}
+--- !u!65 &754277263
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 754277254}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 11200.002, y: 5066.668, z: 4441.2227}
+  m_Center: {x: 9000.005, y: 622.053, z: 2220.6113}
 --- !u!1 &964454195
 GameObject:
   m_ObjectHideFlags: 0
@@ -693,6 +1296,34 @@ MonoBehaviour:
   distantThunderClips: []
   thunderVolume: 1
   closeThunderDistance: 1200
+--- !u!114 &990482034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450774}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
 --- !u!1 &1232413903
 GameObject:
   m_ObjectHideFlags: 0
@@ -816,7 +1447,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48e3ec572209ca8e38f8fb7517efea6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.AircraftNetworkSpawner
-  aircraftPrefab: {fileID: 1911544054002264119, guid: 4d9356e36a69efad7b71be2bcc489460, type: 3}
+  aircraftPrefab: {fileID: 4251443454191989576, guid: e68d797e28f56847b98937e65c93668b, type: 3}
   clearPlayerPrefab: 1
   spawnPoints:
   - {fileID: 627687290}
@@ -832,12 +1463,12 @@ MonoBehaviour:
   botCount: 4
   botMinSkill: 0.452
   botMaxSkill: 0.638
-  botPatrolCentre: {x: 0, y: 19.03, z: 0}
+  botPatrolCentre: {x: 0, y: 39.5, z: 0}
   botPatrolRadius: 0
-  botPatrolMinAltitude: 0.97
+  botPatrolMinAltitude: 9.54
   botPatrolMaxAltitude: 26.12
   botSpawnRingRadius: 0
-  botSpawnAltitude: 0.72
+  botSpawnAltitude: 2.64
   botSpawnAltitudeJitter: 0
   botSpawnAirspeed: 0
   botRespawnDelay: 0
@@ -905,7 +1536,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1408440977}
-    PlayerPrefab: {fileID: 4236846573566100625, guid: 4d9356e36a69efad7b71be2bcc489460, type: 3}
+    PlayerPrefab: {fileID: 8466846936211404819, guid: e68d797e28f56847b98937e65c93668b, type: 3}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 231defc439656c9eeb01983552873c57, type: 2}
@@ -1144,6 +1775,109 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!1 &1741822399
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1741822400}
+  - component: {fileID: 1741822402}
+  - component: {fileID: 1741822401}
+  m_Layer: 0
+  m_Name: _BakedColliders
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1741822400
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1741822399}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 384346715}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1741822401
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1741822399}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 6400.002, y: 8000.016, z: 40151.3}
+  m_Center: {x: 200.00415, y: -9111.287, z: 23725.768}
+--- !u!65 &1741822402
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1741822399}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 6400.002, y: 12800.025, z: 3650.1182}
+  m_Center: {x: 200.00415, y: -6711.282, z: 1825.0591}
+--- !u!114 &1751142696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
 --- !u!1 &1801246298
 GameObject:
   m_ObjectHideFlags: 0
@@ -1995,6 +2729,67 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1855106837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 15
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!114 &1875715878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 70450772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2350085eb09b660ead59b5bd2bd56ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Destruction.DestructibleMesh
+  minImpactSpeed: 25
+  minGunDamage: 1
+  chunkSize: 4
+  impactRadius: 8
+  radiusFromSpeed: 0.08
+  maxImpactRadius: 14
+  maxDebrisPieces: 48
+  chunkThickness: 0.32
+  debrisLifetime: 12
+  debrisDensity: 250
+  debrisDrag: 0.15
+  explosionForce: 1.2
+  colliderVoxelsPerAxis: 32
+  maxColliders: 12
+  solidColliders: 1
+  rebakeCollidersOnBreak: 1
+--- !u!4 &2062995315 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 993273523406227525, guid: 403927e446a6451bb4c8689300a4d3e8, type: 3}
+  m_PrefabInstance: {fileID: 70450769}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -2013,3 +2808,4 @@ SceneRoots:
   - {fileID: 1801246300}
   - {fileID: 964454197}
   - {fileID: 126043896}
+  - {fileID: 70450769}

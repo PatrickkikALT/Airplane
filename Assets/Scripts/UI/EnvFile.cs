@@ -5,16 +5,11 @@ using UnityEngine;
 
 namespace Airplane.UI
 {
-    /// <summary>
-    /// Reads KEY=value lines from a <c>.env</c> next to the project (Editor) or the player
-    /// executable (builds). The file is not an asset and is not packed into the build.
-    /// </summary>
     public static class EnvFile
     {
         private static readonly Dictionary<string, string> Values = new Dictionary<string, string>(StringComparer.Ordinal);
         private static bool _loaded;
 
-        /// <summary>Absolute path that was parsed, or null if none existed.</summary>
         public static string LoadedPath { get; private set; }
 
         public static string Get(string key)
@@ -51,8 +46,6 @@ namespace Airplane.UI
 
         private static string ResolvePath()
         {
-            // Editor: <project>/Assets → <project>/.env
-            // Player: <game>_Data → folder containing the executable.
             string data = Application.dataPath;
             if (!string.IsNullOrEmpty(data))
             {
