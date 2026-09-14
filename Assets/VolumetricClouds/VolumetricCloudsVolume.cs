@@ -110,6 +110,12 @@ public class VolumetricClouds : VolumeComponent, IPostProcessComponent
     [Tooltip("Controls the size of the volumetric clouds volume in meters.")]
     public MinFloatParameter altitudeRange = new(2000.0f, 100.0f);
 
+    public void GetCombinedAltitudeBounds(out float lowestBottom, out float highestTop)
+    {
+        lowestBottom = bottomAltitude.value;
+        highestTop = lowestBottom + altitudeRange.value;
+    }
+
     /// <summary>
     /// Controls the world space offset applied when evaluating the larger noise passing through the cloud coverage.
     /// </summary>
