@@ -348,15 +348,15 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -72.84445
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 36.55
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 20.498644
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -438,6 +438,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Aircraft 1A Right Wing
       objectReference: {fileID: 0}
+    - target: {fileID: -333311449156910491, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
+    - target: {fileID: -333311449156910491, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
     - target: {fileID: 396017902307296066, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_Name
       value: Aircraft 1A Left Wing
@@ -446,10 +454,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: Aircraft1A
       objectReference: {fileID: 0}
+    - target: {fileID: 1746232170337957976, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
     - target: {fileID: 4582190644818387665, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_Name
       value: Aircraft 1A Vertical Stabiliser
       objectReference: {fileID: 0}
+    - target: {fileID: 4873301130775593322, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
+    - target: {fileID: 4941413926422455939, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
+    - target: {fileID: 5202629273535499425, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
+    - target: {fileID: 8539367592015006747, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7d04c87193f3c1f4a86b306ce24eaa8a, type: 2}
     - target: {fileID: 8906112568274553320, guid: 37deef22b073ea948ba2582cc8a033f2, type: 3}
       propertyPath: m_Name
       value: Aircraft 1A Right Horizontal Stabiliser
