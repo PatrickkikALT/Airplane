@@ -25,7 +25,6 @@ namespace Airplane.AI
         private const float RudderCoordination = 1.4f;
         private const float ThrottleGain = 0.022f;
         private const float DerivativeSmoothing = 0.35f;
-        private const float DefaultMaxFlightPathDeg = 14f;
 
         private static readonly Vector3 BodyForward = new Vector3(1f, 0f, 0f);
         private static readonly Vector3 BodyUp = new Vector3(0f, 1f, 0f);
@@ -86,11 +85,10 @@ namespace Airplane.AI
             BankAngle = bank;
 
             Vector3 flow = body.Velocity - AtmosphericModel.SampleWind();
-            float horizSpeed = Mathf.Sqrt(flow.x * flow.x + flow.z * flow.z);
-            float actualFpa = Mathf.Atan2(flow.y, Mathf.Max(1f, horizSpeed));
 
             float yawError;
             float pitchError;
+            float altitudeStick = 0f;
             if (command.HoldAltitude)
             {
                 Vector3 horiz = desired;
@@ -108,28 +106,20 @@ namespace Airplane.AI
                 Vector3 desiredBody = body.InverseTransformDirection(horiz);
                 yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
 
-                // Close altitude on the flight path, not the nose. Pointing the nose at the horizon
-                // with leftover thrust is still a 1G climb; pushing the path down is what actually
-                // stops them going upstairs.
+                // Direct altitude PD. FPA-on-the-nose was too weak against stall unload, and adding
+                // a frozen −0.1 trim on a zero path-error made them walk into the ground.
                 float altError = command.TargetAltitude - body.Position.y;
-                float maxFpaDeg = command.MaxFlightPathDeg > 0.1f ? command.MaxFlightPathDeg : DefaultMaxFlightPathDeg;
-                // Climb is allowed to be steeper than a dive so leftover nose-down bias cannot
-                // walk them into the ground, and they cannot zoom-climb their way into space.
-                float desiredVs = Mathf.Clamp(altError * 0.4f, -22f, 55f);
-                float tas = Mathf.Max(30f, body.TrueAirspeed);
-                float desiredFpa = Mathf.Atan2(desiredVs, tas);
-                float maxFpa = maxFpaDeg * Mathf.Deg2Rad;
-                float minFpa = -Mathf.Min(maxFpa, 10f * Mathf.Deg2Rad);
-                desiredFpa = Mathf.Clamp(desiredFpa, minFpa, maxFpa);
-                pitchError = FlightSimMath.WrapPi(desiredFpa - actualFpa);
-                TrackingError = Mathf.Abs(pitchError);
+                float vs = flow.y;
+                altitudeStick = Mathf.Clamp(altError * 0.006f - vs * 0.035f, -0.35f, 1f);
+                pitchError = altitudeStick;
+                TrackingError = Mathf.Abs(altError);
             }
             else
             {
                 Vector3 desiredBody = body.InverseTransformDirection(desired);
                 float horizontal = Mathf.Sqrt(desiredBody.x * desiredBody.x + desiredBody.z * desiredBody.z);
                 yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
-                pitchError = Mathf.Atan2(desiredBody.y, horizontal);
+                pitchError = Mathf.Atan2(desiredBody.y, Mathf.Max(0.05f, horizontal));
                 TrackingError = Vector3.Angle(body.TransformDirection(BodyForward), desired) * Mathf.Deg2Rad;
             }
 
@@ -163,24 +153,29 @@ namespace Airplane.AI
                 _holdAltitudePrev = command.HoldAltitude;
             }
 
-            float pitchP = command.HoldAltitude ? 2.1f : PitchP;
-            float pitchI = command.HoldAltitude ? 0.55f : PitchI;
-            float pitchILimit = command.HoldAltitude ? 0.9f : 0.35f;
-            float stick = pitchP * pitchError + PitchD * _pitchRate;
-
-            if (Mathf.Abs(pitchError) < 0.5f)
+            float stick;
+            if (command.HoldAltitude)
             {
-                _pitchIntegral = Mathf.Clamp(_pitchIntegral + pitchError * dt, -pitchILimit, pitchILimit);
-                stick += pitchI * _pitchIntegral;
+                stick = altitudeStick;
             }
             else
             {
-                _pitchIntegral = Mathf.MoveTowards(_pitchIntegral, 0f, dt);
+                stick = PitchP * pitchError + PitchD * _pitchRate;
+                if (Mathf.Abs(pitchError) < 0.5f)
+                {
+                    _pitchIntegral = Mathf.Clamp(_pitchIntegral + pitchError * dt, -0.35f, 0.35f);
+                    stick += PitchI * _pitchIntegral;
+                }
+                else
+                {
+                    _pitchIntegral = Mathf.MoveTowards(_pitchIntegral, 0f, dt);
+                }
             }
 
-            stick = ApplyEnvelopeLimits(body, profile, stick);
-            // Altitude-hold PI includes the hands-off elevator. Adding the −0.1 trim on top of a
-            // zero path-error stick was a constant descent, and the old cruise target followed it.
+            bool climbing = command.HoldAltitude && altitudeStick > 0.05f;
+            if (!command.IgnoreEnvelope && !climbing)
+                stick = ApplyEnvelopeLimits(body, profile, stick);
+
             output.Elevator = command.HoldAltitude
                 ? Clamp11(stick)
                 : Clamp11(stick + elevatorTrim);
@@ -197,6 +192,8 @@ namespace Airplane.AI
             float targetSpeed = command.Speed > 1f ? command.Speed : profile.cruiseSpeed;
             float speedError = targetSpeed - body.TrueAirspeed;
             output.Throttle = FlightSimMath.Saturate(0.6f + speedError * ThrottleGain);
+            if (command.HoldAltitude && altitudeStick > 0.2f)
+                output.Throttle = Mathf.Max(output.Throttle, 0.9f);
 
             float overspeed = -speedError;
             output.Airbrake = command.AllowAirbrake && overspeed > 20f
@@ -258,15 +255,18 @@ namespace Airplane.AI
         public bool AllowAirbrake;
 
         /// <summary>
-        /// If true, the autopilot holds <see cref="TargetAltitude"/> with a shallow flight-path
-        /// instead of pointing at the vertical component of <see cref="Direction"/>.
+        /// If true, hold <see cref="TargetAltitude"/> with a climb/dive elevator rather than
+        /// pointing the nose at the vertical component of <see cref="Direction"/>.
         /// </summary>
         public bool HoldAltitude;
 
         public float TargetAltitude;
 
-        /// <summary>Hard cap on climb/dive angle while holding altitude, degrees.</summary>
+        /// <summary>Hard cap on climb/dive angle while holding altitude, degrees. Unused by the PD hold.</summary>
         public float MaxFlightPathDeg;
+
+        /// <summary>Skip AoA/G unload. Recovery must be able to pull when already stalled into the dirt.</summary>
+        public bool IgnoreEnvelope;
     }
 
     /// <summary>Deflections and lever positions to hand to the flight controller.</summary>

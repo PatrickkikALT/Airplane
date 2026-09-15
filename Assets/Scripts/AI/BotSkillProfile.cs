@@ -90,17 +90,17 @@ namespace Airplane.AI
             {
                 skill = t,
 
-                visualRange = Mathf.Lerp(1300f, 3200f, t),
-                visionHalfAngleDeg = Mathf.Lerp(80f, 115f, t),
-                reactionSeconds = Mathf.Lerp(2.2f, 0.5f, t),
-                memorySeconds = Mathf.Lerp(7f, 20f, t),
-                trackingErrorPerKm = Mathf.Lerp(55f, 8f, t),
+                visualRange = Mathf.Lerp(2000f, 3500f, t),
+                visionHalfAngleDeg = Mathf.Lerp(110f, 140f, t),
+                reactionSeconds = Mathf.Lerp(0.9f, 0.25f, t),
+                memorySeconds = Mathf.Lerp(10f, 22f, t),
+                trackingErrorPerKm = Mathf.Lerp(40f, 8f, t),
 
-                gunRange = Mathf.Lerp(420f, 700f, t),
-                aimErrorDeg = Mathf.Lerp(7f, 0.9f, t),
-                firingConeDeg = Mathf.Lerp(6f, 1.8f, t),
-                burstSeconds = Mathf.Lerp(1.4f, 0.5f, t),
-                burstGapSeconds = Mathf.Lerp(1.6f, 0.5f, t),
+                gunRange = Mathf.Lerp(500f, 750f, t),
+                aimErrorDeg = Mathf.Lerp(5f, 1.2f, t),
+                firingConeDeg = Mathf.Lerp(12f, 6f, t),
+                burstSeconds = Mathf.Lerp(1.1f, 0.55f, t),
+                burstGapSeconds = Mathf.Lerp(0.8f, 0.35f, t),
 
                 maxLoadFactor = Mathf.Lerp(4f, 7.5f, t),
                 maxBankDeg = Mathf.Lerp(62f, 82f, t),

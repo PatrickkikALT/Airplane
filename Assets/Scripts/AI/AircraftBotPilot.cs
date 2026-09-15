@@ -54,7 +54,7 @@ namespace Airplane.AI
         [SerializeField] private LayerMask worldMask = ~0;
 
         [Tooltip("Seconds of flight path checked ahead for terrain.")]
-        [SerializeField] private float terrainLookaheadSeconds = 7f;
+        [SerializeField] private float terrainLookaheadSeconds = 20f;
 
         private static readonly Vector3 BodyForward = new Vector3(1f, 0f, 0f);
 
@@ -72,9 +72,10 @@ namespace Airplane.AI
         private BotContact _target;
         private float _seed;
         private float _perceptionClock;
-        private float _terrainClock;
         private float _altitudeAgl = 9999f;
         private float _timeToTerrain = 999f;
+        private float _aheadGroundY;
+        private float _groundY;
         private Vector3 _waypoint;
         private bool _hasWaypoint;
         private float _burstClock;
@@ -145,18 +146,13 @@ namespace Airplane.AI
                 SelectTarget();
             }
 
-            _terrainClock += dt;
-            if (_terrainClock >= 0.1f)
-            {
-                SampleSurroundings();
-                _terrainClock = 0f;
-            }
+            SampleSurroundings();
 
             UpdateState();
 
             BotFlightCommand command = BuildCommand(out bool wantsToShoot);
             command.Direction = ApplySeparation(command.Direction);
-            command.Direction = ApplyTerrainAvoid(command.Direction);
+            ApplyTerrainClearance(ref command);
 
             float trim = _controller ? _controller.ElevatorTrim : -0.1f;
             BotControlOutput output = _autopilot.Tick(_body, in command, profile, trim, dt);
@@ -210,7 +206,7 @@ namespace Airplane.AI
             for (int i = 0; i < _vision.Contacts.Count; i++)
             {
                 BotContact contact = _vision.Contacts[i];
-                if (contact.Aircraft == null || !contact.Acquired)
+                if (contact.Aircraft == null || contact.Awareness < 0.25f)
                     continue;
                 if (contact.TimeSinceSeen > profile.memorySeconds)
                     continue;
@@ -222,11 +218,10 @@ namespace Airplane.AI
 
                 float angleOff = Vector3.Angle(_body.TransformDirection(BodyForward), toTarget);
 
-                // Closer and more nearly in front wins. The per-contact seed breaks ties differently
-                // for every pilot, so a flight of bots spreads across the targets on offer instead of
-                // all converging on whoever happens to be nearest the middle of the map.
                 float score = distance + angleOff * 12f + (contact.ErrorSeed % 7f) * 45f;
 
+                if (!contact.Aircraft.IsBot)
+                    score -= 2500f;
                 if (contact.WasShotBy && Time.time - contact.LastFiredAtMeTime < 8f)
                     score -= 900f;
                 if (contact == _target)
@@ -272,9 +267,8 @@ namespace Airplane.AI
             float distance = FlightSimMath.SafeMagnitude(toTarget);
             float angleOff = Vector3.Angle(_body.TransformDirection(BodyForward), toTarget);
 
-            bool inFiringGeometry = _target.Visible
-                                    && distance < profile.gunRange * 1.5f
-                                    && angleOff < 55f
+            bool inFiringGeometry = distance < profile.gunRange * 2f
+                                    && angleOff < 70f
                                     && Time.time > _extendUntil;
 
             return inFiringGeometry ? BotState.Attack : BotState.Pursue;
@@ -285,15 +279,18 @@ namespace Airplane.AI
             if (_altitudeAgl < profile.minSafeAltitude)
                 return true;
 
-            // Last-moment pull-up for a slope they are already descending into. Long look-ahead
-            // climbs are handled by turning instead, so this does not ratchet them upstairs.
-            if (_timeToTerrain < 2.2f && _body.Velocity.y < 8f && _altitudeAgl < profile.minSafeAltitude * 3.5f)
+            // Flight path hits ground or a ridge before they can climb over it.
+            if (_timeToTerrain < 5f)
+                return true;
+            if (_body.Position.y < ClearanceAltitude - 80f && _timeToTerrain < 10f)
                 return true;
 
             if (_state != BotState.Recover)
                 return false;
 
-            return _altitudeAgl < profile.minSafeAltitude * 1.8f;
+            return _altitudeAgl < profile.minSafeAltitude * 1.8f
+                   || _timeToTerrain < 8f
+                   || _body.Position.y < ClearanceAltitude - 40f;
         }
 
         private bool ShouldEvade()
@@ -321,7 +318,9 @@ namespace Airplane.AI
             _evadeUntil = Time.time + profile.evadeSeconds;
             _evadeSide = Random.value < 0.5f ? -1f : 1f;
 
-            bool roomBelow = _altitudeAgl > 900f && _body.Position.y > CombatFloor + 250f;
+            bool roomBelow = _altitudeAgl > 900f
+                             && _timeToTerrain > 8f
+                             && _body.Position.y > ClearanceAltitude + 250f;
             bool roomAbove = _body.Position.y < CombatCeiling - 80f;
             bool fast = _body.TrueAirspeed > profile.cruiseSpeed;
 
@@ -364,19 +363,25 @@ namespace Airplane.AI
             heading.Normalize();
 
             float urgency = Mathf.Clamp01(1f - _altitudeAgl / Mathf.Max(1f, profile.minSafeAltitude * 2f));
-            float climb = Mathf.Lerp(0.45f, 1.1f, urgency);
+            if (_timeToTerrain < 5f)
+                urgency = Mathf.Max(urgency, 1f - _timeToTerrain / 5f);
 
-            bool highEnough = _altitudeAgl > profile.minSafeAltitude * 2f && _body.Position.y >= CombatCeiling;
-            if (highEnough)
-                return LevelCommand(heading, profile.cruiseSpeed, 30f, CombatCeiling, 10f);
+            float climb = Mathf.Lerp(0.55f, 1.4f, urgency);
+            Vector3 turn = TerrainTurn();
+            Vector3 direction = (heading + Vector3.up * climb + turn * 0.55f).normalized;
+
+            float targetAlt = Mathf.Max(CruiseAltitude, ClearanceAltitude);
+            if (_altitudeAgl > profile.minSafeAltitude && _timeToTerrain > 3.5f)
+                return LevelCommand(direction, profile.combatSpeed, 40f, targetAlt, 18f);
 
             return new BotFlightCommand
             {
-                Direction = (heading + Vector3.up * climb).normalized,
-                Speed = profile.combatSpeed,
-                MaxBankDeg = 25f,
-                HoldWingsLevel = true,
-                AllowAirbrake = false
+                Direction = direction,
+                Speed = Mathf.Max(profile.cruiseSpeed, profile.combatSpeed * 0.85f),
+                MaxBankDeg = 35f,
+                HoldWingsLevel = urgency > 0.7f,
+                AllowAirbrake = false,
+                IgnoreEnvelope = true
             };
         }
 
@@ -460,42 +465,29 @@ namespace Airplane.AI
                     out float _))
             {
                 boresight = BotGunSolution.ApplyAimError(boresight, profile.aimErrorDeg, _seed);
-
-                // Steer whatever the guns are bore-sighted along onto the solution, not the nose:
-                // the mounts do not have to be aligned with the fuselage axis.
                 Quaternion correction = Quaternion.FromToRotation(shotAxis, boresight);
                 desiredNose = correction * _body.TransformDirection(BodyForward);
-
-                float error = Vector3.Angle(shotAxis, boresight);
-                wantsToShoot = error < profile.firingConeDeg
-                               && distance < profile.gunRange
-                               && distance > minEngageRange * 0.6f
-                               && _target.Visible;
             }
 
-            // Slow down behind a target rather than sliding out in front of it.
+            float aimError = Vector3.Angle(_body.TransformDirection(BodyForward), toTarget);
+            float gunError = Vector3.Angle(shotAxis, toTarget);
+            wantsToShoot = Mathf.Min(aimError, gunError) < Mathf.Max(8f, profile.firingConeDeg)
+                           && distance < profile.gunRange * 1.25f
+                           && distance > minEngageRange * 0.4f;
+
             float speed = distance < profile.gunRange * 0.5f && closure > 25f
                 ? Mathf.Max(profile.cruiseSpeed * 0.85f, FlightSimMath.SafeMagnitude(targetVelocity) * 1.05f)
                 : profile.combatSpeed;
 
-            // Inside gun range, point at the solution even if it means a dive or a climb — that is
-            // the shot. Outside it, do not zoom-climb after a target that is already above the band.
-            bool closeEnoughToAim = distance < profile.gunRange * 1.25f
-                                    && Mathf.Abs(targetPosition.y - _body.Position.y) < 350f;
-
-            if (closeEnoughToAim)
+            return new BotFlightCommand
             {
-                return new BotFlightCommand
-                {
-                    Direction = desiredNose,
-                    Speed = speed,
-                    MaxBankDeg = profile.maxBankDeg,
-                    HoldWingsLevel = false,
-                    AllowAirbrake = true
-                };
-            }
-
-            return LevelCommand(desiredNose, speed, profile.maxBankDeg, ClampAimAltitude(targetPosition.y), 10f);
+                Direction = desiredNose,
+                Speed = speed,
+                MaxBankDeg = profile.maxBankDeg,
+                HoldWingsLevel = false,
+                AllowAirbrake = true,
+                IgnoreEnvelope = false
+            };
         }
 
         private BotFlightCommand BuildBreakoffCommand(Vector3 toTarget)
@@ -561,15 +553,7 @@ namespace Airplane.AI
             _hasWaypoint = true;
         }
 
-        private float GroundY
-        {
-            get
-            {
-                if (_body == null || _altitudeAgl > 5000f)
-                    return 0f;
-                return _body.Position.y - _altitudeAgl;
-            }
-        }
+        private float GroundY => _groundY;
 
         private float CombatFloor => Mathf.Max(patrolMinAltitude, GroundY + profile.minSafeAltitude + 180f);
 
@@ -651,33 +635,80 @@ namespace Airplane.AI
         }
 
         /// <summary>
-        /// Hill or tower in the flight path: turn, do not climb. Recovery already handles being
-        /// too close to the ground.
+        /// Raise the commanded altitude over anything in the flight path, and turn toward the
+        /// lower side of a ridge. Patrol used to hold a flat cruise and fly through mountains.
+        /// Attack must pull up too: yawing while still pointing at a gun solution flies into the
+        /// same ridge.
         /// </summary>
-        private Vector3 ApplyTerrainAvoid(Vector3 direction)
+        private void ApplyTerrainClearance(ref BotFlightCommand command)
         {
-            if (_state == BotState.Recover)
-                return direction;
-            if (_timeToTerrain > 6f)
-                return direction;
+            float clear = ClearanceAltitude;
+            float below = clear - _body.Position.y;
+            bool threat = _timeToTerrain < 8f
+                          || (below > 80f && _timeToTerrain < 14f)
+                          || _altitudeAgl < profile.minSafeAltitude * 1.2f;
 
-            float urgency = 1f - FlightSimMath.Saturate(_timeToTerrain / 6f);
-            Vector3 right = Vector3.Cross(Vector3.up, Flatten(_body.Velocity));
-            if (right.sqrMagnitude < 1e-4f)
-                right = Vector3.Cross(Vector3.up, Flatten(direction));
-            if (right.sqrMagnitude < 1e-4f)
-                return direction;
+            if (command.HoldAltitude)
+                command.TargetAltitude = Mathf.Max(command.TargetAltitude, clear);
 
-            right.Normalize();
-            float side = (_seed % 1f) >= 0.5f ? 1f : -1f;
-            Vector3 horiz = Flatten(direction);
+            if (!threat)
+                return;
+
+            Vector3 turn = TerrainTurn();
+            float turnWeight = _timeToTerrain < 8f
+                ? 1f - FlightSimMath.Saturate(_timeToTerrain / 8f)
+                : FlightSimMath.Saturate(below / 400f);
+
+            Vector3 horiz = Flatten(command.Direction);
             if (horiz.sqrMagnitude < 1e-4f)
                 horiz = Flatten(_body.TransformDirection(BodyForward));
             if (horiz.sqrMagnitude < 1e-4f)
-                return direction;
+                return;
+            horiz.Normalize();
 
-            return (horiz.normalized + right * side * urgency * 1.4f).normalized;
+            if (command.HoldAltitude)
+            {
+                command.Direction = (horiz + turn * Mathf.Max(0.35f, turnWeight)).normalized;
+                if (_timeToTerrain < 4f || below > 180f)
+                    command.IgnoreEnvelope = true;
+                return;
+            }
+
+            float climb = Mathf.Clamp(below / 180f, 0.35f, 1.8f);
+            if (_timeToTerrain < 5f)
+                climb = Mathf.Max(climb, 1.2f);
+
+            command.Direction = (horiz + Vector3.up * climb + turn * Mathf.Max(0.4f, turnWeight)).normalized;
+            command.IgnoreEnvelope = true;
+            if (_timeToTerrain < 3f)
+                command.HoldWingsLevel = true;
         }
+
+        private Vector3 TerrainTurn()
+        {
+            Vector3 forward = Flatten(_body.Velocity);
+            if (forward.sqrMagnitude < 1e-4f)
+                forward = Flatten(_body.TransformDirection(BodyForward));
+            if (forward.sqrMagnitude < 1e-4f)
+                return Vector3.zero;
+
+            forward.Normalize();
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            if (right.sqrMagnitude < 1e-4f)
+                return Vector3.zero;
+            right.Normalize();
+
+            Vector3 here = _body.Position;
+            float look = 700f;
+            float leftH = BotTerrain.SampleGroundY(here - right * 450f + forward * look, _groundY);
+            float rightH = BotTerrain.SampleGroundY(here + right * 450f + forward * look, _groundY);
+            if (Mathf.Abs(leftH - rightH) < 25f)
+                return Vector3.zero;
+
+            return leftH < rightH ? -right : right;
+        }
+
+        private float ClearanceAltitude => _aheadGroundY + profile.minSafeAltitude + 140f;
 
         /// <summary>
         /// Burst discipline. Holding the trigger down forever is both unrealistic and a fast way to
@@ -688,27 +719,33 @@ namespace Airplane.AI
             if (!wantsToShoot)
             {
                 _triggerHeld = false;
-                _burstClock = Mathf.Max(0f, _burstClock - dt);
+                _burstClock = 0f;
                 return 0f;
+            }
+
+            if (_burstClock < 0f)
+            {
+                _burstClock += dt;
+                return 0f;
+            }
+
+            if (!_triggerHeld)
+            {
+                _triggerHeld = true;
+                _burstClock = 0f;
+                return 1f;
             }
 
             _burstClock += dt;
 
-            if (_triggerHeld)
+            if (_burstClock >= profile.burstSeconds)
             {
-                if (_burstClock >= profile.burstSeconds)
-                {
-                    _triggerHeld = false;
-                    _burstClock = 0f;
-                }
-            }
-            else if (_burstClock >= profile.burstGapSeconds)
-            {
-                _triggerHeld = true;
-                _burstClock = 0f;
+                _triggerHeld = false;
+                _burstClock = -Mathf.Max(0.2f, profile.burstGapSeconds);
+                return 0f;
             }
 
-            return _triggerHeld ? 1f : 0f;
+            return 1f;
         }
 
         private void ResolveGunGeometry(ref Vector3 muzzle, ref Vector3 axis, ref float muzzleSpeed, ref bool leadMotion)
@@ -757,20 +794,90 @@ namespace Airplane.AI
         private void SampleSurroundings()
         {
             Vector3 position = _body.Position;
+            _groundY = BotTerrain.SampleGroundY(position, 0f);
 
-            _altitudeAgl = Probe(position, Vector3.down, 6000f, out float groundDistance)
-                ? groundDistance
-                : 9999f;
+            if (Probe(position + Vector3.up * 4f, Vector3.down, 6000f, out float rayAgl))
+                _groundY = Mathf.Max(_groundY, position.y + 4f - rayAgl);
 
+            _altitudeAgl = position.y - _groundY;
+
+            _aheadGroundY = _groundY;
             _timeToTerrain = 999f;
+
             Vector3 velocity = _body.Velocity;
             float speed = FlightSimMath.SafeMagnitude(velocity);
-            if (speed < 5f)
-                return;
+            Vector3 step = speed > 5f
+                ? velocity
+                : _body.TransformDirection(BodyForward) * Mathf.Max(40f, profile.cruiseSpeed);
 
-            float reach = speed * Mathf.Max(1f, terrainLookaheadSeconds);
-            if (Probe(position, velocity / speed, reach, out float pathDistance))
-                _timeToTerrain = pathDistance / speed;
+            Vector3 along = Flatten(step);
+            Vector3 right = Vector3.Cross(Vector3.up, along);
+            if (right.sqrMagnitude > 1e-4f)
+                right.Normalize();
+            else
+                right = Vector3.zero;
+
+            float lookSeconds = Mathf.Max(20f, terrainLookaheadSeconds);
+            const int steps = 32;
+            float stepSeconds = lookSeconds / steps;
+            Vector3 p = position;
+            float t = 0f;
+            const float corridor = 90f;
+            for (int i = 0; i < steps; i++)
+            {
+                t += stepSeconds;
+                p += step * stepSeconds;
+
+                float ground = BotTerrain.SampleGroundY(p, _groundY);
+                if (right.sqrMagnitude > 0f)
+                {
+                    ground = Mathf.Max(ground, BotTerrain.SampleGroundY(p + right * corridor, _groundY));
+                    ground = Mathf.Max(ground, BotTerrain.SampleGroundY(p - right * corridor, _groundY));
+                }
+
+                if (ground > _aheadGroundY)
+                    _aheadGroundY = ground;
+
+                if (p.y < ground + 50f && t < _timeToTerrain)
+                    _timeToTerrain = t;
+            }
+
+            if (speed > 8f)
+            {
+                float reach = speed * lookSeconds;
+                Vector3 origin = position + Vector3.up * 2f;
+                Vector3 dir = velocity / speed;
+                if (Probe(origin, dir, reach, out float pathDistance))
+                {
+                    float rayTime = pathDistance / speed;
+                    if (rayTime < _timeToTerrain)
+                        _timeToTerrain = rayTime;
+                }
+
+                int n = Physics.SphereCastNonAlloc(
+                    origin,
+                    8f,
+                    dir,
+                    _probeHits,
+                    reach,
+                    worldMask,
+                    QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < n; i++)
+                {
+                    Collider col = _probeHits[i].collider;
+                    if (!col)
+                        continue;
+                    Transform hitTransform = col.transform;
+                    if (hitTransform == transform || hitTransform.IsChildOf(transform))
+                        continue;
+                    if (col.GetComponentInParent<PlaneRigidbody>() != null)
+                        continue;
+
+                    float rayTime = _probeHits[i].distance / speed;
+                    if (rayTime < _timeToTerrain)
+                        _timeToTerrain = rayTime;
+                }
+            }
         }
 
         private bool Probe(Vector3 origin, Vector3 direction, float distance, out float hitDistance)

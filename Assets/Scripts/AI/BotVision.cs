@@ -42,7 +42,7 @@ namespace Airplane.AI
             if (!self || !body)
                 return;
 
-            Vector3 eye = body.Position;
+            Vector3 eye = body.Position + Vector3.up * 3f;
             Vector3 nose = body.TransformDirection(new Vector3(1f, 0f, 0f));
             float cosFov = Mathf.Cos(Mathf.Clamp(profile.visionHalfAngleDeg, 10f, 179f) * Mathf.Deg2Rad);
             float now = Time.time;
@@ -60,10 +60,14 @@ namespace Airplane.AI
                 float distance = FlightSimMath.SafeMagnitude(toTarget);
                 contact.Distance = distance;
 
-                bool visible = distance > 1f
-                               && distance <= EffectiveRange(profile, distance, toTarget, other)
-                               && Vector3.Dot(toTarget / Mathf.Max(distance, 0.001f), nose) >= cosFov
-                               && HasLineOfSight(eye, truePosition, body.transform, other.transform, occlusionMask, distance);
+                bool inCone = distance > 1f
+                              && distance <= EffectiveRange(profile, distance, toTarget, other)
+                              && Vector3.Dot(toTarget / Mathf.Max(distance, 0.001f), nose) >= cosFov;
+
+                // Close-range fights often have the line of sight clip a hill between two low
+                // aircraft. Treat that as visible so they can still engage instead of patrolling.
+                bool visible = inCone && (distance < 900f
+                    || HasLineOfSight(eye, truePosition, body.transform, other.transform, occlusionMask, distance));
 
                 contact.Visible = visible;
 
@@ -254,7 +258,7 @@ namespace Airplane.AI
 
         public float ErrorSeed;
 
-        public bool Acquired => Awareness >= 0.999f;
+        public bool Acquired => Awareness >= 0.25f;
 
         public float TimeSinceSeen => Time.time - LastSeenTime;
     }
