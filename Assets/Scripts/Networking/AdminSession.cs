@@ -50,8 +50,23 @@ namespace Airplane.Multiplayer
 
         internal static string Send(AdminCommand command, string target, float value)
         {
+            return Send(command, target, value, Vector3.zero, 0);
+        }
+
+        internal static string SendScale(string target, Vector3 scale, byte axes)
+        {
+            return Send(AdminCommand.Scale, target, 0f, scale, axes);
+        }
+
+        private static string Send(
+            AdminCommand command,
+            string target,
+            float value,
+            Vector3 extra,
+            byte flags)
+        {
             if (!IsListening)
-                return ExecuteLocal(command, target, value);
+                return ExecuteLocal(command, target, value, extra, flags);
 
             if (NeedsAircraft(command)
                 && string.IsNullOrEmpty(target)
@@ -62,7 +77,7 @@ namespace Airplane.Multiplayer
             if (!carrier)
                 return "no networked aircraft to send from";
 
-            carrier.RequestAdmin(command, target ?? "", value);
+            carrier.RequestAdmin(command, target ?? "", value, extra, flags);
             return "";
         }
 
@@ -86,6 +101,8 @@ namespace Airplane.Multiplayer
             AdminCommand command,
             string target,
             float value,
+            Vector3 extra,
+            byte flags,
             ulong senderClientId,
             NetworkedAircraft carrier)
         {
@@ -111,7 +128,7 @@ namespace Airplane.Multiplayer
                     DestroyTargets(target, senderClientId);
                     return;
                 case AdminCommand.Scale:
-                    ScaleTargets(target, senderClientId, value);
+                    ScaleTargets(target, senderClientId, extra, flags);
                     return;
                 case AdminCommand.Mass:
                 case AdminCommand.Heal:
@@ -166,11 +183,11 @@ namespace Airplane.Multiplayer
                 targets[i].ForceDestroyFromServer();
         }
 
-        private static void ScaleTargets(string target, ulong senderClientId, float scale)
+        private static void ScaleTargets(string target, ulong senderClientId, Vector3 scale, byte axes)
         {
             List<NetworkedAircraft> targets = ResolveTargets(target, senderClientId);
             for (int i = 0; i < targets.Count; i++)
-                targets[i].ServerSetScale(scale);
+                targets[i].ServerSetScale(scale, axes);
         }
 
         private static void ApplyOwnerCommand(
@@ -184,13 +201,18 @@ namespace Airplane.Multiplayer
                 targets[i].ApplyOwnerAdmin(command, value);
         }
 
-        private static string ExecuteLocal(AdminCommand command, string target, float value)
+        private static string ExecuteLocal(
+            AdminCommand command,
+            string target,
+            float value,
+            Vector3 extra,
+            byte flags)
         {
             switch (command)
             {
                 case AdminCommand.Weather:
                     WeatherManager manager = WeatherManager.Instance;
-                    if (manager == null)
+                    if (!manager)
                         return "no weather manager";
                     return manager.TrySetWeather(target) ? "" : "Invalid weather, run weather for possible weathers.";
                 case AdminCommand.Timescale:
@@ -204,7 +226,7 @@ namespace Airplane.Multiplayer
                 case AdminCommand.Speed:
                 case AdminCommand.Scale:
                 case AdminCommand.Mass:
-                    ApplyLocalAircraft(command, target, value);
+                    ApplyLocalAircraft(command, target, value, extra, flags);
                     return "";
                 case AdminCommand.Bots:
                     return "bots can only be changed on the server";
@@ -222,7 +244,12 @@ namespace Airplane.Multiplayer
                 targets[i].ReportCrash(Vector3.zero, 500f);
         }
 
-        private static void ApplyLocalAircraft(AdminCommand command, string target, float value)
+        private static void ApplyLocalAircraft(
+            AdminCommand command,
+            string target,
+            float value,
+            Vector3 extra,
+            byte flags)
         {
             List<NetworkedAircraft> targets = ResolveTargets(target, LocalSenderId());
             for (int i = 0; i < targets.Count; i++)
@@ -230,8 +257,14 @@ namespace Airplane.Multiplayer
                 NetworkedAircraft aircraft = targets[i];
                 if (command == AdminCommand.Scale)
                 {
-                    float scale = Mathf.Clamp(value, 0f, 50f);
-                    aircraft.transform.localScale = new Vector3(scale, scale, scale);
+                    Vector3 next = aircraft.transform.localScale;
+                    if ((flags & 1) != 0)
+                        next.x = Mathf.Clamp(extra.x, 0f, 50f);
+                    if ((flags & 2) != 0)
+                        next.y = Mathf.Clamp(extra.y, 0f, 50f);
+                    if ((flags & 4) != 0)
+                        next.z = Mathf.Clamp(extra.z, 0f, 50f);
+                    aircraft.transform.localScale = next;
                     continue;
                 }
 

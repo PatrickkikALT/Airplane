@@ -454,7 +454,7 @@ namespace Airplane.UI
             Add("dummy", "dummy", "Spawn a still target in front of you. Replicated, any admin.", CmdDummy);
             Add("timescale", "timescale [rate]", "Set Time.timeScale for everyone. 1 is normal.", CmdTimescale);
             Add("nametags", "nametags [on|off]", "Toggle aircraft nametags.", CmdNametags);
-            Add("scale", "scale [scale] [name|*]", "Change an aircraft's scale. Default is you.", CmdScale);
+            Add("scale", "scale [scale|x y z|axis value ...] [name|*]", "Change an aircraft's scale, optionally per axis. Default is you.", CmdScale);
             Add("destroy", "destroy [name|*]", "Crash an aircraft by nametag, or * for everyone.", CmdDestroy);
             Add("speed", "speed [speed] [name|*]", "Set max thrust. Base is 60000. Default is you.", CmdSpeed);
             Add("weather", "weather [weather]", "Set the shared weather. No argument lists presets.", CmdWeather);
@@ -531,16 +531,124 @@ namespace Airplane.UI
 
         private string CmdScale(string[] args)
         {
-            if (args == null || args.Length == 0 || !float.TryParse(args[0], out float scale))
-                return "usage: scale [scale] [name|*]";
+            const string usage = "usage: scale [scale] [name|*]  or  scale [x] [y] [z] [name|*]  or  scale x|y|z [value] ...";
+            if (args == null || args.Length == 0)
+                return usage;
 
-            scale = Mathf.Clamp(scale, 0f, 50f);
-            string target = args.Length > 1 ? args[1] : "";
+            if (!TryParseScaleArgs(args, out Vector3 scale, out byte axes, out string target))
+                return usage;
+
             if (!string.IsNullOrEmpty(target) && target != "*" && !AdminSession.AnyMatch(target))
                 return "no aircraft named '" + target + "'";
 
-            string error = AdminSession.Send(AdminCommand.Scale, target, scale);
-            return string.IsNullOrEmpty(error) ? "scale " + scale.ToString("0.###") : error;
+            string error = AdminSession.SendScale(target, scale, axes);
+            return string.IsNullOrEmpty(error) ? "scale " + FormatScale(scale, axes) : error;
+        }
+
+        private static bool TryParseScaleArgs(string[] args, out Vector3 scale, out byte axes, out string target)
+        {
+            scale = Vector3.one;
+            axes = 0;
+            target = "";
+
+            if (float.TryParse(args[0], out float first))
+            {
+                if (args.Length >= 3
+                    && float.TryParse(args[1], out float y)
+                    && float.TryParse(args[2], out float z))
+                {
+                    if (args.Length > 4)
+                        return false;
+                    scale = ClampScale(new Vector3(first, y, z));
+                    axes = 7;
+                    target = args.Length > 3 ? args[3] : "";
+                    return true;
+                }
+
+                if (args.Length > 2)
+                    return false;
+                scale = ClampScale(new Vector3(first, first, first));
+                axes = 7;
+                target = args.Length > 1 ? args[1] : "";
+                return true;
+            }
+
+            int i = 0;
+            while (i < args.Length)
+            {
+                if (!TryAxisIndex(args[i], out int axis))
+                {
+                    if (i != args.Length - 1 || axes == 0)
+                        return false;
+                    target = args[i];
+                    return true;
+                }
+
+                if (i + 1 >= args.Length || !float.TryParse(args[i + 1], out float value))
+                    return false;
+
+                byte bit = (byte)(1 << axis);
+                if ((axes & bit) != 0)
+                    return false;
+
+                axes |= bit;
+                if (axis == 0)
+                    scale.x = Mathf.Clamp(value, 0f, 50f);
+                else if (axis == 1)
+                    scale.y = Mathf.Clamp(value, 0f, 50f);
+                else
+                    scale.z = Mathf.Clamp(value, 0f, 50f);
+                i += 2;
+            }
+
+            return axes != 0;
+        }
+
+        private static bool TryAxisIndex(string token, out int axis)
+        {
+            axis = -1;
+            if (string.Equals(token, "x", StringComparison.OrdinalIgnoreCase))
+            {
+                axis = 0;
+                return true;
+            }
+
+            if (string.Equals(token, "y", StringComparison.OrdinalIgnoreCase))
+            {
+                axis = 1;
+                return true;
+            }
+
+            if (string.Equals(token, "z", StringComparison.OrdinalIgnoreCase))
+            {
+                axis = 2;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static Vector3 ClampScale(Vector3 scale)
+        {
+            return new Vector3(
+                Mathf.Clamp(scale.x, 0f, 50f),
+                Mathf.Clamp(scale.y, 0f, 50f),
+                Mathf.Clamp(scale.z, 0f, 50f));
+        }
+
+        private static string FormatScale(Vector3 scale, byte axes)
+        {
+            if (axes == 7 && Mathf.Approximately(scale.x, scale.y) && Mathf.Approximately(scale.y, scale.z))
+                return scale.x.ToString("0.###");
+
+            var parts = new List<string>(3);
+            if ((axes & 1) != 0)
+                parts.Add("x " + scale.x.ToString("0.###"));
+            if ((axes & 2) != 0)
+                parts.Add("y " + scale.y.ToString("0.###"));
+            if ((axes & 4) != 0)
+                parts.Add("z " + scale.z.ToString("0.###"));
+            return string.Join(" ", parts);
         }
 
         private string CmdHelp(string[] args)

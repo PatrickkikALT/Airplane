@@ -25,6 +25,8 @@ namespace Airplane.Weapons
         private Vector3 _position;
         private Vector3 _prevPosition;
         private Vector3 _velocity;
+        private Vector3 _launchOrigin;
+        private float _launchFixedTime = -1f;
         private float _age;
         private float _life;
         private float _mass = 0.01f;
@@ -136,12 +138,13 @@ namespace Airplane.Weapons
             _age = 0f;
             _life = Mathf.Max(0.02f, lifetime);
             _velocity = velocity;
+            _launchOrigin = origin;
+            _launchFixedTime = Time.fixedTime;
             _prevPosition = origin;
             _position = origin;
             _homeOn = null;
             gameObject.SetActive(true);
-            _line.SetPosition(0, origin);
-            _line.SetPosition(1, origin);
+            DrawWorldTimeVisual();
         }
 
         public void LaunchHitscanVisual(Vector3 origin, Vector3 end, float lifetime)
@@ -172,18 +175,17 @@ namespace Airplane.Weapons
             _age = 0f;
             _life = maxLifetime;
             _velocity = velocity;
+            _launchOrigin = origin;
+            _launchFixedTime = Time.fixedTime;
             _prevPosition = origin;
             _position = origin;
             _homeOn = !visualOnly && CheatFlags.HomingBullets && CheatFlags.AppliesTo(shooter)
                 ? PickHomingTarget(shooter, origin, velocity)
                 : null;
             gameObject.SetActive(true);
-            transform.SetPositionAndRotation(origin, Quaternion.LookRotation(
-                velocity.sqrMagnitude > 1e-4f ? velocity : Vector3.right, Vector3.up));
-            _line.SetPosition(0, origin);
-            _line.SetPosition(1, origin);
             _shooterIgnored = GetComponentsInChildren<Collider>(true);
             SetShooterIgnore(true);
+            DrawWorldTimeVisual();
         }
 
         private void SetShooterIgnore(bool ignore)
@@ -211,7 +213,7 @@ namespace Airplane.Weapons
 
         private void FixedUpdate()
         {
-            if (!_inFlight)
+            if (!_inFlight || _kinematic)
                 return;
 
             float dt = Time.fixedDeltaTime;
@@ -225,47 +227,85 @@ namespace Airplane.Weapons
                 return;
             }
 
-            if (_kinematic)
-            {
-                StepKinematic(dt);
-                return;
-            }
-
-            if (!_ballistic)
-                return;
-
             StepBallistic(dt);
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (!_inFlight || !_line)
                 return;
 
-            if (_ballistic || _kinematic)
+            if (_kinematic)
             {
-                float alpha = Time.fixedDeltaTime > 0f
-                    ? Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime)
-                    : 1f;
-                Vector3 vis = Vector3.Lerp(_prevPosition, _position, alpha);
-                _line.SetPosition(0, _prevPosition);
-                _line.SetPosition(1, vis);
-                transform.position = vis;
+                float t = TravelledTime();
+                if (t >= _life)
+                {
+                    Stop();
+                    return;
+                }
+
+                DrawStreak(_launchOrigin + _velocity * t, t);
+                return;
             }
-            else
+
+            if (_ballistic)
             {
-                float t = FlightSimMath.Saturate(_age / Mathf.Max(0.01f, _life));
-                Color fade = color;
-                fade.a = 1f - t;
-                _line.startColor = fade;
-                _line.endColor = new Color(color.r, color.g, color.b, 0f);
+                float t = TravelledTime();
+                Vector3 vis;
+                if (_age <= 0f)
+                    vis = _launchOrigin + _velocity * t;
+                else
+                {
+                    float alpha = Time.fixedDeltaTime > 0f
+                        ? Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime)
+                        : 1f;
+                    vis = Vector3.Lerp(_prevPosition, _position, alpha);
+                }
+
+                DrawStreak(vis, t);
             }
         }
 
-        private void StepKinematic(float dt)
+        /// <summary>
+        /// World-time pose from the muzzle. Same clock the airframe interpolates with:
+        /// visual ≈ firePose + velocity × (Time.time − fireFixedTime), so inherited airspeed
+        /// keeps the round ahead of the interpolated guns instead of sitting on the old muzzle.
+        /// The streak only extends back toward the muzzle, never behind it.
+        /// </summary>
+        private void DrawWorldTimeVisual()
         {
-            _prevPosition = _position;
-            _position += _velocity * dt;
+            float t = TravelledTime();
+            DrawStreak(_launchOrigin + _velocity * t, t);
+        }
+
+        /// <summary>
+        /// Seconds since fire on the same clock as PlaneRigidbody interpolation:
+        /// completed physics time plus the current render remainder.
+        /// </summary>
+        private float TravelledTime()
+        {
+            float dt = Time.fixedDeltaTime;
+            if (dt <= 0f)
+                return Mathf.Max(0f, Time.time - _launchFixedTime);
+
+            float alpha = Mathf.Clamp01((Time.time - Time.fixedTime) / dt);
+            return Mathf.Max(0f, Time.fixedTime - _launchFixedTime + alpha * dt);
+        }
+
+        private void DrawStreak(Vector3 vis, float travelledTime)
+        {
+            Vector3 dir = _velocity;
+            float speed = dir.magnitude;
+            if (speed > 0.01f)
+                dir /= speed;
+            else
+                dir = Vector3.right;
+
+            Vector3 up = Mathf.Abs(dir.y) > 0.98f ? Vector3.forward : Vector3.up;
+            float length = Mathf.Min(4f, speed * travelledTime);
+            _line.SetPosition(0, vis - dir * length);
+            _line.SetPosition(1, vis);
+            transform.SetPositionAndRotation(vis, Quaternion.LookRotation(dir, up));
         }
 
         private void StepBallistic(float dt)
@@ -414,6 +454,7 @@ namespace Airplane.Weapons
             _inFlight = false;
             _kinematic = false;
             _ballistic = false;
+            _launchFixedTime = -1f;
             _homeOn = null;
             SetShooterIgnore(false);
             _gun = null;

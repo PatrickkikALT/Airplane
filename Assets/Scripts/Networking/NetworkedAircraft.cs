@@ -52,8 +52,8 @@ namespace Airplane.Multiplayer
         private readonly NetworkVariable<FixedString64Bytes> _pilotName = new NetworkVariable<FixedString64Bytes>(
             default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
-        private readonly NetworkVariable<float> _visualScale = new NetworkVariable<float>(
-            1f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<Vector3> _visualScale = new NetworkVariable<Vector3>(
+            Vector3.one, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
         private PlaneRigidbody _body;
         private AircraftEngine _engine;
@@ -206,7 +206,7 @@ namespace Airplane.Multiplayer
             }
 
             _visualScale.OnValueChanged += HandleScaleChanged;
-            HandleScaleChanged(1f, _visualScale.Value);
+            HandleScaleChanged(Vector3.one, _visualScale.Value);
 
             ApplyAuthorityRoles();
 
@@ -583,18 +583,30 @@ namespace Airplane.Multiplayer
 
         internal void ServerSetScale(float scale)
         {
+            ServerSetScale(new Vector3(scale, scale, scale), 7);
+        }
+
+        internal void ServerSetScale(Vector3 scale, byte axes)
+        {
             if (!IsSpawned || !IsServer)
                 return;
 
-            _visualScale.Value = Mathf.Clamp(scale, 0f, 50f);
+            Vector3 next = _visualScale.Value;
+            if ((axes & 1) != 0)
+                next.x = Mathf.Clamp(scale.x, 0f, 50f);
+            if ((axes & 2) != 0)
+                next.y = Mathf.Clamp(scale.y, 0f, 50f);
+            if ((axes & 4) != 0)
+                next.z = Mathf.Clamp(scale.z, 0f, 50f);
+            _visualScale.Value = next;
         }
 
-        internal void RequestAdmin(AdminCommand command, string target, float value)
+        internal void RequestAdmin(AdminCommand command, string target, float value, Vector3 extra, byte flags)
         {
             if (!IsSpawned)
                 return;
 
-            SubmitAdminRpc((byte)command, ToFixedName(target), value);
+            SubmitAdminRpc((byte)command, ToFixedName(target), value, extra, flags);
         }
 
         internal void BroadcastWorldAdmin(AdminCommand command, string payload, float value)
@@ -627,12 +639,20 @@ namespace Airplane.Multiplayer
         }
 
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
-        private void SubmitAdminRpc(byte command, FixedString64Bytes target, float value, RpcParams rpcParams = default)
+        private void SubmitAdminRpc(
+            byte command,
+            FixedString64Bytes target,
+            float value,
+            Vector3 extra,
+            byte flags,
+            RpcParams rpcParams = default)
         {
             AdminSession.ExecuteOnServer(
                 (AdminCommand)command,
                 target.ToString(),
                 value,
+                extra,
+                flags,
                 rpcParams.Receive.SenderClientId,
                 this);
         }
@@ -699,10 +719,12 @@ namespace Airplane.Multiplayer
             }
         }
 
-        private void HandleScaleChanged(float previous, float current)
+        private void HandleScaleChanged(Vector3 previous, Vector3 current)
         {
-            float scale = Mathf.Clamp(current, 0f, 50f);
-            transform.localScale = new Vector3(scale, scale, scale);
+            transform.localScale = new Vector3(
+                Mathf.Clamp(current.x, 0f, 50f),
+                Mathf.Clamp(current.y, 0f, 50f),
+                Mathf.Clamp(current.z, 0f, 50f));
         }
     }
 }

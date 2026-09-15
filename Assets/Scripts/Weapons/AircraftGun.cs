@@ -231,7 +231,7 @@ namespace Airplane.Weapons
             else
                 LaunchProjectile(body, origin, velocity, visualOnly);
         }
-
+        
         public float ProjectileMass => projectileMass;
         public float ProjectileArea => projectileArea;
         public float ProjectileCd => projectileCd;
