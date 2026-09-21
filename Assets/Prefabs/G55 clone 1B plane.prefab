@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1070386890055248124}
   - component: {fileID: 6935276667849458111}
   - component: {fileID: 1289455811641832296}
+  - component: {fileID: 7683159660792704928}
   m_Layer: 0
   m_Name: R wing
   m_TagString: Untagged
@@ -140,6 +141,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!65 &7683159660792704928
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 329466355786096799}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.897073, y: 0.52821517, z: 2.8766115}
+  m_Center: {x: 0.58926356, y: -0.033076152, z: -0.11631739}
 --- !u!1 &1065534686185249217
 GameObject:
   m_ObjectHideFlags: 0
@@ -151,6 +173,7 @@ GameObject:
   - component: {fileID: 8115152349939533339}
   - component: {fileID: 8096568224726323657}
   - component: {fileID: 632239060594474997}
+  - component: {fileID: 5644433747286070479}
   m_Layer: 0
   m_Name: L wing flap
   m_TagString: Untagged
@@ -230,6 +253,27 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &5644433747286070479
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1065534686185249217}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.342554, y: 0.20946279, z: 0.77660984}
+  m_Center: {x: -0.11753273, y: -0.00360566, z: -0.0030075312}
 --- !u!1 &1711956196404468872
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,6 +317,7 @@ GameObject:
   - component: {fileID: 1066926770619967561}
   - component: {fileID: 3963018273174798185}
   - component: {fileID: 6938013271490972358}
+  - component: {fileID: 2694973456409872119}
   m_Layer: 0
   m_Name: R wing gun
   m_TagString: Untagged
@@ -391,6 +436,27 @@ MonoBehaviour:
   tracerLifetime: 0.12
   drawGizmos: 1
   gizmoLength: 1.6
+--- !u!65 &2694973456409872119
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817231266201855811}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.044016123, y: 0.044016093, z: 0.64991736}
+  m_Center: {x: 0.00000035762787, y: -0.000000044703484, z: 0.009480715}
 --- !u!1 &3917848511843861380
 GameObject:
   m_ObjectHideFlags: 0
@@ -403,6 +469,7 @@ GameObject:
   - component: {fileID: 4311882076426190663}
   - component: {fileID: 1848413552390197157}
   - component: {fileID: 9018799794019357994}
+  - component: {fileID: 2679045250346864281}
   m_Layer: 0
   m_Name: R body gun
   m_TagString: Untagged
@@ -521,6 +588,27 @@ MonoBehaviour:
   tracerLifetime: 0.12
   drawGizmos: 1
   gizmoLength: 1.6
+--- !u!65 &2679045250346864281
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3917848511843861380}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.03356874, y: 0.03356874, z: 0.1705985}
+  m_Center: {x: -0.000000074505806, y: -0.00000017881393, z: -0.010168791}
 --- !u!1 &4643665987587730435
 GameObject:
   m_ObjectHideFlags: 0
@@ -533,6 +621,7 @@ GameObject:
   - component: {fileID: 1306200490057746936}
   - component: {fileID: 685599430793601814}
   - component: {fileID: 4819814600291304819}
+  - component: {fileID: 9198999153048681180}
   m_Layer: 0
   m_Name: L body gun
   m_TagString: Untagged
@@ -651,6 +740,27 @@ MonoBehaviour:
   tracerLifetime: 0.12
   drawGizmos: 1
   gizmoLength: 1.6
+--- !u!65 &9198999153048681180
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4643665987587730435}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.03356874, y: 0.03356874, z: 0.1705985}
+  m_Center: {x: 0.000000044703484, y: -0.00000017881393, z: -0.010168552}
 --- !u!1 &5027664896189255892
 GameObject:
   m_ObjectHideFlags: 0
@@ -663,6 +773,7 @@ GameObject:
   - component: {fileID: 4834907545221056240}
   - component: {fileID: 981535967440863658}
   - component: {fileID: 2056461701880711757}
+  - component: {fileID: 7720262756579241478}
   m_Layer: 0
   m_Name: body
   m_TagString: Untagged
@@ -791,6 +902,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.5}
+--- !u!65 &7720262756579241478
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5027664896189255892}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0245143, y: 1.9085166, z: 9.689923}
+  m_Center: {x: -0.010219514, y: 0.08306146, z: -0.75595665}
 --- !u!1 &5253825869524765412
 GameObject:
   m_ObjectHideFlags: 0
@@ -802,6 +934,7 @@ GameObject:
   - component: {fileID: 662161836310628389}
   - component: {fileID: 5255360349648985471}
   - component: {fileID: 9223319277934160106}
+  - component: {fileID: 2373297623961066655}
   m_Layer: 0
   m_Name: R rear wing flap
   m_TagString: Untagged
@@ -881,6 +1014,27 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &2373297623961066655
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5253825869524765412}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.7098856, y: 0.09010041, z: 0.49869156}
+  m_Center: {x: 0.02921918, y: -0.0000000037252903, z: -0.027727246}
 --- !u!1 &5501163379820280093
 GameObject:
   m_ObjectHideFlags: 0
@@ -924,6 +1078,7 @@ GameObject:
   - component: {fileID: 9151508929067150232}
   - component: {fileID: 406135213350193755}
   - component: {fileID: 4645603174709439481}
+  - component: {fileID: 3010713685666462238}
   m_Layer: 0
   m_Name: L wing
   m_TagString: Untagged
@@ -1052,6 +1207,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!65 &3010713685666462238
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5932477033178454343}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.897073, y: 0.52821517, z: 2.8766115}
+  m_Center: {x: -0.5892633, y: -0.033076152, z: -0.11631739}
 --- !u!1 &5936138804274115892
 GameObject:
   m_ObjectHideFlags: 0
@@ -1064,6 +1240,7 @@ GameObject:
   - component: {fileID: 8424123024543508561}
   - component: {fileID: 9055655596411557682}
   - component: {fileID: 3853505574109797436}
+  - component: {fileID: 1817184651841648738}
   m_Layer: 0
   m_Name: L wing gun
   m_TagString: Untagged
@@ -1182,6 +1359,27 @@ MonoBehaviour:
   tracerLifetime: 0.12
   drawGizmos: 1
   gizmoLength: 1.6
+--- !u!65 &1817184651841648738
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5936138804274115892}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.044016123, y: 0.044016093, z: 0.64991736}
+  m_Center: {x: -0.00000071525574, y: -0.000000044703484, z: 0.009480715}
 --- !u!1 &6527927004602355287
 GameObject:
   m_ObjectHideFlags: 0
@@ -1193,6 +1391,7 @@ GameObject:
   - component: {fileID: 7392594022371023476}
   - component: {fileID: 1093273789112998855}
   - component: {fileID: 261576236596753030}
+  - component: {fileID: 5086713799474595761}
   m_Layer: 0
   m_Name: propeller
   m_TagString: Untagged
@@ -1272,6 +1471,27 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &5086713799474595761
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6527927004602355287}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4, y: 4, z: 0.00000017484555}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &6656707201405255313
 GameObject:
   m_ObjectHideFlags: 0
@@ -1345,6 +1565,7 @@ GameObject:
   - component: {fileID: 8039285995443888380}
   - component: {fileID: 4560635676456063237}
   - component: {fileID: 1027203134685879291}
+  - component: {fileID: 4843166980139925736}
   m_Layer: 0
   m_Name: R wing flap
   m_TagString: Untagged
@@ -1424,6 +1645,27 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &4843166980139925736
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7077095860241231599}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.3425546, y: 0.20946279, z: 0.77660984}
+  m_Center: {x: 0.11753297, y: -0.00360566, z: -0.0030075014}
 --- !u!1 &7143253354840479259
 GameObject:
   m_ObjectHideFlags: 0
@@ -1435,6 +1677,7 @@ GameObject:
   - component: {fileID: 3192524277389227691}
   - component: {fileID: 363776583276465712}
   - component: {fileID: 7917719228406120208}
+  - component: {fileID: 7425444554564054876}
   m_Layer: 0
   m_Name: L rear wing flap
   m_TagString: Untagged
@@ -1514,6 +1757,27 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &7425444554564054876
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7143253354840479259}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.7098855, y: 0.09010041, z: 0.49869156}
+  m_Center: {x: -0.02921921, y: -0.0000000037252903, z: -0.027727246}
 --- !u!1 &7735914592477823587
 GameObject:
   m_ObjectHideFlags: 0
@@ -1526,6 +1790,7 @@ GameObject:
   - component: {fileID: 2331070762336070594}
   - component: {fileID: 2067331104811005708}
   - component: {fileID: 3265395533152622626}
+  - component: {fileID: 9217004736732192762}
   m_Layer: 0
   m_Name: R rear wing
   m_TagString: Untagged
@@ -1654,6 +1919,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.45, g: 0.9, b: 0.55, a: 0.9}
+--- !u!65 &9217004736732192762
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7735914592477823587}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8505621, y: 0.13228995, z: 1.2567568}
+  m_Center: {x: 0.16676816, y: 0.0000004656613, z: -0.050097644}
 --- !u!1 &7912365723661644242
 GameObject:
   m_ObjectHideFlags: 0
@@ -1666,6 +1952,7 @@ GameObject:
   - component: {fileID: 7233441121965956909}
   - component: {fileID: 6285233348978190992}
   - component: {fileID: 5065198955229164001}
+  - component: {fileID: 880770409609757290}
   m_Layer: 0
   m_Name: V stabilizer
   m_TagString: Untagged
@@ -1794,6 +2081,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.95, g: 0.8, b: 0.25, a: 0.9}
+--- !u!65 &880770409609757290
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7912365723661644242}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.20729466, y: 1.5067022, z: 1.7716001}
+  m_Center: {x: -0.000074349344, y: 0.12751088, z: 0.14074188}
 --- !u!1 &8366032937517303367
 GameObject:
   m_ObjectHideFlags: 0
@@ -1869,7 +2177,7 @@ MonoBehaviour:
   inertiaIxy: 0
   inertiaIxz: 0
   inertiaIyz: 0
-  centerOfMassBody: {x: 0, y: 0, z: 0}
+  centerOfMassBody: {x: 0, y: 0, z: 0.17}
   integrationScheme: 0
   substeps: 4
   interpolateTransform: 1
@@ -1926,11 +2234,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07d5f440453bf3f40b239641fbee05ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.AircraftFlightController
-  rollSpeed: 1
+  rollSpeed: 0.62
   yawSpeed: 1
   pitchStickBackNoseUp: 1
   invertPitch: 1
-  invertRoll: 1
+  invertRoll: 0
   invertYaw: 0
   throttleIsRate: 1
   throttleRate: 0.45
@@ -1940,11 +2248,11 @@ MonoBehaviour:
   airbrakeRate: 1.2
   referenceDynamicPressure: 3900
   qStiffeningGain: 0.25
-  highSpeedIasKmh: 1000
+  highSpeedIasKmh: 2500
   stickFollowSeconds: 0
   aileronRudderMix: 1.5
   sideslipYawGain: 1.2
-  elevatorTrim: -0.302
+  elevatorTrim: -0.1
   autoElevatorTrim: 0
   autoTrimRate: 0.4
   autoTrimStickDeadzone: 0.08
@@ -1983,7 +2291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60b8cd8c8b1b0983ebf46363119b6dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAircraftEngine
-  maxStaticThrust: 60000
+  maxStaticThrust: 240000
   zeroThrustAirspeed: 125
   densityExponent: 1
   idleThrottle: 0.04
@@ -2342,6 +2650,7 @@ GameObject:
   - component: {fileID: 5901615178988233045}
   - component: {fileID: 2687498558773545405}
   - component: {fileID: 6443902074142029685}
+  - component: {fileID: 3662169143392996972}
   m_Layer: 0
   m_Name: L rear wing
   m_TagString: Untagged
@@ -2470,3 +2779,24 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.45, g: 0.9, b: 0.55, a: 0.9}
+--- !u!65 &3662169143392996972
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8943578676463279446}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8505621, y: 0.13228995, z: 1.2567568}
+  m_Center: {x: -0.16676816, y: 0.0000004656613, z: -0.050097644}

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 669475946773431461}
   - component: {fileID: 4868146114619066107}
   - component: {fileID: 4396229658893783799}
+  - component: {fileID: 1511943877957198203}
   m_Layer: 0
   m_Name: Aircraft A1 Right Horizontal Stabiliser
   m_TagString: Untagged
@@ -140,6 +141,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.45, g: 0.9, b: 0.55, a: 0.9}
+--- !u!65 &1511943877957198203
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 831223259711450456}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8207207, y: 0.19340688, z: 1.1226616}
+  m_Center: {x: -0.10704079, y: -0.023717247, z: -0.09379172}
 --- !u!1 &932026622310087360
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,7 +232,7 @@ MonoBehaviour:
   inertiaIxy: 0
   inertiaIxz: 0
   inertiaIyz: 0
-  centerOfMassBody: {x: 0, y: 0, z: 0.55}
+  centerOfMassBody: {x: 0, y: 0, z: 0}
   integrationScheme: 0
   substeps: 4
   interpolateTransform: 1
@@ -281,7 +303,7 @@ MonoBehaviour:
   airbrakeRate: 1.2
   referenceDynamicPressure: 3900
   qStiffeningGain: 0.25
-  highSpeedIasKmh: 1000
+  highSpeedIasKmh: 1500
   stickFollowSeconds: 0
   aileronRudderMix: 1.5
   sideslipYawGain: 1.2
@@ -324,7 +346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60b8cd8c8b1b0983ebf46363119b6dab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAircraftEngine
-  maxStaticThrust: 60000
+  maxStaticThrust: 90000
   zeroThrustAirspeed: 125
   densityExponent: 1
   idleThrottle: 0.04
@@ -683,6 +705,7 @@ GameObject:
   - component: {fileID: 4073279844567961535}
   - component: {fileID: 4953182642190606610}
   - component: {fileID: 2125627064973737567}
+  - component: {fileID: 1649146830470692584}
   m_Layer: 0
   m_Name: Aircraft 1A Left Wing
   m_TagString: Untagged
@@ -811,6 +834,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!65 &1649146830470692584
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1282816309756695658}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.853013, y: 0.42964578, z: 2.2169995}
+  m_Center: {x: 0.41193783, y: -0.022024319, z: 0.16745102}
 --- !u!1 &3552548447111574204
 GameObject:
   m_ObjectHideFlags: 0
@@ -854,6 +898,7 @@ GameObject:
   - component: {fileID: 2619792076132251403}
   - component: {fileID: 5196348396403886896}
   - component: {fileID: 1652444585734452920}
+  - component: {fileID: 4015908073659641133}
   m_Layer: 0
   m_Name: Aircraft 1A Left Horizontal Stabiliser
   m_TagString: Untagged
@@ -982,6 +1027,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.45, g: 0.9, b: 0.55, a: 0.9}
+--- !u!65 &4015908073659641133
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3948655108127202224}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8207206, y: 0.19340688, z: 1.1226616}
+  m_Center: {x: 0.10704082, y: -0.023717247, z: -0.09379172}
 --- !u!1 &3976527318996203798
 GameObject:
   m_ObjectHideFlags: 0
@@ -1025,6 +1091,7 @@ GameObject:
   - component: {fileID: 928777278674344429}
   - component: {fileID: 1735447710853021641}
   - component: {fileID: 1487109233474087170}
+  - component: {fileID: 1039779422856941226}
   m_Layer: 0
   m_Name: Aircraft A1 Right Wing
   m_TagString: Untagged
@@ -1153,6 +1220,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!65 &1039779422856941226
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4901424376545121119}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.8530126, y: 0.42964575, z: 2.217}
+  m_Center: {x: -0.41193795, y: -0.022024259, z: 0.16745114}
 --- !u!1 &6147036510291110912
 GameObject:
   m_ObjectHideFlags: 0
@@ -1286,6 +1374,7 @@ GameObject:
   - component: {fileID: 145937654876944325}
   - component: {fileID: 8895039823700313588}
   - component: {fileID: 4643625648664345470}
+  - component: {fileID: 3963318588000527470}
   m_Layer: 0
   m_Name: Aircraft 1A Fuselage
   m_TagString: Untagged
@@ -1415,6 +1504,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.7, g: 0.7, b: 0.7, a: 0.5}
+--- !u!65 &3963318588000527470
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6605069187371172449}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4047663, y: 1.9522846, z: 9.272081}
+  m_Center: {x: 0.046481192, y: 0.07747853, z: 0.40887046}
 --- !u!1 &8344242635420670364
 GameObject:
   m_ObjectHideFlags: 0
@@ -1427,6 +1537,7 @@ GameObject:
   - component: {fileID: 8568332019926630659}
   - component: {fileID: 8552262039651437450}
   - component: {fileID: 3675993046516421265}
+  - component: {fileID: 7603284358548058255}
   m_Layer: 0
   m_Name: Aircraft 1A Vertical Stabiliser
   m_TagString: Untagged
@@ -1555,6 +1666,27 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.95, g: 0.8, b: 0.25, a: 0.9}
+--- !u!65 &7603284358548058255
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8344242635420670364}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.25983444, y: 1.8036926, z: 1.7432823}
+  m_Center: {x: 8.539095e-25, y: 0.107031316, z: -0.15912619}
 --- !u!1 &8486606927633118608
 GameObject:
   m_ObjectHideFlags: 0
