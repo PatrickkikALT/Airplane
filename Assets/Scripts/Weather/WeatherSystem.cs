@@ -87,7 +87,7 @@ namespace Airplane.Weather
             float dt = Mathf.Min(Time.deltaTime, 0.05f);
             Vector3 camPos = cam.transform.position;
             float ceiling = ResolveCloudCeiling();
-            float fadeMeters = Mathf.Max(cloudFade, 1f);
+            float fadeMeters = Mathf.Min(Mathf.Max(cloudFade, 1f), 25f);
             float camFade = Mathf.Clamp01((ceiling - camPos.y) / fadeMeters);
 
             simulationCompute.SetFloat(DeltaTimeId, dt);
@@ -125,7 +125,7 @@ namespace Airplane.Weather
             _props.SetFloat(VelocityStretchId, velocityStretch);
             _props.SetFloat(FarFadeId, Mathf.Max(Mathf.Min(volumeBounds.x, volumeBounds.z) * 0.45f, 1f));
             _props.SetFloat(CloudCeilingId, ceiling);
-            _props.SetFloat(CloudFadeId, fadeMeters);
+            _props.SetFloat(CloudFadeId, Mathf.Min(fadeMeters, 10f));
             material.SetBuffer(ParticlesId, _particles);
 
             RenderParams rp = new(material)

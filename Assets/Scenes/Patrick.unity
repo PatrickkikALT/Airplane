@@ -2344,7 +2344,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 2000
+    BottomAltitude: 2500
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2504,7 +2504,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 2000
+    BottomAltitude: 2500
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2664,7 +2664,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 2000
+    BottomAltitude: 2500
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2824,7 +2824,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 2000
+    BottomAltitude: 2500
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0

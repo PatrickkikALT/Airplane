@@ -31,10 +31,15 @@ float3 Turb(float3 p, float seed, float t)
     return f;
 }
 
-float3 WrapToCam(float3 pos, float3 center, float3 size)
+float3 WrapToCam(float3 pos, float3 cam, float3 size, float ceiling)
 {
-    // wrap stuff around the camera
+    // wrap around the camera, but slide the box down so it never flattens against the deck
     float3 s = max(size, 0.01);
+    float3 center = cam;
+    float overflow = (center.y + s.y * 0.5) - ceiling;
+    if (overflow > 0.0)
+        center.y -= overflow;
+
     float3 rel = pos - center;
     rel -= s * round(rel / s);
     return center + rel;
@@ -61,9 +66,7 @@ void Simulate(uint3 id : SV_DispatchThreadID)
         p.velocity *= cap / spd;
 
     p.position += p.velocity * dt;
-    p.position = WrapToCam(p.position, _CameraPosition, _BoundsSize);
-    // rain lives under the clouds, not above them
-    p.position.y = min(p.position.y, _CloudCeiling);
+    p.position = WrapToCam(p.position, _CameraPosition, _BoundsSize, _CloudCeiling);
 
     _Particles[id.x] = p;
 }
