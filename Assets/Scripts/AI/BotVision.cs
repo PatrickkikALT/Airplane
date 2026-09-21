@@ -5,33 +5,18 @@ using UnityEngine;
 
 namespace Airplane.AI
 {
-    /// <summary>
-    /// What one bot pilot believes about the other aircraft in the air.
-    ///
-    /// This is the piece that keeps the bots honest. A bot never reads another aircraft's transform
-    /// to fly or shoot; it reads a <see cref="BotContact"/>, which only updates while the target is
-    /// inside the search cone, inside visual range and not hidden behind terrain, and which carries
-    /// a position estimate that is deliberately wrong by an amount that grows with range and shrinks
-    /// with skill. Break line of sight and the bot keeps chasing a stale track until it gives up.
-    /// </summary>
     public sealed class BotVision
     {
         private readonly List<BotContact> _contacts = new List<BotContact>();
         private readonly RaycastHit[] _losHits = new RaycastHit[8];
 
-        /// <summary>Every aircraft this pilot has an opinion about, seen or remembered.</summary>
         public IReadOnlyList<BotContact> Contacts => _contacts;
 
         public void Clear()
         {
             _contacts.Clear();
         }
-
-        /// <summary>
-        /// Re-evaluates every candidate. Call on a slow clock (a few times a second): the sampling
-        /// interval is itself part of the realism, since it puts a lag between what a target does and
-        /// when the bot can possibly know about it.
-        /// </summary>
+        
         public void Tick(
             NetworkedAircraft self,
             PlaneRigidbody body,
@@ -43,7 +28,7 @@ namespace Airplane.AI
                 return;
 
             Vector3 eye = body.Position + Vector3.up * 3f;
-            Vector3 nose = body.TransformDirection(new Vector3(1f, 0f, 0f));
+            Vector3 nose = body.TransformDirection(new Vector3(0f, 0f, 1f));
             float cosFov = Mathf.Cos(Mathf.Clamp(profile.visionHalfAngleDeg, 10f, 179f) * Mathf.Deg2Rad);
             float now = Time.time;
 
@@ -63,9 +48,7 @@ namespace Airplane.AI
                 bool inCone = distance > 1f
                               && distance <= EffectiveRange(profile, distance, toTarget, other)
                               && Vector3.Dot(toTarget / Mathf.Max(distance, 0.001f), nose) >= cosFov;
-
-                // Close-range fights often have the line of sight clip a hill between two low
-                // aircraft. Treat that as visible so they can still engage instead of patrolling.
+                
                 bool visible = inCone && (distance < 900f
                     || HasLineOfSight(eye, truePosition, body.transform, other.transform, occlusionMask, distance));
 
@@ -73,8 +56,7 @@ namespace Airplane.AI
 
                 if (visible)
                 {
-                    // Awareness is what a reaction time looks like in a state machine: a target has
-                    // to stay in sight for a while before the pilot has actually processed it.
+                    Debug.Log("Enemy visible.");
                     float rate = 1f / Mathf.Max(0.05f, profile.reactionSeconds);
                     contact.Awareness = Mathf.Min(1f, contact.Awareness + rate * dt);
                     contact.LastSeenTime = now;
@@ -86,25 +68,15 @@ namespace Airplane.AI
                 }
                 else
                 {
-                    // Fades rather than snapping to zero, so a target flickering behind a tower is
-                    // not repeatedly re-acquired from scratch.
                     float decay = 1f / Mathf.Max(0.5f, profile.memorySeconds * 0.5f);
                     contact.Awareness = Mathf.Max(0f, contact.Awareness - decay * dt);
-
-                    // Dead reckoning on the last known track. The estimate drifts exactly the way a
-                    // pilot's mental picture of a bandit they lost sight of drifts.
                     contact.EstimatedPosition += contact.EstimatedVelocity * dt;
                 }
             }
 
             PruneStale(profile, now);
         }
-
-        /// <summary>
-        /// Being shot at is information. The pilot cannot see behind the tail, but the airframe
-        /// being hit tells them roughly where the shooter is, which is what turns a bounce into a
-        /// fight instead of a free kill.
-        /// </summary>
+        
         public void NotifyIncomingFire(NetworkedAircraft shooter, Vector3 shooterPosition, Vector3 shooterVelocity, float confidence)
         {
             if (!shooter)
@@ -165,24 +137,14 @@ namespace Airplane.AI
             }
         }
 
-        /// <summary>
-        /// Spotting range is not a single number. A target crossing in front presents a wing and is
-        /// easy to see; one flying straight at you is a dot. Nose-on contacts are worth roughly half
-        /// the range of a beam contact.
-        /// </summary>
         private static float EffectiveRange(BotSkillProfile profile, float distance, Vector3 toTarget, NetworkedAircraft target)
         {
-            Vector3 targetNose = target.Body.TransformDirection(new Vector3(1f, 0f, 0f));
+            Vector3 targetNose = target.Body.TransformDirection(new Vector3(0f, 0f, 1f));
             Vector3 losDir = toTarget / Mathf.Max(distance, 0.001f);
             float aspect = 1f - Mathf.Abs(Vector3.Dot(losDir, targetNose));
             return profile.visualRange * Mathf.Lerp(0.55f, 1f, Mathf.Clamp01(aspect));
         }
-
-        /// <summary>
-        /// A smoothly wandering offset rather than per-frame white noise: a wrong mental picture is
-        /// persistent for a second or two, which is what makes bot fire miss in a believable pattern
-        /// instead of spraying symmetrically around the target.
-        /// </summary>
+        
         private static Vector3 ResolveTrackingError(BotContact contact, BotSkillProfile profile, float distance)
         {
             float magnitude = profile.trackingErrorPerKm * (distance / 1000f);
@@ -224,42 +186,21 @@ namespace Airplane.AI
             return true;
         }
     }
-
-    /// <summary>
-    /// One bot's belief about one aircraft. A class rather than a struct because it is mutated in
-    /// place across frames and the drift of the estimate over time is the whole point.
-    /// </summary>
+    
     public sealed class BotContact
     {
         public NetworkedAircraft Aircraft;
-
-        /// <summary>Where the pilot thinks the target is. Not where it is.</summary>
         public Vector3 EstimatedPosition;
-
         public Vector3 EstimatedVelocity;
-
-        /// <summary>Straight-line range at the last evaluation, metres.</summary>
         public float Distance;
-
-        /// <summary>Range at the last sighting, metres.</summary>
         public float TrueDistance;
-
-        /// <summary>True while the target is in the search cone, in range and unobstructed.</summary>
         public bool Visible;
-
-        /// <summary>0 = has not registered, 1 = fully processed. Climbs over the reaction time.</summary>
         public float Awareness;
-
         public float LastSeenTime;
-
         public bool WasShotBy;
-
         public float LastFiredAtMeTime;
-
         public float ErrorSeed;
-
         public bool Acquired => Awareness >= 0.25f;
-
         public float TimeSinceSeen => Time.time - LastSeenTime;
     }
 }

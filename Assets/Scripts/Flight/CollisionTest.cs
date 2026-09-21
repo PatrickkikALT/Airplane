@@ -15,12 +15,23 @@ public class CollisionTest : MonoBehaviour
 
     private void OnPlaneCollisionEnter(PlaneCollision hit)
     {
+        TryReportCrash(hit);
+    }
+
+    private void OnPlaneCollisionStay(PlaneCollision hit)
+    {
+        if (_networked && _networked.IsShotDown)
+            TryReportCrash(hit);
+    }
+
+    private void TryReportCrash(PlaneCollision hit)
+    {
+        if (!_rigidbody)
+            return;
+
         float impactKmh = _rigidbody.TrueAirspeed * FlightSimMath.AirSpeedToKnots * FlightSimMath.KnotsToKmh;
 
         if (_networked && _networked.IsSpawned)
-        {
             _networked.ReportCrash(hit.Point, impactKmh);
-            return;
-        }
     }
 }

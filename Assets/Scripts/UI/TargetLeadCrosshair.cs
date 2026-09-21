@@ -143,7 +143,7 @@ namespace Airplane.UI
             velocity = Vector3.zero;
 
             Vector3 muzzle = shooter.Position;
-            Vector3 axis = shooter.TransformDirection(Vector3.right);
+            Vector3 axis = shooter.TransformDirection(Vector3.forward);
             if (TryShotAxis(weapons.Guns, channel, shooter, out Vector3 batteryMuzzle, out Vector3 batteryAxis))
             {
                 muzzle = batteryMuzzle;

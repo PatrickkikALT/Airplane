@@ -13,9 +13,6 @@ namespace Airplane.Weapons
         [Tooltip("Hit points at spawn. Each gun's Damage is subtracted on a local, simulated hit.")]
         [SerializeField] private float hitPoints = 100f;
 
-        [Tooltip("Impact true airspeed reported to the crash path, km/h. The existing spawner only cares that it clears the threshold.")]
-        [SerializeField] private float reportedCrashSpeedKmh = 80f;
-
         public Action<GunHit> OnDeathEvent;
         private float _hp;
         private PlaneRigidbody _body;
@@ -55,12 +52,10 @@ namespace Airplane.Weapons
                 return;
 
             _hp = 0f;
-            Vector3 point = hit.Point;
             if (_networked && _networked.IsSpawned)
             {
                 OnDeathEvent?.Invoke(hit);
-                _networked.ReportCrash(point, reportedCrashSpeedKmh);
-                return;
+                _networked.BeginShotDown();
             }
         }
     }

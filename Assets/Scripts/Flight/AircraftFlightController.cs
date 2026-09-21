@@ -321,13 +321,13 @@ namespace Airplane.FlightSimulation
             if (_body == null || _body.AnyGearDown)
                 return 0f;
 
-            float mix = aileron * aileronRudderMix;
+            float mix = -aileron * aileronRudderMix;
             float damper = 0f;
             if (sideslipYawGain > 0.01f)
             {
                 Vector3 vBody = _body.InverseTransformDirection(
                     _body.Velocity - AtmosphericModel.SampleWind());
-                damper = FlightSimMath.Sideslip(vBody) * sideslipYawGain;
+                damper = -FlightSimMath.BodySideslip(vBody) * sideslipYawGain;
             }
 
             float manual = Mathf.Abs(manualYaw);
@@ -456,8 +456,8 @@ namespace Airplane.FlightSimulation
             AtmosphereSample atmo = AtmosphericModel.SampleAt(_body.Position);
             float tas = _body.TrueAirspeed;
             Vector3 vBody = _body.InverseTransformDirection(_body.Velocity - AtmosphericModel.SampleWind());
-            float aoa = FlightSimMath.AngleOfAttack(vBody) * FlightSimMath.Rad2Deg;
-            float beta = FlightSimMath.Sideslip(vBody) * FlightSimMath.Rad2Deg;
+            float aoa = FlightSimMath.BodyAngleOfAttack(vBody) * FlightSimMath.Rad2Deg;
+            float beta = FlightSimMath.BodySideslip(vBody) * FlightSimMath.Rad2Deg;
             float ias = tas * Mathf.Sqrt(atmo.Density / AtmosphericModel.StandardSeaLevelDensity);
             float mach = atmo.SpeedOfSound > 1f ? tas / atmo.SpeedOfSound : 0f;
             float gLoad = _body.LoadFactorNz;

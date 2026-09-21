@@ -33,7 +33,7 @@ namespace Airplane.Multiplayer
         [SerializeField] private float generatedHeadingDeg;
 
         [Header("Initial State")]
-        [Tooltip("Airspeed handed to a freshly spawned aircraft along its own forward (+X body) axis, m/s.")]
+        [Tooltip("Airspeed handed to a freshly spawned aircraft along its own forward (+Z body) axis, m/s.")]
         [SerializeField] private float spawnAirspeed = 60f;
 
         [Header("Respawn")]
@@ -214,7 +214,7 @@ namespace Airplane.Multiplayer
             }
 
             ResolveSpawnPose(slot, out Vector3 position, out Quaternion rotation);
-            Vector3 velocity = rotation * new Vector3(spawnAirspeed, 0f, 0f);
+            Vector3 velocity = rotation * new Vector3(0f, 0f, spawnAirspeed);
 
             NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
             aircraft.name = $"Aircraft (Client {clientId})";
@@ -259,7 +259,7 @@ namespace Airplane.Multiplayer
 
             int index = _nextBotIndex++;
             ResolveBotSpawnPose(index, out Vector3 position, out Quaternion rotation);
-            Vector3 velocity = rotation * new Vector3(Mathf.Max(40f, botSpawnAirspeed), 0f, 0f);
+            Vector3 velocity = rotation * new Vector3(0f, 0f, Mathf.Max(40f, botSpawnAirspeed));
 
             NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
             string callsign = BotCallsigns.Next();
@@ -522,7 +522,7 @@ namespace Airplane.Multiplayer
                     if (!point)
                         continue;
                     Gizmos.DrawWireSphere(point.position, 3f);
-                    Gizmos.DrawLine(point.position, point.position + point.right * 12f);
+                    Gizmos.DrawLine(point.position, point.position + point.forward * 12f);
                 }
 
                 return;
@@ -533,7 +533,7 @@ namespace Airplane.Multiplayer
             {
                 Vector3 p = generatedOrigin + generatedSpacing * i;
                 Gizmos.DrawWireSphere(p, 3f);
-                Gizmos.DrawLine(p, p + rotation * Vector3.right * 12f);
+                Gizmos.DrawLine(p, p + rotation * Vector3.forward * 12f);
             }
         }
     }

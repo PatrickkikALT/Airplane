@@ -1480,7 +1480,7 @@ MonoBehaviour:
   - {fileID: 627687290}
   - {fileID: 135916390}
   - {fileID: 367953598}
-  generatedOrigin: {x: 0, y: 50, z: 0}
+  generatedOrigin: {x: 0, y: 500, z: 0}
   generatedSpacing: {x: 0, y: 0, z: 60}
   generatedHeadingDeg: 0
   spawnAirspeed: 60
@@ -1492,10 +1492,10 @@ MonoBehaviour:
   botMaxSkill: 1
   botPatrolCentre: {x: 0, y: 500, z: 0}
   botPatrolRadius: 87.7
-  botPatrolMinAltitude: 4000
-  botPatrolMaxAltitude: 6000
+  botPatrolMinAltitude: 700
+  botPatrolMaxAltitude: 1500
   botSpawnRingRadius: 0
-  botSpawnAltitude: 4000
+  botSpawnAltitude: 500
   botSpawnAltitudeJitter: 0
   botSpawnAirspeed: 0
   botRespawnDelay: 0
@@ -2188,6 +2188,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1801246300}
   - component: {fileID: 1801246299}
+  - component: {fileID: 1801246301}
   m_Layer: 0
   m_Name: GameObject (6)
   m_TagString: Untagged
@@ -2343,7 +2344,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 1200
+    BottomAltitude: 2000
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2390,7 +2391,7 @@ MonoBehaviour:
     CloudsEnabled: 1
     LocalClouds: 1
     CloudPreset: 2
-    FogEnabled: 1
+    FogEnabled: 0
     FogColor: {r: 0.5660378, g: 0.5660378, b: 0.5660378, a: 1}
     FogDensity: 0.0001
     FogStart: 177.3
@@ -2503,7 +2504,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 1200
+    BottomAltitude: 2000
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2663,7 +2664,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 1200
+    BottomAltitude: 2000
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2823,7 +2824,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 1200
+    BottomAltitude: 2000
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -2983,7 +2984,7 @@ MonoBehaviour:
     MicroErosion: 0
     MicroErosionFactor: 0.5
     MicroErosionScale: 200
-    BottomAltitude: 1200
+    BottomAltitude: 2000
     AltitudeRange: 2000
     ShapeOffset: {x: 0, y: 0, z: 0}
     EarthCurvature: 0
@@ -3029,6 +3030,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1801246301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1801246298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66c383c0e09aace0f85d26ab27e40881, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weather.WeatherCycle
+  cycleEnabled: 1
+  minHoldSeconds: 75
+  maxHoldSeconds: 140
+  blendSeconds: 40
+  worsenChance: 0.38
 --- !u!1 &1904997405
 GameObject:
   m_ObjectHideFlags: 0

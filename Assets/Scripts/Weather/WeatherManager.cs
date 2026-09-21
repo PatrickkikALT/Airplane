@@ -399,6 +399,8 @@ namespace Airplane.Weather
         [SerializeField] [Min(0f)] private float transitionDuration = 10f;
         private readonly Keyframe[] _curveKeys = new Keyframe[CurveSamples];
         private float _blend;
+        private float _queuedTransitionDuration = -1f;
+        private float _activeTransitionDuration;
 
         private bool _blending;
         private CloudSnapshot _fromClouds;
@@ -408,7 +410,6 @@ namespace Airplane.Weather
         private CloudSnapshot _toClouds;
         private int _toRain;
         private Vector3 _toWind;
-        private float _toDensity;
         private int _fromTornadoes;
         private int _toTornadoes;
         private int _fromDebris;
@@ -417,6 +418,19 @@ namespace Airplane.Weather
         private TornadoShape _toTornadoShape;
         private LightningSnapshot _fromLightning;
         private LightningSnapshot _toLightning;
+        private FogSnapshot _fromFog;
+        private FogSnapshot _toFog;
+
+        public bool IsBlending => _blending;
+        public int CurrentPresetIndex => currentPreset;
+        public int PresetCount => presets != null ? presets.Length : 0;
+
+        public WeatherPreset GetPreset(int index)
+        {
+            if (presets == null || index < 0 || index >= presets.Length)
+                return null;
+            return presets[index];
+        }
 
         private void Reset()
         {
@@ -433,7 +447,7 @@ namespace Airplane.Weather
             if (!_blending)
                 return;
 
-            float duration = Mathf.Max(transitionDuration, 0.0001f);
+            float duration = Mathf.Max(_activeTransitionDuration, 0.0001f);
             _blend = Mathf.MoveTowards(_blend, 1f, Time.deltaTime / duration);
             ApplyBlend(Mathf.SmoothStep(0f, 1f, _blend));
 
@@ -443,7 +457,8 @@ namespace Airplane.Weather
 
         public void UpdateWeather()
         {
-            NetworkedWeather.Instance.UpdateWeatherClientRpc();
+            if (NetworkedWeather.Instance != null)
+                NetworkedWeather.Instance.UpdateWeatherClientRpc();
             UpdateWeatherInternal();
         }
 
@@ -452,7 +467,7 @@ namespace Airplane.Weather
             if (!TryGetTarget(out WeatherPreset target))
                 return;
 
-            if (!Application.isPlaying || transitionDuration <= 0.001f)
+            if (!Application.isPlaying || ResolveQueuedTransitionDuration() <= 0.001f)
             {
                 ApplyImmediate(target);
                 return;
@@ -489,11 +504,17 @@ namespace Airplane.Weather
         {
             _blending = false;
             _blend = 1f;
+            _queuedTransitionDuration = -1f;
             CaptureFrom();
             CaptureTo(target);
             PrepareRainCapacity();
             PrepareTornadoCapacity();
             ApplyBlend(1f);
+        }
+
+        private float ResolveQueuedTransitionDuration()
+        {
+            return _queuedTransitionDuration >= 0f ? _queuedTransitionDuration : transitionDuration;
         }
 
         private void ApplyWind(WeatherPreset target)
@@ -514,7 +535,8 @@ namespace Airplane.Weather
             CaptureTo(target);
             PrepareRainCapacity();
             PrepareTornadoCapacity();
-            SetFog(target.FogEnabled, target.FogColor, target.FogStart, target.FogEnd, target.Mode);
+            _activeTransitionDuration = ResolveQueuedTransitionDuration();
+            _queuedTransitionDuration = -1f;
             _blend = 0f;
             _blending = true;
             ApplyBlend(0f);
@@ -543,6 +565,7 @@ namespace Airplane.Weather
             _fromDebris = tornadoSystem != null ? tornadoSystem.DebrisCount : 0;
             _fromTornadoShape = TornadoShape.FromSystem(tornadoSystem);
             _fromLightning = LightningSnapshot.FromSystem(lightningSystem);
+            _fromFog = FogSnapshot.FromRenderSettings();
             _fromWind = weatherSystem != null ? weatherSystem.Wind : AtmosphericModel.SampleWind();
             _fromClouds = TryGetClouds(out VolumetricClouds clouds)
                 ? CloudSnapshot.FromVolume(clouds)
@@ -556,9 +579,9 @@ namespace Airplane.Weather
             _toDebris = _toTornadoes > 0 ? Mathf.Max(0, target.TornadoDebrisCount) : 0;
             _toTornadoShape = TornadoShape.FromPreset(target);
             _toLightning = LightningSnapshot.FromPreset(target);
+            _toFog = FogSnapshot.FromPreset(target);
             _toCloudPreset = target.CloudPreset;
             _toClouds = CloudSnapshot.FromPreset(target);
-            _toDensity = target.FogDensity;
             ApplyWind(target);
         }
 
@@ -570,11 +593,8 @@ namespace Airplane.Weather
             if (weatherSystem != null)
             {
                 weatherSystem.SetWind(wind);
-                if (t > 0.5f)
-                {
-                    float rainT = GetRainT(t);
-                    weatherSystem.SetParticleCount(Mathf.RoundToInt(Mathf.Lerp(_fromRain, _toRain, rainT)));
-                }
+                float rainT = _toRain >= _fromRain ? GetRainT(t) : Mathf.Clamp01(t * 2f);
+                weatherSystem.SetParticleCount(Mathf.RoundToInt(Mathf.Lerp(_fromRain, _toRain, rainT)));
             }
 
             ApplyTornadoBlend(t, wind);
@@ -585,8 +605,7 @@ namespace Airplane.Weather
 
             CloudSnapshot.Lerp(_fromClouds, _toClouds, t, _curveKeys, clouds);
             OverrideCloudParams(clouds);
-            float fogT = GetRainT(t);
-            LerpFog(_toDensity, fogT);
+            ApplyFogBlend(t);
             
             if (t >= 1f - Mathf.Epsilon)
             {
@@ -767,10 +786,16 @@ namespace Airplane.Weather
 
         public bool TrySetWeather(string name)
         {
+            return TrySetWeather(name, -1f);
+        }
+
+        public bool TrySetWeather(string name, float blendSeconds)
+        {
             if (!TryFindPreset(name, out int index))
                 return false;
 
             currentPreset = index;
+            _queuedTransitionDuration = blendSeconds;
             UpdateWeather();
             return true;
         }
@@ -799,6 +824,52 @@ namespace Airplane.Weather
             }
 
             return false;
+        }
+
+        private struct FogSnapshot
+        {
+            public bool Enabled;
+            public Color Color;
+            public float Density;
+            public float Start;
+            public float End;
+            public FogMode Mode;
+
+            public static FogSnapshot FromRenderSettings()
+            {
+                return new FogSnapshot
+                {
+                    Enabled = RenderSettings.fog,
+                    Color = RenderSettings.fogColor,
+                    Density = RenderSettings.fogDensity,
+                    Start = RenderSettings.fogStartDistance,
+                    End = RenderSettings.fogEndDistance,
+                    Mode = RenderSettings.fogMode
+                };
+            }
+
+            public static FogSnapshot FromPreset(WeatherPreset preset)
+            {
+                return new FogSnapshot
+                {
+                    Enabled = preset.FogEnabled,
+                    Color = preset.FogColor,
+                    Density = preset.FogDensity,
+                    Start = preset.FogStart,
+                    End = preset.FogEnd,
+                    Mode = preset.Mode
+                };
+            }
+        }
+
+        private void ApplyFogBlend(float t)
+        {
+            RenderSettings.fogColor = Color.Lerp(_fromFog.Color, _toFog.Color, t);
+            RenderSettings.fogDensity = Mathf.Lerp(_fromFog.Density, _toFog.Density, t);
+            RenderSettings.fogStartDistance = Mathf.Lerp(_fromFog.Start, _toFog.Start, t);
+            RenderSettings.fogEndDistance = Mathf.Lerp(_fromFog.End, _toFog.End, t);
+            RenderSettings.fogMode = t < 0.5f ? _fromFog.Mode : _toFog.Mode;
+            RenderSettings.fog = t >= 1f ? _toFog.Enabled : (_fromFog.Enabled || _toFog.Enabled);
         }
 
         private struct LightningSnapshot
@@ -1102,7 +1173,7 @@ namespace Airplane.Weather
             public static void Lerp(in CloudSnapshot a, in CloudSnapshot b, float t, Keyframe[] keys,
                 VolumetricClouds clouds)
             {
-                clouds.state.value = t < 0.5f ? a.cloudsEnabled : b.cloudsEnabled;
+                clouds.state.value = t >= 1f ? b.cloudsEnabled : (a.cloudsEnabled || b.cloudsEnabled);
                 clouds.localClouds.value = t < 0.5f ? a.localClouds : b.localClouds;
                 clouds.densityMultiplier.value = Mathf.Lerp(a.densityMultiplier, b.densityMultiplier, t);
                 clouds.shapeFactor.value = Mathf.Lerp(a.shapeFactor, b.shapeFactor, t);

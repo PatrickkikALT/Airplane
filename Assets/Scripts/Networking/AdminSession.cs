@@ -241,7 +241,7 @@ namespace Airplane.Multiplayer
         {
             List<NetworkedAircraft> targets = ResolveTargets(target, LocalSenderId());
             for (int i = 0; i < targets.Count; i++)
-                targets[i].ReportCrash(Vector3.zero, 500f);
+                targets[i].BeginShotDown();
         }
 
         private static void ApplyLocalAircraft(

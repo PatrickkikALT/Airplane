@@ -140,6 +140,7 @@ namespace Airplane.FlightSimulation
         public float LastAlphaDeg => _lastAlphaDeg;
         public float Area => area;
         public AeroControlType ControlType => controlType;
+        public AeroSurfaceMode SurfaceMode => surfaceMode;
 
         private Quaternion AeroFrameLocal => Quaternion.Euler(aeroFrameEuler);
 
@@ -210,7 +211,7 @@ namespace Airplane.FlightSimulation
             if (wingDownwashFactor > 0f)
             {
                 Vector3 vBody = body.InverseTransformDirection(body.Velocity - windWorld);
-                alpha -= wingDownwashFactor * FlightSimMath.AngleOfAttack(vBody);
+                alpha -= wingDownwashFactor * FlightSimMath.BodyAngleOfAttack(vBody);
             }
             _lastAlphaDeg = alpha * FlightSimMath.Rad2Deg;
 

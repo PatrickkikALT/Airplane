@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Airplane.FlightSimulation;
+using Airplane.AI;
 using Airplane.UI;
 using Airplane.Weapons;
 using Airplane.Weather;
@@ -65,6 +66,7 @@ namespace Airplane.Multiplayer
         private Quaternion _lastSentOrientation = Quaternion.identity;
         private bool _hasSent;
         private bool _crashReported;
+        private bool _shotDown;
         private bool _botLocally;
         private bool _isAlive;
         private string _pendingPilotName;
@@ -157,6 +159,8 @@ namespace Airplane.Multiplayer
 
         public bool IsAlive => _isAlive;
 
+        public bool IsShotDown => _shotDown;
+
         public string DisplayName
         {
             get
@@ -190,11 +194,13 @@ namespace Airplane.Multiplayer
             _weapons = GetComponent<AircraftWeaponsController>();
             _playerInput = GetComponent<PlayerInput>();
             _isAlive = true;
+            _shotDown = false;
         }
 
         public override void OnNetworkSpawn()
         {
             _isAlive = true;
+            _shotDown = false;
             if (!Registry.Contains(this))
                 Registry.Add(this);
 
@@ -237,6 +243,7 @@ namespace Airplane.Multiplayer
             _buffer.Clear();
             _hasSent = false;
             _crashReported = false;
+            _shotDown = false;
         }
 
         public override void OnDestroy()
@@ -447,9 +454,9 @@ namespace Airplane.Multiplayer
         {
             if (!IsSpawned || !IsOwner || _crashReported)
                 return;
-            if (CheatFlags.GodMode && this == Local)
+            if (!_shotDown && CheatFlags.GodMode && this == Local)
                 return;
-            if (impactSpeedKmh < crashSpeedKmh)
+            if (!_shotDown && impactSpeedKmh < crashSpeedKmh)
                 return;
 
             _crashReported = true;
@@ -501,11 +508,74 @@ namespace Airplane.Multiplayer
         [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
         private void SubmitCrashRpc(Vector3 point, float impactSpeedKmh)
         {
-            if (impactSpeedKmh < crashSpeedKmh)
+            if (!_shotDown && impactSpeedKmh < crashSpeedKmh)
                 return;
 
             _crashCount.Value++;
             AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
+        }
+
+        public void BeginShotDown()
+        {
+            if (!IsSpawned || !IsOwner || _shotDown || _crashReported)
+                return;
+
+            ApplyShotDown();
+            SubmitShotDownRpc();
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        private void SubmitShotDownRpc()
+        {
+            BeginShotDownRpc();
+        }
+
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
+        private void BeginShotDownRpc()
+        {
+            ApplyShotDown();
+        }
+
+        private void ApplyShotDown()
+        {
+            if (_shotDown || _crashReported)
+                return;
+
+            _shotDown = true;
+            _isAlive = false;
+
+            if (_body)
+                _body.SetWrecked(true);
+
+            if (_controller)
+            {
+                _controller.SetInputEnabled(false);
+                _controller.SetHudVisible(false);
+                _controller.ApplyExternalControls(0f, 0f, 0f, 0f, 0f, 0f, 0f);
+            }
+
+            if (_weapons)
+            {
+                _weapons.SetInputEnabled(false);
+                _weapons.SetHudVisible(false);
+                _weapons.ApplyExternalFire(0f, 0f);
+            }
+
+            if (_playerInput)
+                _playerInput.enabled = false;
+
+            AircraftBotPilot pilot = GetComponent<AircraftBotPilot>();
+            if (pilot)
+                pilot.enabled = false;
+
+            AircraftDummyHold dummyHold = GetComponent<AircraftDummyHold>();
+            if (dummyHold)
+                dummyHold.enabled = false;
+
+            AircraftWreckVisual.Apply(gameObject);
+
+            if (Local == this)
+                AircraftChaseCamera.Active?.HoldWatch();
         }
 
         internal void PlayCrashExplosion(Vector3 origin)
@@ -527,6 +597,10 @@ namespace Airplane.Multiplayer
         {
             _isAlive = false;
             _crashReported = true;
+
+            AircraftWreckVisual wreck = GetComponent<AircraftWreckVisual>();
+            if (wreck)
+                wreck.Stop();
 
             Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < renderers.Length; i++)
@@ -567,18 +641,20 @@ namespace Airplane.Multiplayer
             _buffer.Clear();
             _hasSent = false;
             _crashReported = false;
-            _body.Teleport(comWorld, orientation, velocityWorld, angularVelocityBody);
+            _shotDown = false;
+            if (_body)
+            {
+                _body.SetWrecked(false);
+                _body.Teleport(comWorld, orientation, velocityWorld, angularVelocityBody);
+            }
         }
 
         internal void ForceDestroyFromServer()
         {
-            if (!IsSpawned || !IsServer || _crashReported)
+            if (!IsSpawned || !IsServer || _shotDown || _crashReported)
                 return;
 
-            _crashReported = true;
-            _crashCount.Value++;
-            Vector3 point = _body ? _body.Position : transform.position;
-            AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
+            BeginShotDownRpc();
         }
 
         internal void ServerSetScale(float scale)

@@ -56,7 +56,7 @@ namespace Airplane.AI
         [Tooltip("Seconds of flight path checked ahead for terrain.")]
         [SerializeField] private float terrainLookaheadSeconds = 20f;
 
-        private static readonly Vector3 BodyForward = new Vector3(1f, 0f, 0f);
+        private static readonly Vector3 BodyForward = new Vector3(0f, 0f, 1f);
 
         private readonly BotVision _vision = new BotVision();
         private readonly BotAutopilot _autopilot = new BotAutopilot();

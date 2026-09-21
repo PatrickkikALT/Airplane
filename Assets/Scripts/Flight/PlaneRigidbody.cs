@@ -12,13 +12,13 @@ namespace Airplane.FlightSimulation
         [Tooltip("Mass of the vehicle, kg. Baseline trainer = 1500 kg.")]
         [SerializeField] private float mass = 1500f;
 
-        [Tooltip("Ixx - roll inertia about body +X (forward), kg·m².")]
+        [Tooltip("Ixx - roll inertia, kg·m². Applied about the nose (+Z).")]
         [SerializeField] private float inertiaIxx = 2200f;
 
         [Tooltip("Iyy - yaw inertia about body +Y (up), kg·m².")]
         [SerializeField] private float inertiaIyy = 5200f;
 
-        [Tooltip("Izz - pitch inertia about body +Z (right), kg·m².")]
+        [Tooltip("Izz - pitch inertia, kg·m². Applied about +X (right).")]
         [SerializeField] private float inertiaIzz = 3600f;
 
         [SerializeField] private float inertiaIxy;
@@ -43,7 +43,7 @@ namespace Airplane.FlightSimulation
         [SerializeField] private float maxAngularAcceleration = 6f;
 
         [Header("Initial Conditions (body frame)")]
-        [SerializeField] private Vector3 initialVelocityBody = new Vector3(50f, 0f, 0f);
+        [SerializeField] private Vector3 initialVelocityBody = new Vector3(0f, 0f, 50f);
         [SerializeField] private Vector3 initialAngularVelocityBody;
 
         [Header("Ground Contact")]
@@ -54,9 +54,9 @@ namespace Airplane.FlightSimulation
 
         [SerializeField] private Vector3[] gearAttachBody =
         {
-            new Vector3(2.05f, -0.35f, 0f),
-            new Vector3(-0.45f, -0.35f, -1.25f),
-            new Vector3(-0.45f, -0.35f, 1.25f)
+            new Vector3(0f, -0.35f, 2.05f),
+            new Vector3(-1.25f, -0.35f, -0.45f),
+            new Vector3(1.25f, -0.35f, -0.45f)
         };
 
         [SerializeField] private float gearRestLength = 0.95f;
@@ -88,20 +88,14 @@ namespace Airplane.FlightSimulation
         [Tooltip("Fraction of overlap removed each iteration.")]
         [SerializeField] [Range(0.1f, 1f)] private float collisionBaumgarte = 0.7f;
 
-        [Tooltip("If the aircraft has no colliders, add a box hull so contact still works.")]
-        [SerializeField] private bool createFallbackHull = true;
-
-        [SerializeField] private Vector3 fallbackHullSize = new Vector3(7.5f, 1.2f, 10.5f);
-        [SerializeField] private Vector3 fallbackHullCenter;
-
         [Header("Handling")]
-        [Tooltip("Body-axis rate damping (N·m / (rad/s)) at reference q. Higher = slower, heavier rotation.")]
+        [Tooltip("Body-axis rate damping (N·m / (rad/s)) at reference q. X = roll about +Z, Y = yaw, Z = pitch about +X.")]
         [SerializeField] private Vector3 angularDamping = new Vector3(8000f, 7000f, 7000f);
 
         [Tooltip("Dynamic pressure (Pa) at which Angular Damping is quoted. Scales with q.")]
         [SerializeField] private float dampingReferenceQ = 1800f;
 
-        [Tooltip("Hard cap on body rates, degrees/s (roll, yaw, pitch).")]
+        [Tooltip("Hard cap on body rates, degrees/s. X = roll about +Z, Y = yaw, Z = pitch about +X.")]
         [SerializeField] private Vector3 maxAngularSpeedDeg = new Vector3(80f, 28f, 45f);
 
         [Tooltip("Extra damping multiplier when the stick is released, so rotation stops with the input instead of coasting.")]
@@ -134,6 +128,7 @@ namespace Airplane.FlightSimulation
         private bool _initialized;
         private bool _anyGearDown;
         private bool _simulationEnabled = true;
+        private bool _wrecked;
         private bool _externalStateApplied;
 
         private AeroSurface[] _surfaces;
@@ -161,6 +156,13 @@ namespace Airplane.FlightSimulation
         }
 
         public bool SimulationEnabled => _simulationEnabled;
+
+        public bool Wrecked => _wrecked;
+
+        public void SetWrecked(bool wrecked)
+        {
+            _wrecked = wrecked;
+        }
 
         public Vector3 AngularVelocityWorld => _orientation * _omegaBody;
 
@@ -285,11 +287,11 @@ namespace Airplane.FlightSimulation
 
         private void RebuildInertia()
         {
-            _inertia = Mat3.Inertia(inertiaIxx, inertiaIyy, inertiaIzz, inertiaIxy, inertiaIxz, inertiaIyz);
+            _inertia = Mat3.Inertia(inertiaIzz, inertiaIyy, inertiaIxx, inertiaIxy, inertiaIxz, inertiaIyz);
             if (!_inertia.TryInvert(out _inertiaInverse))
             {
                 Debug.LogError("PlaneRigidbody: inertia tensor is singular. Check Ixx/Iyy/Izz.", this);
-                _inertiaInverse = Mat3.Diagonal(1f / inertiaIxx, 1f / inertiaIyy, 1f / inertiaIzz);
+                _inertiaInverse = Mat3.Diagonal(1f / inertiaIzz, 1f / inertiaIyy, 1f / inertiaIxx);
             }
 
             _tensorDirty = false;
@@ -428,7 +430,7 @@ namespace Airplane.FlightSimulation
             Vector3 wind = AtmosphericModel.SampleWind();
 
             PropWashState wash = default;
-            if (_engine)
+            if (_engine && !_wrecked)
             {
                 _engine.ContributeForces(this, in atmo, dt);
                 wash = _engine.BuildPropWash();
@@ -441,6 +443,8 @@ namespace Airplane.FlightSimulation
                 {
                     if (!surface || !surface.isActiveAndEnabled)
                         continue;
+                    if (_wrecked && surface.SurfaceMode == AeroSurfaceMode.LiftingAirfoil)
+                        continue;
                     surface.ContributeForces(this, in atmo, wind, in wash);
                     aeroSum += surface.LastForceWorld;
                 }
@@ -448,9 +452,12 @@ namespace Airplane.FlightSimulation
 
             _lastAeroForceWorld = aeroSum;
 
+            if (_wrecked)
+                ContributeWreckDrag(in atmo, wind);
+
             ContributeRateDamping(in atmo);
 
-            if (enableLandingGear)
+            if (enableLandingGear && !_wrecked)
                 ContributeLandingGear();
 
             _lastTotalForceWorld = _forceWorld;
@@ -546,11 +553,11 @@ namespace Airplane.FlightSimulation
         {
             Vector3 maxRad = maxAngularSpeedDeg * FlightSimMath.Deg2Rad;
             if (maxRad.x > 0.01f)
-                _omegaBody.x = Mathf.Clamp(_omegaBody.x, -maxRad.x, maxRad.x);
+                _omegaBody.z = Mathf.Clamp(_omegaBody.z, -maxRad.x, maxRad.x);
             if (maxRad.y > 0.01f)
                 _omegaBody.y = Mathf.Clamp(_omegaBody.y, -maxRad.y, maxRad.y);
             if (maxRad.z > 0.01f)
-                _omegaBody.z = Mathf.Clamp(_omegaBody.z, -maxRad.z, maxRad.z);
+                _omegaBody.x = Mathf.Clamp(_omegaBody.x, -maxRad.z, maxRad.z);
         }
 
         private RigidBodyDerivatives EvaluateDerivatives(float dt)
@@ -616,6 +623,18 @@ namespace Airplane.FlightSimulation
             }
         }
 
+        private void ContributeWreckDrag(in AtmosphereSample atmo, Vector3 wind)
+        {
+            Vector3 vRel = _velocity - wind;
+            float speed = vRel.magnitude;
+            if (speed < 0.4f)
+                return;
+
+            float area = 10f;
+            float drag = 0.5f * atmo.Density * speed * speed * area;
+            AddForce(vRel * (-drag / speed));
+        }
+
         private void ContributeRateDamping(in AtmosphereSample atmo)
         {
             float q = atmo.DynamicPressure(TrueAirspeed);
@@ -634,9 +653,9 @@ namespace Airplane.FlightSimulation
             }
 
             AddTorque(new Vector3(
-                -angularDamping.x * _omegaBody.x * scale,
+                -angularDamping.z * _omegaBody.x * scale,
                 -angularDamping.y * _omegaBody.y * scale,
-                -angularDamping.z * _omegaBody.z * scale));
+                -angularDamping.x * _omegaBody.z * scale));
         }
 
         private void ContributeLandingGear()
@@ -685,11 +704,11 @@ namespace Airplane.FlightSimulation
                 AddForceAtPosition(groundNormal * nForce, contact);
 
                 Vector3 vTan = pointVel - groundNormal * vN;
-                Vector3 forward = _orientation * Vector3.right;
+                Vector3 forward = _orientation * Vector3.forward;
                 if (i == noseGearIndex && steerRad * steerRad > 1e-8f)
                 {
                     Quaternion steer = Quaternion.AngleAxis(steerRad * FlightSimMath.Rad2Deg, groundNormal);
-                    forward = steer * (_orientation * Vector3.right);
+                    forward = steer * (_orientation * Vector3.forward);
                 }
 
                 Vector3 longDir = FlightSimMath.SafeNormalize(forward - groundNormal * Vector3.Dot(forward, groundNormal));

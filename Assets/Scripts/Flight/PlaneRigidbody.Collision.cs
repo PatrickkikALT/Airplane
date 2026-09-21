@@ -154,20 +154,6 @@ namespace Airplane.FlightSimulation
             Collider[] found = GetComponentsInChildren<Collider>(true);
             int count = found.Count(c => c && c.enabled && !c.isTrigger);
 
-            if (count == 0 && createFallbackHull && Application.isPlaying)
-            {
-                if (!_fallbackHull)
-                {
-                    _fallbackHull = gameObject.AddComponent<BoxCollider>();
-                    _fallbackHull.size = fallbackHullSize;
-                    _fallbackHull.center = fallbackHullCenter;
-                    _fallbackHull.isTrigger = false;
-                }
-
-                found = GetComponentsInChildren<Collider>(true);
-                count = found.Count(c => c && c.enabled && !c.isTrigger);
-            }
-
             _ownColliders = new Collider[count];
             int w = 0;
             foreach (Collider c in found)

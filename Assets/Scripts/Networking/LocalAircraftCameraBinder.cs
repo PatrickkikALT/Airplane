@@ -50,6 +50,7 @@ namespace Airplane.Multiplayer
             if (!chaseCamera || !aircraft)
                 return;
 
+            chaseCamera.ReleaseWatch();
             chaseCamera.SetTarget(aircraft.transform);
 
             if (_placeholder)

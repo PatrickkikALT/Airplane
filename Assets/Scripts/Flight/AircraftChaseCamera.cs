@@ -62,14 +62,30 @@ namespace Airplane.FlightSimulation
         private float _pointerZoom;
         private float _stickZoom;
         private bool _orbitHeld;
+        private bool _frozen;
+        private Vector3 _frozenPosition;
 
         public static AircraftChaseCamera Active { get; private set; }
 
         public Transform FollowTarget => target;
 
+        public void HoldWatch()
+        {
+            _frozen = true;
+            _frozenPosition = transform.position;
+        }
+
+        public void ReleaseWatch()
+        {
+            _frozen = false;
+        }
+
         public void SetTarget(Transform t)
         {
             target = t;
+            if (_frozen)
+                return;
+
             _hasHeading = false;
             ResetOrbit();
         }
@@ -135,8 +151,18 @@ namespace Airplane.FlightSimulation
 
         private void LateUpdate()
         {
-            if (target == null)
+            if (!target)
                 return;
+
+            if (_frozen)
+            {
+                Vector3 focus2 = target.position + Vector3.up * lookAtHeight;
+                Vector3 toFocus2 = focus2 - _frozenPosition;
+                if (toFocus2.sqrMagnitude < 1e-8f)
+                    return;
+                transform.SetPositionAndRotation(_frozenPosition, Quaternion.LookRotation(toFocus2, Vector3.up));
+                return;
+            }
 
             ApplyOrbitInput();
 
@@ -232,15 +258,15 @@ namespace Airplane.FlightSimulation
                 return false;
             if (control is DeltaControl || control.parent is DeltaControl)
                 return false;
-            return control.device is Gamepad || control.device is Joystick;
+            return control.device is Gamepad or Joystick;
         }
 
         private static Vector3 HorizontalForward(Transform t)
         {
-            Vector3 nose = Vector3.ProjectOnPlane(t.right, Vector3.up);
+            Vector3 nose = Vector3.ProjectOnPlane(t.forward, Vector3.up);
             if (nose.sqrMagnitude < 0.04f)
             {
-                Vector3 fallback = Vector3.ProjectOnPlane(t.forward, Vector3.up);
+                Vector3 fallback = Vector3.ProjectOnPlane(t.right, Vector3.up);
                 if (fallback.sqrMagnitude < 0.04f)
                     return Vector3.forward;
                 return fallback.normalized;

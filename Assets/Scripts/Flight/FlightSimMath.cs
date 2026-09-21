@@ -215,15 +215,27 @@ namespace Airplane.FlightSimulation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float AngleOfAttack(Vector3 velocityBody)
+        public static float AngleOfAttack(Vector3 velocityAero)
         {
-            return Mathf.Atan2(-velocityBody.y, velocityBody.x);
+            return Mathf.Atan2(-velocityAero.y, velocityAero.x);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Sideslip(Vector3 velocityBody)
+        public static float Sideslip(Vector3 velocityAero)
         {
-            return Mathf.Atan2(velocityBody.z, velocityBody.x);
+            return Mathf.Atan2(velocityAero.z, velocityAero.x);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float BodyAngleOfAttack(Vector3 velocityBody)
+        {
+            return Mathf.Atan2(-velocityBody.y, velocityBody.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float BodySideslip(Vector3 velocityBody)
+        {
+            return Mathf.Atan2(velocityBody.x, velocityBody.z);
         }
     }
 }

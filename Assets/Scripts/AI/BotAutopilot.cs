@@ -26,9 +26,9 @@ namespace Airplane.AI
         private const float ThrottleGain = 0.022f;
         private const float DerivativeSmoothing = 0.35f;
 
-        private static readonly Vector3 BodyForward = new Vector3(1f, 0f, 0f);
+        private static readonly Vector3 BodyForward = new Vector3(0f, 0f, 1f);
         private static readonly Vector3 BodyUp = new Vector3(0f, 1f, 0f);
-        private static readonly Vector3 BodyRight = new Vector3(0f, 0f, 1f);
+        private static readonly Vector3 BodyRight = new Vector3(1f, 0f, 0f);
 
         private float _bankErrorPrev;
         private float _pitchErrorPrev;
@@ -104,7 +104,7 @@ namespace Airplane.AI
 
                 horiz.Normalize();
                 Vector3 desiredBody = body.InverseTransformDirection(horiz);
-                yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
+                yawError = Mathf.Atan2(desiredBody.x, desiredBody.z);
 
                 // Direct altitude PD. FPA-on-the-nose was too weak against stall unload, and adding
                 // a frozen −0.1 trim on a zero path-error made them walk into the ground.
@@ -118,7 +118,7 @@ namespace Airplane.AI
             {
                 Vector3 desiredBody = body.InverseTransformDirection(desired);
                 float horizontal = Mathf.Sqrt(desiredBody.x * desiredBody.x + desiredBody.z * desiredBody.z);
-                yawError = Mathf.Atan2(desiredBody.z, desiredBody.x);
+                yawError = Mathf.Atan2(desiredBody.x, desiredBody.z);
                 pitchError = Mathf.Atan2(desiredBody.y, Mathf.Max(0.05f, horizontal));
                 TrackingError = Vector3.Angle(body.TransformDirection(BodyForward), desired) * Mathf.Deg2Rad;
             }
@@ -186,7 +186,7 @@ namespace Airplane.AI
             if (speed > 5f)
             {
                 float slip = Vector3.Dot(flow / speed, rightWorld);
-                output.Rudder = Clamp11(slip * RudderCoordination);
+                output.Rudder = Clamp11(-slip * RudderCoordination);
             }
 
             float targetSpeed = command.Speed > 1f ? command.Speed : profile.cruiseSpeed;
@@ -214,7 +214,7 @@ namespace Airplane.AI
                 return pitchCommand;
 
             Vector3 flowBody = body.InverseTransformDirection(body.Velocity - AtmosphericModel.SampleWind());
-            float aoaDeg = FlightSimMath.AngleOfAttack(flowBody) * FlightSimMath.Rad2Deg;
+            float aoaDeg = FlightSimMath.BodyAngleOfAttack(flowBody) * FlightSimMath.Rad2Deg;
             float aoaLimit = Mathf.Max(6f, profile.aoaLimitDeg);
             float aoaScale = 1f - FlightSimMath.Smoothstep(aoaLimit * 0.7f, aoaLimit, aoaDeg);
 

@@ -65,8 +65,8 @@ namespace Airplane.FlightSimulation
         [Tooltip("Thrust application point. Defaults to this transform (PropellerMount).")]
         [SerializeField] private Transform thrustTransform;
 
-        [Tooltip("Thrust axis in the thrust-transform local frame. (1,0,0) = forward.")]
-        [SerializeField] private Vector3 localThrustAxis = Vector3.right;
+        [Tooltip("Thrust axis in the thrust-transform local frame. (0,0,1) = forward.")]
+        [SerializeField] private Vector3 localThrustAxis = Vector3.forward;
 
         [Tooltip("Propeller disc radius, metres. Used for momentum-theory induced velocity.")]
         [SerializeField] private float propellerRadius = 1.05f;
@@ -78,7 +78,7 @@ namespace Airplane.FlightSimulation
         [Tooltip("Roll torque opposite propeller rotation, N·m per Newton of thrust. Sign: +1 = American engine (clockwise from cockpit) producing left-roll reaction.")]
         [SerializeField] private float torqueReactionPerNewton = 0.012f;
 
-        [Tooltip("Propeller rotation sign in the body frame. +1 = spinning about +X (right-hand). Reaction torque is −sign × thrust.")]
+        [Tooltip("Propeller rotation sign in the body frame. +1 = spinning about +Z (right-hand). Reaction torque is −sign × thrust.")]
         [SerializeField] private float propellerSpinSign = 1f;
 
         [Header("Gyroscopic Precession (optional)")]
