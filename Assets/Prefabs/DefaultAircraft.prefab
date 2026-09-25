@@ -916,6 +916,7 @@ GameObject:
   - component: {fileID: 5803495383866979626}
   - component: {fileID: 3271766798385386199}
   - component: {fileID: 2536580363667141772}
+  - component: {fileID: 5622924405645309160}
   m_Layer: 0
   m_Name: DefaultAircraft
   m_TagString: Untagged
@@ -997,9 +998,6 @@ MonoBehaviour:
   collisionFriction: 0.4
   collisionSlop: 0.015
   collisionBaumgarte: 0.7
-  createFallbackHull: 1
-  fallbackHullSize: {x: 7.5, y: 1.2, z: 10.5}
-  fallbackHullCenter: {x: 0, y: 0, z: 0}
   angularDamping: {x: 8000, y: 7000, z: 7000}
   dampingReferenceQ: 1800
   maxAngularSpeedDeg: {x: 80, y: 28, z: 45}
@@ -1349,7 +1347,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 969679299
+  GlobalObjectIdHash: 1694393203
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1410,7 +1408,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftVitality
   hitPoints: 100
-  reportedCrashSpeedKmh: 80
 --- !u!114 &2536580363667141772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1423,6 +1420,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f27a02c00e0637b758dcce912b899f80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollisionTest
+--- !u!114 &5622924405645309160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4236846573566100625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b730dcff6ae006743963a1e87433670e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AircraftClientScoreSystem
+  ShowTopMostFoldoutHeaderGroup: 1
+  _pointText: {fileID: 0}
 --- !u!1 &4453878835154248986
 GameObject:
   m_ObjectHideFlags: 0

@@ -20,6 +20,7 @@ namespace Airplane.Weapons
 
         public float HitPoints => _hp;
         public float MaxHitPoints => hitPoints;
+        public NetworkedAircraft Networked => _networked;
 
         public void Restore()
         {
