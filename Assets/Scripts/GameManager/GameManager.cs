@@ -14,6 +14,8 @@ public enum Direction
 public class GameManager : NetworkBehaviour
 {
 
+    public static GameManager Instance;
+
     private IReadOnlyList<NetworkedAircraft> _readOnlyAircrafts = new List<NetworkedAircraft>();
     private List<NetworkedAircraft> _aircrafts = new List<NetworkedAircraft>();
 
@@ -23,11 +25,23 @@ public class GameManager : NetworkBehaviour
 
     private bool _hasGameStarted;
 
+    private AircraftServerScoreSystem _aircraftServerScoreSystem;
+    private EndGameHandler _endGameHandler;
+
     private void Awake()
     {
         _bounds = fightArea.GetComponent<Collider>().bounds;
 
+        if (!Instance)
+        {
+            Instance = this;
+        }
+
+        _aircraftServerScoreSystem = GetComponent<AircraftServerScoreSystem>();
+        _endGameHandler = GetComponent<EndGameHandler>();
+
     }
+
     public void StartGame()
     {
         CollectPlayers();
@@ -62,7 +76,8 @@ public class GameManager : NetworkBehaviour
     private void BeginSession()
     {
         _hasGameStarted = true;
-        AircraftServerScoreSystem.Instance.StartGame();
+        _aircraftServerScoreSystem.StartGame();
+        Timer.Instance.TurnTimerOn();
     }
 
     private void TeleportPlayers()
@@ -133,7 +148,7 @@ public class GameManager : NetworkBehaviour
 
     public void EndGame()
     {
-
+        _endGameHandler?.HandleResults();
     }
 
 

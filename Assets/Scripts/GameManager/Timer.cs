@@ -13,9 +13,14 @@ public class Timer : NetworkBehaviour
     
     private void Awake()
     {
-        if (!NetworkManager.Singleton.IsHost) return;
-        Instance = this;
+        if (Instance == null)
+        {
+            Instance = this;
+
+        }
+        print("yes this is connected yeah");
     }
+
     public void TurnTimerOn()
     {
 
@@ -36,6 +41,8 @@ public class Timer : NetworkBehaviour
             timer--;
 
         }
+
+        GameManager.Instance.EndGame();
     }
 
     [ClientRpc]

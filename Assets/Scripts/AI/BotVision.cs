@@ -56,7 +56,7 @@ namespace Airplane.AI
 
                 if (visible)
                 {
-                    Debug.Log("Enemy visible.");
+                    //Debug.Log("Enemy visible.");
                     float rate = 1f / Mathf.Max(0.05f, profile.reactionSeconds);
                     contact.Awareness = Mathf.Min(1f, contact.Awareness + rate * dt);
                     contact.LastSeenTime = now;

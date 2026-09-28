@@ -1,11 +1,12 @@
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class AircraftServerScoreSystem : NetworkBehaviour
 {
     public static AircraftServerScoreSystem Instance;
-    [SerializeField] private Dictionary<ulong, int> playerPoints = new Dictionary<ulong, int>();
+    private Dictionary<ulong, int> playerPoints = new Dictionary<ulong, int>();
 
 
     private void Awake()
@@ -41,21 +42,34 @@ public class AircraftServerScoreSystem : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void HandlePointServerRpc(ulong shooterPlayer)
     {
         playerPoints[shooterPlayer]++;
         Debug.LogError(shooterPlayer);
         if (NetworkManager.Singleton.ConnectedClients.TryGetValue(shooterPlayer, out NetworkClient client))
         {
-            NetworkObject playerObject = client.OwnedObjects[2];
+            NetworkObject playerObject = client.OwnedObjects[0];
 
+            foreach (NetworkObject networkObject in client.OwnedObjects)
+            {
+                if (networkObject.TryGetComponent(out PlayerInput playerInput))
+                {
+                    playerObject = networkObject;
+                    break;
+                } 
+            }
             if (playerObject.TryGetComponent(out AircraftClientScoreSystem scoreSystem))
             {
                 scoreSystem.HandlePointClientRpc(shooterPlayer, playerPoints[shooterPlayer]);
             }
         }
 
+    }
+
+    public Dictionary<ulong, int> ReturnPlayerPoints()
+    {
+        return playerPoints;
     }
 
 }
