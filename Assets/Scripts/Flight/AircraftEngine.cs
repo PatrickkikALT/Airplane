@@ -112,6 +112,8 @@ namespace Airplane.FlightSimulation
 
         public float Throttle01 => _throttle01;
         public float LastThrust => _lastThrust;
+        public float MaxStaticThrust => maxStaticThrust;
+        public float ZeroThrustAirspeed => zeroThrustAirspeed;
         public Transform ThrustTransform => thrustTransform != null ? thrustTransform : transform;
 
         public void SetThrustTransform(Transform t)

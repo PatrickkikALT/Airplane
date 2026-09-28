@@ -5,9 +5,11 @@ namespace Airplane.Multiplayer
     public static class LocalPlayerIdentity
     {
         private const string PrefsKey = "Airplane.PilotName";
+        private const string AircraftPrefsKey = "Airplane.AircraftIndex";
         private const int MaxLength = 24;
 
         private static string _pilotName;
+        private static int _aircraftIndex = int.MinValue;
 
         public static string PilotName
         {
@@ -31,6 +33,37 @@ namespace Airplane.Multiplayer
                 _pilotName = sanitized;
                 PlayerPrefs.SetString(PrefsKey, sanitized);
                 PlayerPrefs.Save();
+            }
+        }
+
+        public static int AircraftIndex
+        {
+            get
+            {
+                if (_aircraftIndex == int.MinValue)
+                    _aircraftIndex = Mathf.Max(0, PlayerPrefs.GetInt(AircraftPrefsKey, 0));
+                return _aircraftIndex;
+            }
+            set
+            {
+                int next = Mathf.Max(0, value);
+                if (next == _aircraftIndex)
+                    return;
+
+                _aircraftIndex = next;
+                PlayerPrefs.SetInt(AircraftPrefsKey, next);
+                PlayerPrefs.Save();
+            }
+        }
+
+        public static string AircraftName
+        {
+            get
+            {
+                AircraftCatalog catalog = AircraftSelection.Catalog;
+                if (!catalog || catalog.Count == 0)
+                    return "";
+                return catalog.GetDisplayName(AircraftIndex);
             }
         }
 

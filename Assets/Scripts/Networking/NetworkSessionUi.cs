@@ -1,9 +1,11 @@
 using System.Text;
 using Airplane.UI;
+using TMPro;
 using Unity.Netcode;
-using Unity.Netcode.Transports.UTP;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Airplane.Multiplayer
 {
@@ -11,13 +13,6 @@ namespace Airplane.Multiplayer
     [AddComponentMenu("Airplane/Networking/Network Session UI")]
     public sealed class NetworkSessionUi : MonoBehaviour
     {
-        [Header("Connection")]
-        [SerializeField] private string address = "127.0.0.1";
-        [SerializeField] private ushort port = 7777;
-
-        [Tooltip("Address the server binds to. 0.0.0.0 accepts connections on every interface.")]
-        [SerializeField] private string serverBindAddress = "0.0.0.0";
-
         [Header("Auto Start")]
         [Tooltip("Start a host immediately on Play. Handy while iterating with ParrelSync clones.")]
         [SerializeField] private bool autoStartHost;
@@ -25,120 +20,63 @@ namespace Airplane.Multiplayer
         [Tooltip("Start as a client immediately on Play. Ignored if Auto Start Host is set.")]
         [SerializeField] private bool autoStartClient;
 
-        [Header("Layout")]
-        [SerializeField] private Vector2 panelPosition = new Vector2(16f, 240f);
-        [SerializeField] private float panelWidth = 320f;
+        [SerializeField] private string address = "127.0.0.1";
+        [SerializeField] private ushort port = 7777;
+
+        [Tooltip("Address the server binds to. 0.0.0.0 accepts connections on every interface.")]
+        [SerializeField] private string serverBindAddress = "0.0.0.0";
+
+        [Header("Scene")]
+        [Tooltip("Loaded after Disconnect. Leave empty to stay in this scene.")]
+        [SerializeField] private string menuScene = "";
+
+        [Header("Panels")]
+        [SerializeField] private GameObject root;
+        [SerializeField] private GameObject serverControls;
+
+        [Header("Session")]
+        [SerializeField] private TMP_Text roleText;
+        [SerializeField] private TMP_Text statusText;
+        [SerializeField] private TMP_Text rosterText;
+        [SerializeField] private Button disconnectButton;
+
+        [Header("Server")]
+        [SerializeField] private Button dummyButton;
+        [SerializeField] private TMP_Text botCountText;
+        [SerializeField] private Button botsDownButton;
+        [SerializeField] private Button botsUpButton;
 
         private readonly StringBuilder _rosterBuilder = new StringBuilder(256);
-        private string _status = "Offline";
-        private bool _subscribed;
-        private string _callsignField;
 
         private NetworkManager Manager => NetworkManager.Singleton;
 
         private static AircraftNetworkSpawner Spawner => AircraftNetworkSpawner.Instance;
 
+        private void OnEnable()
+        {
+            Wire(true);
+        }
+
+        private void OnDisable()
+        {
+            Wire(false);
+        }
+
         private void Start()
         {
-            _callsignField = LocalPlayerIdentity.PilotName;
-
-            if (Manager != null)
-            {
-                Manager.OnClientConnectedCallback += HandleClientConnected;
-                Manager.OnClientDisconnectCallback += HandleClientDisconnected;
-                _subscribed = true;
-            }
+            if (Manager && Manager.IsListening)
+                return;
 
             if (autoStartHost)
-                StartHost();
+                NetworkConnection.StartHost(address, port, serverBindAddress);
             else if (autoStartClient)
-                StartClient();
-        }
-
-        private void OnDestroy()
-        {
-            if (!_subscribed || Manager == null)
-                return;
-            Manager.OnClientConnectedCallback -= HandleClientConnected;
-            Manager.OnClientDisconnectCallback -= HandleClientDisconnected;
-            _subscribed = false;
-        }
-
-        public void StartHost()
-        {
-            if (!ApplyConnectionData(true))
-                return;
-            _status = Manager.StartHost() ? $"Hosting on {port}" : "Failed to start host";
-        }
-
-        public void StartServer()
-        {
-            if (!ApplyConnectionData(true))
-                return;
-            _status = Manager.StartServer() ? $"Server on {port}" : "Failed to start server";
-        }
-
-        public void StartClient()
-        {
-            if (!ApplyConnectionData(false))
-                return;
-            _status = Manager.StartClient() ? $"Connecting to {address}:{port}" : "Failed to start client";
-        }
-
-        public void Disconnect()
-        {
-            if (!Manager || !Manager.IsListening)
-                return;
-            Manager.Shutdown();
-            _status = "Offline";
-            AdminSession.Reset();
-        }
-
-        private bool ApplyConnectionData(bool listening)
-        {
-            if (!Manager)
-            {
-                _status = "No NetworkManager in the scene";
-                return false;
-            }
-
-            UnityTransport transport = Manager.GetComponent<UnityTransport>();
-            if (!transport)
-            {
-                _status = "NetworkManager has no UnityTransport";
-                return false;
-            }
-
-            string bind = listening && !string.IsNullOrWhiteSpace(serverBindAddress)
-                ? serverBindAddress
-                : null;
-
-            if (bind != null)
-                transport.SetConnectionData(address, port, bind);
-            else
-                transport.SetConnectionData(address, port);
-
-            return true;
-        }
-
-        private void HandleClientConnected(ulong clientId)
-        {
-            if (Manager != null && clientId == Manager.LocalClientId)
-                _status = Manager.IsHost ? $"Hosting on {port}" : $"Connected to {address}:{port}";
-        }
-
-        private void HandleClientDisconnected(ulong clientId)
-        {
-            if (Manager == null || clientId != Manager.LocalClientId)
-                return;
-
-            string reason = Manager.DisconnectReason;
-            _status = string.IsNullOrEmpty(reason) ? "Disconnected" : $"Disconnected: {reason}";
-            AdminSession.Reset();
+                NetworkConnection.StartClient(address, port, serverBindAddress);
         }
 
         private void Update()
         {
+            Refresh();
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !keyboard.f8Key.wasPressedThisFrame)
                 return;
@@ -146,87 +84,67 @@ namespace Airplane.Multiplayer
                 return;
             if (Manager == null || !Manager.IsListening || !Manager.IsServer)
                 return;
+            SpawnDummy();
+        }
+
+        public void Disconnect()
+        {
+            bool wasListening = Manager && Manager.IsListening;
+            NetworkConnection.Disconnect();
+            if (!wasListening || string.IsNullOrWhiteSpace(menuScene))
+                return;
+            if (!Application.CanStreamedLevelBeLoaded(menuScene))
+                return;
+            SceneManager.LoadScene(menuScene);
+        }
+
+        public void SpawnDummy()
+        {
             if (Spawner != null)
                 Spawner.SpawnDummy();
         }
 
-        private void OnGUI()
+        public void DecreaseBots()
         {
-            if (CheatFlags.BlockPlayerInput || !HudVisibility.Visible)
-                return;
+            AircraftNetworkSpawner spawner = Spawner;
+            if (spawner != null)
+                spawner.SetBotCount(spawner.DesiredBotCount - 1);
+        }
 
-            float x = panelPosition.x;
-            float y = panelPosition.y;
+        public void IncreaseBots()
+        {
+            AircraftNetworkSpawner spawner = Spawner;
+            if (spawner != null)
+                spawner.SetBotCount(spawner.DesiredBotCount + 1);
+        }
+
+        private void Refresh()
+        {
             bool listening = Manager && Manager.IsListening;
-            bool server = listening && Manager.IsServer;
-            float height = listening ? (server ? 192f : 164f) : 196f;
-
-            GUI.Box(new Rect(x, y, panelWidth, height), "Multiplayer");
-            float row = y + 24f;
-            float inner = panelWidth - 20f;
-
-            if (!listening)
+            bool show = listening && HudVisibility.Visible && !CheatFlags.BlockPlayerInput;
+            SetShown(root, show);
+            if (!show)
             {
-                GUI.Label(new Rect(x + 10f, row, 60f, 20f), "Callsign");
-                string typed = GUI.TextField(new Rect(x + 74f, row, inner - 64f, 20f), _callsignField ?? "", 24);
-                if (typed != _callsignField)
-                {
-                    _callsignField = typed;
-                    LocalPlayerIdentity.PilotName = typed;
-                }
-
-                row += 26f;
-
-                GUI.Label(new Rect(x + 10f, row, 60f, 20f), "Address");
-                address = GUI.TextField(new Rect(x + 74f, row, inner - 130f, 20f), address);
-                GUI.Label(new Rect(x + inner - 50f, row, 30f, 20f), "Port");
-                string portText = GUI.TextField(new Rect(x + inner - 18f, row, 44f, 20f), port.ToString());
-                if (ushort.TryParse(portText, out ushort parsed))
-                    port = parsed;
-                row += 26f;
-
-                if (GUI.Button(new Rect(x + 10f, row, inner / 3f - 4f, 24f), "Host"))
-                    StartHost();
-                if (GUI.Button(new Rect(x + 10f + inner / 3f, row, inner / 3f - 4f, 24f), "Join"))
-                    StartClient();
-                if (GUI.Button(new Rect(x + 10f + 2f * inner / 3f, row, inner / 3f - 4f, 24f), "Server"))
-                    StartServer();
-                row += 30f;
+                if (!root || root == gameObject)
+                    SetShown(serverControls, false);
+                return;
             }
-            else
+
+            bool server = Manager.IsServer;
+            AircraftNetworkSpawner spawner = Spawner;
+            SetShown(serverControls, server && spawner != null);
+
+            Set(statusText, NetworkConnection.Status);
+            Set(rosterText, BuildRoster());
+
+            if (roleText)
             {
                 string role = Manager.IsHost ? "Host" : Manager.IsServer ? "Server" : "Client";
-                GUI.Label(new Rect(x + 10f, row, inner, 20f), $"{role}  ·  client id {Manager.LocalClientId}");
-                row += 24f;
-
-                if (GUI.Button(new Rect(x + 10f, row, inner, 24f), "Disconnect"))
-                    Disconnect();
-                row += 30f;
-
-                if (server)
-                {
-                    AircraftNetworkSpawner spawner = Spawner;
-
-                    if (spawner != null)
-                    {
-                        if (GUI.Button(new Rect(x + 10f, row, 86f, 22f), "Dummy"))
-                            spawner.SpawnDummy();
-
-                        GUI.Label(new Rect(x + 102f, row, inner - 192f, 20f), $"Bots  {spawner.LiveBotCount}/{spawner.DesiredBotCount}");
-
-                        if (GUI.Button(new Rect(x + inner - 62f, row, 28f, 22f), "−"))
-                            spawner.SetBotCount(spawner.DesiredBotCount - 1);
-                        if (GUI.Button(new Rect(x + inner - 28f, row, 28f, 22f), "+"))
-                            spawner.SetBotCount(spawner.DesiredBotCount + 1);
-                    }
-
-                    row += 28f;
-                }
+                Set(roleText, role + "  ·  client id " + Manager.LocalClientId);
             }
 
-            GUI.Label(new Rect(x + 10f, row, inner, 20f), _status);
-            row += 22f;
-            GUI.Label(new Rect(x + 10f, row, inner, 60f), BuildRoster());
+            if (server && botCountText && spawner != null)
+                Set(botCountText, "Bots  " + spawner.LiveBotCount + "/" + spawner.DesiredBotCount);
         }
 
         private string BuildRoster()
@@ -242,17 +160,49 @@ namespace Airplane.Multiplayer
                 foreach (ulong id in Manager.ConnectedClientsIds)
                 {
                     _rosterBuilder.Append(id == Manager.LocalClientId
-                        ? $"· {LocalPlayerIdentity.PilotName} (you)\n"
-                        : $"· client {id}\n");
+                        ? "· " + LocalPlayerIdentity.PilotName + " (you)\n"
+                        : "· client " + id + "\n");
                 }
             }
             else
             {
                 NetworkedAircraft local = NetworkedAircraft.Local;
-                _rosterBuilder.Append(local ? $"Flying as {local.DisplayName}" : "Waiting for aircraft…");
+                _rosterBuilder.Append(local ? "Flying as " + local.DisplayName : "Waiting for aircraft…");
             }
 
             return _rosterBuilder.ToString();
+        }
+
+        private void Wire(bool subscribe)
+        {
+            if (subscribe)
+            {
+                if (disconnectButton) disconnectButton.onClick.AddListener(Disconnect);
+                if (dummyButton) dummyButton.onClick.AddListener(SpawnDummy);
+                if (botsDownButton) botsDownButton.onClick.AddListener(DecreaseBots);
+                if (botsUpButton) botsUpButton.onClick.AddListener(IncreaseBots);
+                return;
+            }
+
+            if (disconnectButton) disconnectButton.onClick.RemoveListener(Disconnect);
+            if (dummyButton) dummyButton.onClick.RemoveListener(SpawnDummy);
+            if (botsDownButton) botsDownButton.onClick.RemoveListener(DecreaseBots);
+            if (botsUpButton) botsUpButton.onClick.RemoveListener(IncreaseBots);
+        }
+
+        private void SetShown(GameObject target, bool shown)
+        {
+            if (!target || target == gameObject)
+                return;
+            if (target.activeSelf != shown)
+                target.SetActive(shown);
+        }
+
+        private static void Set(TMP_Text text, string value)
+        {
+            if (!text || text.text == value)
+                return;
+            text.text = value;
         }
     }
 }

@@ -1,8 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Airplane.UI;
-using System.Text;
-using Airplane.Weapons;
 
 namespace Airplane.FlightSimulation
 {
@@ -81,10 +79,6 @@ namespace Airplane.FlightSimulation
         [Tooltip("Do not auto-trim while |pitch stick| is above this.")]
         [SerializeField] [Range(0f, 0.5f)] private float autoTrimStickDeadzone = 0.08f;
 
-        [Header("Debug HUD")]
-        [SerializeField] private bool drawHud = true;
-        [SerializeField] private Vector2 hudPosition = new Vector2(16f, 16f);
-
         private PlaneRigidbody _body;
         private AircraftEngine _engine;
 
@@ -107,10 +101,6 @@ namespace Airplane.FlightSimulation
         private InputAction _pitchAction;
         private InputAction _rollAction;
         private InputAction _yawAction;
-        private readonly StringBuilder _hudBuilder = new StringBuilder(512);
-        private string _hudText = "";
-        private float _hudClock;
-        private AircraftVitality _aircraftVitality;
 
         public AircraftEngine Engine => _engine;
         public float Throttle01 => _throttle01;
@@ -142,11 +132,6 @@ namespace Airplane.FlightSimulation
         public void SetInputEnabled(bool enable)
         {
             _inputEnabled = enable;
-        }
-
-        public void SetHudVisible(bool visible)
-        {
-            drawHud = visible;
         }
 
         public void TickAutoTrim(float dt)
@@ -219,7 +204,6 @@ namespace Airplane.FlightSimulation
             _body = GetComponent<PlaneRigidbody>();
             _engine = GetComponentInChildren<AircraftEngine>(true);
             _playerInput = GetComponent<PlayerInput>();
-            _aircraftVitality = GetComponent<AircraftVitality>();
             _throttle01 = FlightSimMath.Saturate(initialThrottle);
             CacheStickActions();
         }
@@ -431,59 +415,6 @@ namespace Airplane.FlightSimulation
             if (d > maxDelta) return current + maxDelta;
             if (d < -maxDelta) return current - maxDelta;
             return target;
-        }
-
-        private void OnGUI()
-        {
-            if (!drawHud || !HudVisibility.Visible || !_body)
-                return;
-
-            _hudClock += Time.unscaledDeltaTime;
-            if (_hudClock >= 0.2f || _hudText.Length == 0)
-            {
-                _hudClock = 0f;
-                RebuildHudText();
-            }
-
-            float x = hudPosition.x;
-            float y = hudPosition.y;
-            GUI.Box(new Rect(x, y, 320f, 210f), "Debug Info");
-            GUI.Label(new Rect(x + 10f, y + 24f, 300f, 180f), _hudText);
-        }
-
-        private void RebuildHudText()
-        {
-            AtmosphereSample atmo = AtmosphericModel.SampleAt(_body.Position);
-            float tas = _body.TrueAirspeed;
-            Vector3 vBody = _body.InverseTransformDirection(_body.Velocity - AtmosphericModel.SampleWind());
-            float aoa = FlightSimMath.BodyAngleOfAttack(vBody) * FlightSimMath.Rad2Deg;
-            float beta = FlightSimMath.BodySideslip(vBody) * FlightSimMath.Rad2Deg;
-            float ias = tas * Mathf.Sqrt(atmo.Density / AtmosphericModel.StandardSeaLevelDensity);
-            float mach = atmo.SpeedOfSound > 1f ? tas / atmo.SpeedOfSound : 0f;
-            float gLoad = _body.LoadFactorNz;
-
-            _hudBuilder.Length = 0;
-            _hudBuilder.Append("ALT  ").Append(atmo.Altitude.ToString("F0")).Append(" m\n");
-            _hudBuilder.Append("TAS  ").Append(((tas * FlightSimMath.AirSpeedToKnots) * FlightSimMath.KnotsToKmh).ToString("F0")).Append(" km/u   IAS ");
-            _hudBuilder.Append(((ias * FlightSimMath.AirSpeedToKnots) * FlightSimMath.KnotsToKmh).ToString("F0")).Append(" km/u\n");
-            _hudBuilder.Append("M    ").Append(mach.ToString("F2")).Append("    q ");
-            _hudBuilder.Append(atmo.DynamicPressure(tas).ToString("F0")).Append(" Pa\n");
-            _hudBuilder.Append("AoA  ").Append(aoa.ToString("F1")).Append("°    β ");
-            _hudBuilder.Append(beta.ToString("F1")).Append("°\n");
-            _hudBuilder.Append("G    ").Append(gLoad.ToString("F2")).Append("    TRIM ");
-            _hudBuilder.Append(elevatorTrim.ToString("F2")).Append("    ρ ");
-            _hudBuilder.Append(atmo.Density.ToString("F3")).Append(" kg/m³\n");
-            _hudBuilder.Append("THR  ").Append((_throttle01 * 100f).ToString("F0")).Append("%   T ");
-            _hudBuilder.Append(_engine != null ? _engine.LastThrust.ToString("F0") : "0").Append(" N\n");
-            _hudBuilder.Append("FLP  ").Append((_flaps01 * 100f).ToString("F0")).Append("%   BRK ");
-            _hudBuilder.Append((_airbrake01 * 100f).ToString("F0")).Append("%   WHL ");
-            _hudBuilder.Append((_wheelBrake01 * 100f).ToString("F0")).Append("%\n");
-            _hudBuilder.Append("A/E/R ").Append(_aileron01.ToString("F2")).Append("  ");
-            _hudBuilder.Append(_elevator01.ToString("F2")).Append("  ").Append(_rudder01.ToString("F2")).Append('\n');
-            _hudBuilder.Append("W/S pitch  A/D roll  Q/E yaw\n");
-            _hudBuilder.Append("R/F throttle  X/Z flaps  Shift airbrake  Space wheel\n");
-            _hudBuilder.Append("Vitality   ").Append(_aircraftVitality.HitPoints.ToString("F0")).Append("  ");
-            _hudText = _hudBuilder.ToString();
         }
     }
 }

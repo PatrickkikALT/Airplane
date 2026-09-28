@@ -4,9 +4,11 @@ using System.Text;
 using Airplane.Multiplayer;
 using Airplane.Weapons;
 using Airplane.Weather;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Airplane.UI
 {
@@ -17,14 +19,20 @@ namespace Airplane.UI
     {
         private const int MaxLogLines = 40;
         private const int MaxHistory = 64;
-        private const string InputControlName = "AdminConsoleInput";
         private const string PasswordKey = "ADMIN_PASSWORD";
+
+        [Header("UI")]
+        [SerializeField] private GameObject panel;
+        [SerializeField] private TMP_Text logText;
+        [SerializeField] private TMP_InputField inputField;
+        [SerializeField] private TMP_Text hintText;
 
         private static AdminConsole _instance;
 
         private readonly List<string> _log = new List<string>(MaxLogLines);
         private readonly List<string> _history = new List<string>(MaxHistory);
         private readonly StringBuilder _helpBuilder = new StringBuilder(512);
+        private readonly StringBuilder _logBuilder = new StringBuilder(1024);
         private readonly List<Command> _commands = new List<Command>();
 
         private bool _open;
@@ -33,25 +41,10 @@ namespace Airplane.UI
         private string _input = "";
         private int _historyIndex = -1;
         private bool _focusPending;
-        private bool _openedThisFrame;
-        private GUIStyle _panelStyle;
-        private GUIStyle _logStyle;
-        private GUIStyle _inputStyle;
-        private GUIStyle _hintStyle;
-        private Texture2D _panelTex;
+        private int _swallowFrames;
+        private int _submitFrame = -1;
 
         public static bool IsOpen => _instance != null && _instance._open;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Bootstrap()
-        {
-            if (_instance != null)
-                return;
-
-            GameObject host = new GameObject("Admin Console");
-            DontDestroyOnLoad(host);
-            host.AddComponent<AdminConsole>();
-        }
 
         private void Awake()
         {
@@ -64,18 +57,36 @@ namespace Airplane.UI
             _instance = this;
             _password = EnvFile.Get(PasswordKey);
             RegisterCommands();
+
+            if (inputField)
+            {
+                inputField.lineType = TMP_InputField.LineType.SingleLine;
+                Navigation navigation = inputField.navigation;
+                navigation.mode = Navigation.Mode.None;
+                inputField.navigation = navigation;
+                inputField.onValueChanged.AddListener(OnInputChanged);
+                inputField.onSubmit.AddListener(OnSubmitField);
+            }
+
+            ApplyContentType();
+            RefreshHint();
+            RefreshLog();
+            SetShown(panel, false);
         }
 
         private void OnDestroy()
         {
+            if (inputField)
+            {
+                inputField.onValueChanged.RemoveListener(OnInputChanged);
+                inputField.onSubmit.RemoveListener(OnSubmitField);
+            }
+
             if (_instance == this)
             {
                 _instance = null;
                 CheatFlags.BlockPlayerInput = false;
             }
-
-            if (_panelTex)
-                Destroy(_panelTex);
         }
 
         private void Update()
@@ -86,6 +97,7 @@ namespace Airplane.UI
 
             if (keyboard.semicolonKey.wasPressedThisFrame)
             {
+                _swallowFrames = 3;
                 if (_open)
                     Close();
                 else
@@ -102,16 +114,50 @@ namespace Airplane.UI
                 return;
             }
 
+            if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+            {
+                if (_submitFrame == Time.frameCount)
+                    return;
+                if (inputField)
+                    _input = inputField.text ?? "";
+                Submit();
+                return;
+            }
+
             SyncLocalPlayerInput();
+
+            if (!_unlocked)
+                return;
+
+            if (keyboard.upArrowKey.wasPressedThisFrame)
+                HistoryStep(-1);
+            else if (keyboard.downArrowKey.wasPressedThisFrame)
+                HistoryStep(1);
+            else if (keyboard.tabKey.wasPressedThisFrame)
+                Complete();
+        }
+
+        private void LateUpdate()
+        {
+            if (_swallowFrames > 0)
+                _swallowFrames--;
+
+            if (!_focusPending || !_open || !inputField)
+                return;
+
+            inputField.ActivateInputField();
+            _focusPending = false;
         }
 
         private void Open()
         {
             _open = true;
-            _openedThisFrame = true;
             _focusPending = true;
             _historyIndex = -1;
-            _input = "";
+            SetInputText("");
+            SetShown(panel, true);
+            ApplyContentType();
+            RefreshHint();
             CheatFlags.BlockPlayerInput = true;
             SyncLocalPlayerInput();
             ZeroLocalTriggers();
@@ -123,12 +169,19 @@ namespace Airplane.UI
                     ? "no " + PasswordKey + " in .env"
                     : "password required");
             }
+            else
+            {
+                RefreshLog();
+            }
         }
 
         private void Close()
         {
             _open = false;
             _focusPending = false;
+            if (inputField)
+                inputField.DeactivateInputField();
+            SetShown(panel, false);
             CheatFlags.BlockPlayerInput = false;
             SyncLocalPlayerInput();
         }
@@ -158,122 +211,16 @@ namespace Airplane.UI
             playerInput.enabled = want;
         }
 
-        private void OnGUI()
-        {
-            if (!_open)
-                return;
-
-            EnsureStyles();
-            GUI.depth = -1000;
-
-            Event ev = Event.current;
-            if (ev != null)
-                HandleGuiEvent(ev);
-
-            float width = Screen.width;
-            float logHeight = Mathf.Min(Screen.height * 0.38f, 16f + _log.Count * 18f + 8f);
-            float inputHeight = 28f;
-            float hintHeight = 20f;
-            float total = logHeight + inputHeight + hintHeight;
-            Rect panel = new Rect(0f, Screen.height - total, width, total);
-
-            GUI.Box(panel, GUIContent.none, _panelStyle);
-
-            float y = panel.y + 6f;
-            for (int i = 0; i < _log.Count; i++)
-            {
-                GUI.Label(new Rect(12f, y, width - 24f, 18f), _log[i], _logStyle);
-                y += 18f;
-            }
-
-            Rect inputRect = new Rect(8f, panel.yMax - hintHeight - inputHeight, width - 16f, 22f);
-            GUI.SetNextControlName(InputControlName);
-
-            string typed = _input ?? "";
-            if (_openedThisFrame)
-            {
-                if (typed == ";" || typed == ":")
-                    typed = "";
-            }
-
-            string next = _unlocked
-                ? GUI.TextField(inputRect, typed, _inputStyle)
-                : GUI.PasswordField(inputRect, typed, '*', _inputStyle);
-            if (!_openedThisFrame)
-                _input = next;
-            else
-                _input = "";
-
-            GUI.Label(
-                new Rect(10f, panel.yMax - hintHeight, width - 20f, hintHeight),
-                _unlocked
-                    ? "enter run   up/down history   tab complete   esc / ; close"
-                    : "enter submit   esc / ; close",
-                _hintStyle);
-
-            if (_focusPending)
-            {
-                GUI.FocusControl(InputControlName);
-                _focusPending = false;
-            }
-
-            _openedThisFrame = false;
-        }
-
-        private void HandleGuiEvent(Event ev)
-        {
-            if (ev.type != EventType.KeyDown)
-                return;
-
-            if (ev.keyCode == KeyCode.Semicolon || ev.character == ';' || ev.character == ':')
-            {
-                ev.Use();
-                return;
-            }
-
-            if (ev.keyCode == KeyCode.Escape)
-            {
-                ev.Use();
-                return;
-            }
-
-            if (ev.keyCode == KeyCode.Return || ev.keyCode == KeyCode.KeypadEnter)
-            {
-                ev.Use();
-                Submit();
-                return;
-            }
-
-            if (!_unlocked)
-                return;
-
-            if (ev.keyCode == KeyCode.UpArrow)
-            {
-                ev.Use();
-                HistoryStep(-1);
-                return;
-            }
-
-            if (ev.keyCode == KeyCode.DownArrow)
-            {
-                ev.Use();
-                HistoryStep(1);
-                return;
-            }
-
-            if (ev.keyCode == KeyCode.Tab)
-            {
-                ev.Use();
-                Complete();
-            }
-        }
-
         private void Submit()
         {
+            if (_submitFrame == Time.frameCount)
+                return;
+            _submitFrame = Time.frameCount;
+
             string line = (_input ?? "").Trim();
-            _input = "";
             _historyIndex = -1;
             _focusPending = true;
+            SetInputText("");
 
             if (line.Length == 0)
                 return;
@@ -289,6 +236,27 @@ namespace Airplane.UI
             Execute(line);
         }
 
+        private void OnSubmitField(string value)
+        {
+            if (_submitFrame == Time.frameCount)
+                return;
+            _input = value ?? "";
+            Submit();
+        }
+
+        private void OnInputChanged(string value)
+        {
+            if (value != null && (value.IndexOf('\t') >= 0
+                || (_swallowFrames > 0 && (value.IndexOf(';') >= 0 || value.IndexOf(':') >= 0))))
+            {
+                value = value.Replace(";", "").Replace(":", "").Replace("\t", "");
+                if (inputField)
+                    inputField.SetTextWithoutNotify(value);
+            }
+
+            _input = value ?? "";
+        }
+
         private void TryUnlock(string attempt)
         {
             if (string.IsNullOrEmpty(_password) || attempt != _password)
@@ -299,15 +267,19 @@ namespace Airplane.UI
 
             _unlocked = true;
             _log.Clear();
+            ApplyContentType();
+            RefreshHint();
             Print("admin console  ·  ; to close  ·  help for commands");
         }
 
         private void Relock()
         {
             _unlocked = false;
-            _input = "";
             _historyIndex = -1;
             _log.Clear();
+            SetInputText("");
+            ApplyContentType();
+            RefreshHint();
             Print("locked");
             Print(string.IsNullOrEmpty(_password)
                 ? "no " + PasswordKey + " in .env"
@@ -333,7 +305,7 @@ namespace Airplane.UI
                 _historyIndex = _history.Count;
 
             _historyIndex = Mathf.Clamp(_historyIndex + delta, 0, _history.Count);
-            _input = _historyIndex >= _history.Count ? "" : _history[_historyIndex];
+            SetInputText(_historyIndex >= _history.Count ? "" : _history[_historyIndex]);
             _focusPending = true;
         }
 
@@ -360,7 +332,7 @@ namespace Airplane.UI
 
             if (matches.Count == 1)
             {
-                _input = matches[0] + (space >= 0 ? prefix.Substring(space) : " ");
+                SetInputText(matches[0] + (space >= 0 ? prefix.Substring(space) : " "));
                 _focusPending = true;
                 return;
             }
@@ -424,6 +396,7 @@ namespace Airplane.UI
             _log.Add(line);
             while (_log.Count > MaxLogLines)
                 _log.RemoveAt(0);
+            RefreshLog();
         }
 
         private string CommandNames()
@@ -687,6 +660,7 @@ namespace Airplane.UI
         private string CmdClear(string[] args)
         {
             _log.Clear();
+            RefreshLog();
             return "";
         }
 
@@ -849,46 +823,63 @@ namespace Airplane.UI
             return value ? "on" : "off";
         }
 
-        private void EnsureStyles()
+        private void SetShown(GameObject target, bool shown)
         {
-            if (_panelStyle != null)
+            if (!target || target == gameObject)
+                return;
+            if (target.activeSelf != shown)
+                target.SetActive(shown);
+        }
+
+        private void SetInputText(string value)
+        {
+            _input = value ?? "";
+            if (!inputField)
+                return;
+            inputField.SetTextWithoutNotify(_input);
+            inputField.caretPosition = _input.Length;
+            inputField.stringPosition = _input.Length;
+        }
+
+        private void ApplyContentType()
+        {
+            if (!inputField)
                 return;
 
-            _panelTex = new Texture2D(1, 1, TextureFormat.RGBA32, false)
-            {
-                hideFlags = HideFlags.HideAndDontSave,
-                name = "AdminConsolePanel"
-            };
-            _panelTex.SetPixel(0, 0, new Color(0.04f, 0.05f, 0.07f, 0.88f));
-            _panelTex.Apply();
+            TMP_InputField.ContentType next = _unlocked
+                ? TMP_InputField.ContentType.Standard
+                : TMP_InputField.ContentType.Password;
+            if (inputField.contentType == next)
+                return;
 
-            _panelStyle = new GUIStyle(GUI.skin.box)
-            {
-                normal = { background = _panelTex },
-                border = new RectOffset(0, 0, 0, 0)
-            };
+            inputField.contentType = next;
+            inputField.ForceLabelUpdate();
+        }
 
-            _logStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 13,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = new Color(0.82f, 0.9f, 0.78f, 1f) },
-                clipping = TextClipping.Clip,
-                wordWrap = false
-            };
+        private void RefreshHint()
+        {
+            if (!hintText)
+                return;
 
-            _inputStyle = new GUIStyle(GUI.skin.textField)
-            {
-                fontSize = 14,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white }
-            };
+            hintText.text = _unlocked
+                ? "enter run   up/down history   tab complete   esc / ; close"
+                : "enter submit   esc / ; close";
+        }
 
-            _hintStyle = new GUIStyle(GUI.skin.label)
+        private void RefreshLog()
+        {
+            if (!logText)
+                return;
+
+            _logBuilder.Length = 0;
+            for (int i = 0; i < _log.Count; i++)
             {
-                fontSize = 11,
-                normal = { textColor = new Color(0.65f, 0.7f, 0.62f, 0.9f) }
-            };
+                if (i > 0)
+                    _logBuilder.Append('\n');
+                _logBuilder.Append(_log[i]);
+            }
+
+            logText.text = _logBuilder.ToString();
         }
 
         private struct Command

@@ -3,6 +3,7 @@ using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
 using Airplane.Weapons;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Airplane.UI
 {
@@ -13,8 +14,6 @@ namespace Airplane.UI
         [SerializeField] private float maxDistance = 2500f;
         [SerializeField] private float acquireConeDeg = 18f;
         [SerializeField] private float readyConeDeg = 1.35f;
-        [SerializeField] private float pipperSize = 14f;
-        [SerializeField] private float boresightSize = 8f;
         [SerializeField] private Color pipperColor = new Color(1f, 0.82f, 0.28f, 0.95f);
         [SerializeField] private Color readyColor = new Color(0.45f, 1f, 0.55f, 0.95f);
         [SerializeField] private Color boresightColor = new Color(0.2f, 0.9f, 0.3f, 0.55f);
@@ -22,10 +21,16 @@ namespace Airplane.UI
         [SerializeField] private Color hitColor = new Color(1f, 0.12f, 0.1f, 1f);
         [SerializeField] private float hitFlashSeconds = 0.45f;
 
+        [Header("UI")]
+        [SerializeField] private RectTransform overlay;
+        [SerializeField] private Image pipper;
+        [SerializeField] private Image boresight;
+        [SerializeField] private Image offscreenCaret;
+
         private static TargetLeadCrosshair _instance;
-        private static Texture2D _pixel;
 
         private Camera _camera;
+        private Canvas _canvas;
         private readonly PlaneRigidbody[] _bodyScratch = new PlaneRigidbody[32];
         private float _hitFlashUntil;
 
@@ -49,17 +54,6 @@ namespace Airplane.UI
             return weapons && weapons.InputEnabled;
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Bootstrap()
-        {
-            if (_instance != null)
-                return;
-
-            GameObject host = new GameObject("Target Lead Crosshair");
-            DontDestroyOnLoad(host);
-            host.AddComponent<TargetLeadCrosshair>();
-        }
-
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -69,6 +63,11 @@ namespace Airplane.UI
             }
 
             _instance = this;
+            if (overlay)
+                _canvas = overlay.GetComponentInParent<Canvas>();
+            Show(pipper, false);
+            Show(boresight, false);
+            Show(offscreenCaret, false);
         }
 
         private void OnDestroy()
@@ -77,14 +76,15 @@ namespace Airplane.UI
                 _instance = null;
         }
 
-        private void OnGUI()
+        private void LateUpdate()
         {
-            if (!Enabled || !HudVisibility.Visible)
+            if (!Enabled || !HudVisibility.Visible || !overlay
+                || !TryResolveShooter(out PlaneRigidbody shooter, out AircraftWeaponsController weapons)
+                || !ResolveCamera())
+            {
+                HideMarkers();
                 return;
-            if (!TryResolveShooter(out PlaneRigidbody shooter, out AircraftWeaponsController weapons))
-                return;
-            if (!ResolveCamera())
-                return;
+            }
 
             GunTriggerChannel channel = weapons.FireSecondary01 > 0.5f
                 ? GunTriggerChannel.Secondary
@@ -93,7 +93,10 @@ namespace Airplane.UI
                 channel = GunTriggerChannel.Primary;
 
             if (!TryAcquireTarget(shooter, weapons, channel, out Vector3 targetPosition, out Vector3 targetVelocity))
+            {
+                HideMarkers();
                 return;
+            }
 
             if (!GunLeadSolution.TrySolveBattery(
                     weapons.Guns,
@@ -106,30 +109,71 @@ namespace Airplane.UI
                     out _,
                     out _,
                     out _,
-                    out Vector3 boresight,
+                    out Vector3 boresightPoint,
                     out _,
                     out _,
                     out Vector3 aimPoint))
             {
+                HideMarkers();
                 return;
             }
 
-            float errorDeg = Vector3.Angle(shotAxis, boresight);
+            float errorDeg = Vector3.Angle(shotAxis, boresightPoint);
             Color leadTint = BlendHitFlash(errorDeg <= readyConeDeg ? readyColor : pipperColor);
             Color boreTint = BlendHitFlash(boresightColor);
             Color edgeTint = BlendHitFlash(offscreenColor);
 
             Vector3 boreWorld = muzzle + shotAxis * FlightSimMath.SafeMagnitude(aimPoint - muzzle);
-            if (TryProject(boreWorld, out Vector2 boreGui, out bool boreOnScreen) && boreOnScreen)
-                DrawCross(boreGui, boresightSize, boreTint);
+            if (TryProject(boreWorld, out Vector2 boreScreen, out bool boreOnScreen) && boreOnScreen)
+                Place(boresight, boreScreen, boreTint, 0f);
+            else
+                Show(boresight, false);
 
-            if (!TryProject(aimPoint, out Vector2 leadGui, out bool leadOnScreen))
+            if (!TryProject(aimPoint, out Vector2 leadScreen, out bool leadOnScreen))
+            {
+                Show(pipper, false);
+                Show(offscreenCaret, false);
                 return;
+            }
 
             if (leadOnScreen)
-                DrawPipper(leadGui, pipperSize, leadTint);
+            {
+                Place(pipper, leadScreen, leadTint, 0f);
+                Show(offscreenCaret, false);
+            }
             else
-                DrawOffscreenCaret(leadGui, edgeTint);
+            {
+                Show(pipper, false);
+                Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+                Vector2 dir = leadScreen - center;
+                float ang = dir.sqrMagnitude < 1e-4f ? 0f : Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
+                Place(offscreenCaret, leadScreen, edgeTint, ang);
+            }
+        }
+
+        private void HideMarkers()
+        {
+            Show(pipper, false);
+            Show(boresight, false);
+            Show(offscreenCaret, false);
+        }
+
+        private void Place(Image marker, Vector2 screen, Color color, float zRotation)
+        {
+            if (!marker)
+                return;
+            Show(marker, true);
+            marker.color = color;
+            HudVisibility.Place(overlay, marker.rectTransform, screen, _canvas);
+            marker.rectTransform.localEulerAngles = new Vector3(0f, 0f, zRotation);
+        }
+
+        private void Show(Image marker, bool visible)
+        {
+            if (!marker || marker.gameObject == gameObject)
+                return;
+            if (marker.gameObject.activeSelf != visible)
+                marker.gameObject.SetActive(visible);
         }
 
         private bool TryAcquireTarget(
@@ -328,9 +372,9 @@ namespace Airplane.UI
             return _camera;
         }
 
-        private bool TryProject(Vector3 world, out Vector2 gui, out bool onScreen)
+        private bool TryProject(Vector3 world, out Vector2 screen, out bool onScreen)
         {
-            gui = Vector2.zero;
+            screen = Vector2.zero;
             onScreen = false;
             if (!_camera)
                 return false;
@@ -346,13 +390,11 @@ namespace Airplane.UI
                 sp.y = h - sp.y;
             }
 
-            float x = sp.x;
-            float y = h - sp.y;
-            onScreen = !behind && x >= 0f && x <= w && y >= 0f && y <= h;
+            onScreen = !behind && sp.x >= 0f && sp.x <= w && sp.y >= 0f && sp.y <= h;
             if (!onScreen)
             {
                 Vector2 center = new Vector2(w * 0.5f, h * 0.5f);
-                Vector2 dir = new Vector2(x, y) - center;
+                Vector2 dir = new Vector2(sp.x, sp.y) - center;
                 if (dir.sqrMagnitude < 1e-4f)
                     dir = Vector2.up;
                 dir.Normalize();
@@ -361,85 +403,12 @@ namespace Airplane.UI
                 float hy = (h * 0.5f) - pad;
                 float sx = Mathf.Abs(dir.x) > 1e-4f ? hx / Mathf.Abs(dir.x) : float.PositiveInfinity;
                 float sy = Mathf.Abs(dir.y) > 1e-4f ? hy / Mathf.Abs(dir.y) : float.PositiveInfinity;
-                gui = center + dir * Mathf.Min(sx, sy);
+                screen = center + dir * Mathf.Min(sx, sy);
                 return true;
             }
 
-            gui = new Vector2(x, y);
+            screen = new Vector2(sp.x, sp.y);
             return true;
-        }
-
-        private static void DrawPipper(Vector2 center, float size, Color color)
-        {
-            float r = size;
-            DrawCircle(center, r, color, 1.6f, 28);
-            DrawLine(new Vector2(center.x, center.y - r - 5f), new Vector2(center.x, center.y - r + 1f), 1.6f, color);
-            DrawLine(new Vector2(center.x, center.y + r - 1f), new Vector2(center.x, center.y + r + 5f), 1.6f, color);
-            DrawLine(new Vector2(center.x - r - 5f, center.y), new Vector2(center.x - r + 1f, center.y), 1.6f, color);
-            DrawLine(new Vector2(center.x + r - 1f, center.y), new Vector2(center.x + r + 5f, center.y), 1.6f, color);
-        }
-
-        private static void DrawCross(Vector2 center, float size, Color color)
-        {
-            DrawLine(new Vector2(center.x - size, center.y), new Vector2(center.x + size, center.y), 5, color);
-            DrawLine(new Vector2(center.x, center.y - size), new Vector2(center.x, center.y + size), 5, color);
-        }
-
-        private static void DrawOffscreenCaret(Vector2 tip, Color color)
-        {
-            Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-            Vector2 dir = tip - center;
-            if (dir.sqrMagnitude < 1e-4f)
-                dir = Vector2.up;
-            dir.Normalize();
-            Vector2 n = new Vector2(-dir.y, dir.x);
-            Vector2 a = tip;
-            Vector2 b = tip - dir * 16f + n * 8f;
-            Vector2 c = tip - dir * 16f - n * 8f;
-            DrawLine(a, b, 1.8f, color);
-            DrawLine(a, c, 1.8f, color);
-            DrawLine(b, c, 1.8f, color);
-        }
-
-        private static void DrawCircle(Vector2 center, float radius, Color color, float width, int segments)
-        {
-            float step = Mathf.PI * 2f / segments;
-            Vector2 prev = center + new Vector2(radius, 0f);
-            for (int i = 1; i <= segments; i++)
-            {
-                float ang = i * step;
-                Vector2 next = center + new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * radius;
-                DrawLine(prev, next, width, color);
-                prev = next;
-            }
-        }
-
-        private static void DrawLine(Vector2 a, Vector2 b, float width, Color color)
-        {
-            EnsurePixel();
-            Vector2 d = b - a;
-            float len = d.magnitude;
-            if (len < 0.4f)
-                return;
-
-            Matrix4x4 matrix = GUI.matrix;
-            Color prev = GUI.color;
-            GUI.color = color;
-            float ang = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
-            GUIUtility.RotateAroundPivot(ang, a);
-            GUI.DrawTexture(new Rect(a.x, a.y - width * 0.5f, len, width), _pixel);
-            GUI.matrix = matrix;
-            GUI.color = prev;
-        }
-
-        private static void EnsurePixel()
-        {
-            if (_pixel)
-                return;
-            _pixel = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            _pixel.SetPixel(0, 0, Color.white);
-            _pixel.Apply();
-            _pixel.hideFlags = HideFlags.HideAndDontSave;
         }
     }
 }

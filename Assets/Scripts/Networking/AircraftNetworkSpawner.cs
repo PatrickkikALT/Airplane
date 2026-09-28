@@ -12,7 +12,11 @@ namespace Airplane.Multiplayer
     public sealed class AircraftNetworkSpawner : MonoBehaviour
     {
         [Header("Aircraft")]
-        [Tooltip("Aircraft prefab. Must carry a NetworkObject and be registered in the network prefab list.")]
+        [Tooltip("Planes a pilot can pick. Each prefab needs a PlaneRigidbody and a NetworkObject. " +
+                 "Bots and dummies use the first entry. Falls back to Aircraft Prefab when this is empty.")]
+        [SerializeField] private AircraftCatalog catalog;
+
+        [Tooltip("Used when the catalog is empty. Must carry a NetworkObject and be registered in the network prefab list.")]
         [SerializeField] private NetworkObject aircraftPrefab;
 
         [Tooltip("Clear NetworkManager's PlayerPrefab on start. Leaving it set spawns a second aircraft " +
@@ -98,13 +102,26 @@ namespace Airplane.Multiplayer
         private static NetworkManager Manager => NetworkManager.Singleton;
 
         private bool IsServerActive => Manager != null && Manager.IsListening && Manager.IsServer;
-        
+
+        private AircraftCatalog ActiveCatalog => catalog ? catalog : AircraftSelection.Catalog;
+
+        private void Awake()
+        {
+            if (catalog)
+                AircraftSelection.Bind(catalog);
+
+            NetworkManager manager = Manager;
+            if (!manager)
+                manager = FindAnyObjectByType<NetworkManager>();
+            AircraftSelection.Catalog?.Register(manager);
+        }
+
         private void Start()
         {
             Instance = this;
             _manager = Manager;
 
-            if (!aircraftPrefab)
+            if (!aircraftPrefab && (ActiveCatalog == null || ActiveCatalog.Count == 0))
                 Debug.LogError("no aircraft prefab assigned, nobody will spawn.");
 
             if (clearPlayerPrefab && _manager != null && _manager.NetworkConfig != null && _manager.NetworkConfig.PlayerPrefab != null)
@@ -170,6 +187,7 @@ namespace Airplane.Multiplayer
             _nextBotIndex = 0;
             _nextDummyIndex = 0;
             _desiredBots = 0;
+            AircraftSelection.Clear();
             BotCallsigns.Reset();
             AdminSession.Reset();
         }
@@ -183,6 +201,7 @@ namespace Airplane.Multiplayer
 
         private void HandleClientDisconnected(ulong clientId)
         {
+            AircraftSelection.Forget(clientId);
             _slotByClient.Remove(clientId);
 
             if (!_aircraftByClient.Remove(clientId, out NetworkObject aircraft))
@@ -197,7 +216,8 @@ namespace Airplane.Multiplayer
 
         public void SpawnFor(ulong clientId, bool replaceExisting = false)
         {
-            if (!IsServerActive || !aircraftPrefab)
+            NetworkObject prefab = ResolvePlayerPrefab(clientId);
+            if (!IsServerActive || !prefab)
                 return;
 
             if (_aircraftByClient.TryGetValue(clientId, out NetworkObject existing) && existing && existing.IsSpawned)
@@ -216,7 +236,7 @@ namespace Airplane.Multiplayer
             ResolveSpawnPose(slot, out Vector3 position, out Quaternion rotation);
             Vector3 velocity = rotation * new Vector3(0f, 0f, spawnAirspeed);
 
-            NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
+            NetworkObject aircraft = Instantiate(prefab, position, rotation);
             aircraft.name = $"Aircraft (Client {clientId})";
 
             PlaneRigidbody body = aircraft.GetComponent<PlaneRigidbody>();
@@ -254,14 +274,15 @@ namespace Airplane.Multiplayer
 
         public bool SpawnBot()
         {
-            if (!IsServerActive || !aircraftPrefab)
+            NetworkObject prefab = ResolveSharedPrefab();
+            if (!IsServerActive || !prefab)
                 return false;
 
             int index = _nextBotIndex++;
             ResolveBotSpawnPose(index, out Vector3 position, out Quaternion rotation);
             Vector3 velocity = rotation * new Vector3(0f, 0f, Mathf.Max(40f, botSpawnAirspeed));
 
-            NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
+            NetworkObject aircraft = Instantiate(prefab, position, rotation);
             string callsign = BotCallsigns.Next();
             aircraft.name = $"Bot Aircraft ({callsign})";
 
@@ -307,12 +328,13 @@ namespace Airplane.Multiplayer
 
         public bool SpawnDummyFor(ulong clientId)
         {
-            if (!IsServerActive || !aircraftPrefab)
+            NetworkObject prefab = ResolveSharedPrefab();
+            if (!IsServerActive || !prefab)
                 return false;
 
             ResolveDummySpawnPoseFor(clientId, out Vector3 position, out Quaternion rotation);
 
-            NetworkObject aircraft = Instantiate(aircraftPrefab, position, rotation);
+            NetworkObject aircraft = Instantiate(prefab, position, rotation);
             int index = ++_nextDummyIndex;
             string callsign = index == 1 ? "Dummy" : $"Dummy {index}";
             aircraft.name = $"Dummy Aircraft ({callsign})";
@@ -348,6 +370,32 @@ namespace Airplane.Multiplayer
             }
 
             return true;
+        }
+
+        private NetworkObject ResolvePlayerPrefab(ulong clientId)
+        {
+            AircraftCatalog active = ActiveCatalog;
+            if (active != null && active.Count > 0)
+            {
+                NetworkObject chosen = active.GetNetworkPrefab(AircraftSelection.ForClient(clientId));
+                if (chosen)
+                    return chosen;
+            }
+
+            return aircraftPrefab;
+        }
+
+        private NetworkObject ResolveSharedPrefab()
+        {
+            AircraftCatalog active = ActiveCatalog;
+            if (active != null && active.Count > 0)
+            {
+                NetworkObject chosen = active.GetNetworkPrefab(0);
+                if (chosen)
+                    return chosen;
+            }
+
+            return aircraftPrefab;
         }
 
         private void ResolveDummySpawnPoseFor(ulong clientId, out Vector3 position, out Quaternion rotation)

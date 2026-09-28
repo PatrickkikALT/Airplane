@@ -6,6 +6,19 @@ namespace Airplane.UI
     public static class HudVisibility
     {
         public static bool Visible { get; set; } = true;
+
+        public static void Place(RectTransform overlay, RectTransform target, Vector2 screen, Canvas canvas)
+        {
+            if (!overlay || !target)
+                return;
+
+            Camera cam = canvas && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
+
+            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(overlay, screen, cam, out Vector3 world))
+                target.position = world;
+        }
     }
 
     [DisallowMultipleComponent]
@@ -14,17 +27,6 @@ namespace Airplane.UI
     public sealed class HudToggle : MonoBehaviour
     {
         private static HudToggle _instance;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Bootstrap()
-        {
-            if (_instance != null)
-                return;
-
-            GameObject host = new GameObject("HUD Toggle");
-            DontDestroyOnLoad(host);
-            host.AddComponent<HudToggle>();
-        }
 
         private void Awake()
         {

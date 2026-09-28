@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95fe6e4ba13e9e95e8f7ab19c8f95f84, type: 3}
+  m_Name: AircraftCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.AircraftCatalog
+  aircraft:
+  - displayName: NLI G-44
+    prefab: {fileID: 932026622310087360, guid: e68d797e28f56847b98937e65c93668b, type: 3}
+    previewPrefab: {fileID: 932026622310087360, guid: 5c8a07f7dbceb8f11ba1bcd7093210eb, type: 3}
+  - displayName: RAI R-43
+    prefab: {fileID: 8366032937517303367, guid: fe773cb50ee75c4428b4d8a58a579ea1, type: 3}
+    previewPrefab: {fileID: 8366032937517303367, guid: dd27134ed43526fc4830e3b09597d7fb, type: 3}

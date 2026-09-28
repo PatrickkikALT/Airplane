@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
+using TMPro;
 using UnityEngine;
 
 namespace Airplane.UI
@@ -35,24 +37,19 @@ namespace Airplane.UI
 
         [SerializeField] private LayerMask occluderMask = ~0;
 
+        [Header("UI")]
+        [SerializeField] private RectTransform overlay;
+        [SerializeField] private TMP_Text nametagTemplate;
+
         private static AircraftNametagOverlay _instance;
 
         private readonly RaycastHit[] _hits = new RaycastHit[8];
-        private GUIStyle _style;
+        private readonly List<TMP_Text> _pool = new List<TMP_Text>(8);
         private Camera _camera;
+        private Canvas _canvas;
+        private int _used;
 
         public static bool Enabled { get; set; } = true;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void Bootstrap()
-        {
-            if (_instance != null)
-                return;
-
-            GameObject host = new GameObject("Aircraft Nametags");
-            DontDestroyOnLoad(host);
-            host.AddComponent<AircraftNametagOverlay>();
-        }
 
         private void Awake()
         {
@@ -63,6 +60,10 @@ namespace Airplane.UI
             }
 
             _instance = this;
+            if (nametagTemplate && nametagTemplate.gameObject != gameObject)
+                nametagTemplate.gameObject.SetActive(false);
+            if (overlay)
+                _canvas = overlay.GetComponentInParent<Canvas>();
         }
 
         private void OnDestroy()
@@ -71,19 +72,26 @@ namespace Airplane.UI
                 _instance = null;
         }
 
-        private void OnGUI()
+        private void LateUpdate()
         {
-            if (!Enabled || !HudVisibility.Visible)
-                return;
+            _used = 0;
+            bool show = Enabled && HudVisibility.Visible && nametagTemplate && overlay;
+            if (show && ResolveCamera())
+                DrawAll();
 
+            for (int i = _used; i < _pool.Count; i++)
+            {
+                TMP_Text extra = _pool[i];
+                if (extra && extra.gameObject.activeSelf)
+                    extra.gameObject.SetActive(false);
+            }
+        }
+
+        private void DrawAll()
+        {
             var aircraft = NetworkedAircraft.All;
             if (aircraft.Count == 0)
                 return;
-
-            if (!ResolveCamera())
-                return;
-
-            EnsureStyle();
 
             Transform cameraTransform = _camera.transform;
             Vector3 eye = cameraTransform.position;
@@ -116,36 +124,49 @@ namespace Airplane.UI
                 if (occlusionTest && IsOccluded(eye, anchor, distance, target.transform))
                     continue;
 
-                Draw(target, screen, distance);
+                Draw(target, new Vector2(screen.x, screen.y), distance);
             }
         }
 
-        private void Draw(NetworkedAircraft target, Vector3 screen, float distance)
+        private void Draw(NetworkedAircraft target, Vector2 screen, float distance)
         {
             float proximity = 1f - Mathf.Clamp01(distance / Mathf.Max(1f, maxDistance));
             float alpha = 1f - FlightSimMath.Smoothstep(fadeStartDistance, maxDistance, distance);
             if (alpha <= 0.02f)
                 return;
 
-            _style.fontSize = Mathf.RoundToInt(Mathf.Lerp(minFontSize, maxFontSize, proximity * proximity));
-
-            string label = showDistance
-                ? $"{target.DisplayName}\n{FormatRange(distance)}"
+            TMP_Text text = Rent();
+            text.enableAutoSizing = false;
+            text.enableWordWrapping = false;
+            text.fontSize = Mathf.Lerp(minFontSize, maxFontSize, proximity * proximity);
+            text.text = showDistance
+                ? target.DisplayName + "\n" + FormatRange(distance)
                 : target.DisplayName;
-
-            float width = 220f;
-            float height = _style.fontSize * (showDistance ? 2.6f : 1.4f);
-            Rect rect = new Rect(screen.x - width * 0.5f, Screen.height - screen.y - height, width, height);
 
             Color tint = target.IsBot ? botColor : playerColor;
             tint.a *= alpha;
+            text.color = tint;
+            HudVisibility.Place(overlay, text.rectTransform, screen, _canvas);
+        }
 
-            Color shadow = new Color(0f, 0f, 0f, alpha * 0.85f);
-            _style.normal.textColor = shadow;
-            GUI.Label(new Rect(rect.x + 1f, rect.y + 1f, rect.width, rect.height), label, _style);
+        private TMP_Text Rent()
+        {
+            TMP_Text text;
+            if (_used < _pool.Count)
+            {
+                text = _pool[_used];
+            }
+            else
+            {
+                text = Instantiate(nametagTemplate, overlay);
+                text.gameObject.name = "Nametag";
+                _pool.Add(text);
+            }
 
-            _style.normal.textColor = tint;
-            GUI.Label(rect, label, _style);
+            _used++;
+            if (!text.gameObject.activeSelf)
+                text.gameObject.SetActive(true);
+            return text;
         }
 
         private static string FormatRange(float metres)
@@ -186,20 +207,6 @@ namespace Airplane.UI
 
             _camera = Camera.main;
             return _camera != null;
-        }
-
-        private void EnsureStyle()
-        {
-            if (_style != null)
-                return;
-
-            _style = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.LowerCenter,
-                fontStyle = FontStyle.Bold,
-                richText = false,
-                wordWrap = false
-            };
         }
     }
 }

@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GameShaders
+  m_Shaders:
+  - first: {fileID: 66, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9000, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9001, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9002, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9003, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9004, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9007, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 9101, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 69c1f799e772cb6438f56c23efccb782, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _CLUSTER_LIGHT_LOOP
+          _LIGHT_COOKIES _LIGHT_LAYERS _MAIN_LIGHT_SHADOWS_CASCADE _REFLECTION_PROBE_ATLAS
+          _REFLECTION_PROBE_BLENDING _SCREEN_SPACE_OCCLUSION _SHADOWS_SOFT _TERRAIN_INSTANCED_PERPIXEL_NORMAL
+        passType: 13
+  - first: {fileID: 4800000, guid: 8fbe92a9edfe6074e841d6dd1509bc59, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 21322c8b137c66e49b86085d3c8161f6, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _CLUSTER_LIGHT_LOOP
+          _LIGHT_COOKIES _LIGHT_LAYERS _MAIN_LIGHT_SHADOWS _REFLECTION_PROBE_ATLAS
+          _REFLECTION_PROBE_BLENDING _SCREEN_SPACE_OCCLUSION _TERRAIN_INSTANCED_PERPIXEL_NORMAL
+        passType: 13
+  - first: {fileID: 4800000, guid: 67050ab2c079fa4d59a88bcac344d6a7, type: 3}
+    second:
+      variants: []
+  - first: {fileID: 4800000, guid: 7cea8a257eb4d7c9ab0d5170fe77b0e7, type: 3}
+    second:
+      variants: []
+  - first: {fileID: 4800000, guid: efdc30be9b4df574aac85ceaab43f0fe, type: 3}
+    second:
+      variants: []
+  - first: {fileID: 4800000, guid: f8d299103e9fda93399c73c7973bbab4, type: 3}
+    second:
+      variants: []

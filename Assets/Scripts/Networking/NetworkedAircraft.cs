@@ -304,16 +304,10 @@ namespace Airplane.Multiplayer
                 _body.SetSimulationEnabled(simulate);
 
             if (_controller)
-            {
                 _controller.SetInputEnabled(humanInput);
-                _controller.SetHudVisible(humanInput);
-            }
 
             if (_weapons)
-            {
                 _weapons.SetInputEnabled(humanInput);
-                _weapons.SetHudVisible(humanInput);
-            }
 
             if (_playerInput)
                 _playerInput.enabled = humanInput;
@@ -550,14 +544,12 @@ namespace Airplane.Multiplayer
             if (_controller)
             {
                 _controller.SetInputEnabled(false);
-                _controller.SetHudVisible(false);
                 _controller.ApplyExternalControls(0f, 0f, 0f, 0f, 0f, 0f, 0f);
             }
 
             if (_weapons)
             {
                 _weapons.SetInputEnabled(false);
-                _weapons.SetHudVisible(false);
                 _weapons.ApplyExternalFire(0f, 0f);
             }
 
@@ -620,16 +612,10 @@ namespace Airplane.Multiplayer
                 _body.SetSimulationEnabled(false);
 
             if (_controller)
-            {
                 _controller.SetInputEnabled(false);
-                _controller.SetHudVisible(false);
-            }
 
             if (_weapons)
-            {
                 _weapons.SetInputEnabled(false);
-                _weapons.SetHudVisible(false);
-            }
 
             if (_playerInput)
                 _playerInput.enabled = false;

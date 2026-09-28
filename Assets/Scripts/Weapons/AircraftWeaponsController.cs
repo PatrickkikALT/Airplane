@@ -1,4 +1,3 @@
-using System.Text;
 using Airplane.FlightSimulation;
 using Airplane.UI;
 using UnityEngine;
@@ -12,19 +11,12 @@ namespace Airplane.Weapons
     [AddComponentMenu("Airplane/Weapons/Aircraft Weapons Controller")]
     public sealed class AircraftWeaponsController : MonoBehaviour
     {
-        [Header("Debug HUD")]
-        [SerializeField] private bool drawHud = true;
-        [SerializeField] private Vector2 hudPosition = new Vector2(16f, 236f);
-
         private PlaneRigidbody _body;
         private AircraftGun[] _guns = System.Array.Empty<AircraftGun>();
 
         private float _fire01;
         private float _fireSecondary01;
         private bool _inputEnabled = true;
-        private readonly StringBuilder _hudBuilder = new StringBuilder(256);
-        private string _hudText = "";
-        private float _hudClock;
 
         public float Fire01 => _fire01;
         public float FireSecondary01 => _fireSecondary01;
@@ -36,11 +28,6 @@ namespace Airplane.Weapons
         public void SetInputEnabled(bool enable)
         {
             _inputEnabled = enable;
-        }
-
-        public void SetHudVisible(bool visible)
-        {
-            drawHud = visible;
         }
 
         public void ApplyExternalFire(float firePrimary, float fireSecondary)
@@ -123,98 +110,6 @@ namespace Airplane.Weapons
             if (context.canceled)
                 return 0f;
             return context.ReadValue<float>();
-        }
-
-        private void OnGUI()
-        {
-            if (!drawHud || !HudVisibility.Visible || !_body)
-                return;
-
-            _hudClock += Time.unscaledDeltaTime;
-            if (_hudClock >= 0.2f || _hudText.Length == 0)
-            {
-                _hudClock = 0f;
-                RebuildHudText();
-            }
-
-            float x = hudPosition.x;
-            float y = hudPosition.y;
-            GUI.Box(new Rect(x, y, 320f, 88f), "Guns");
-            GUI.Label(new Rect(x + 10f, y + 24f, 300f, 58f), _hudText);
-        }
-
-        private void RebuildHudText()
-        {
-            _hudBuilder.Length = 0;
-            if (_guns == null || _guns.Length == 0)
-            {
-                _hudBuilder.Append("no guns mounted");
-                _hudText = _hudBuilder.ToString();
-                return;
-            }
-
-            int primaryRounds = 0;
-            int secondaryRounds = 0;
-            int primaryCap = 0;
-            int secondaryCap = 0;
-            bool primaryInf = false;
-            bool secondaryInf = false;
-            bool primaryFiring = false;
-            bool secondaryFiring = false;
-
-            for (int i = 0; i < _guns.Length; i++)
-            {
-                AircraftGun gun = _guns[i];
-                if (!gun)
-                    continue;
-
-                bool inf = gun.AmmoCapacity <= 0;
-                if (gun.TriggerChannel == GunTriggerChannel.Secondary)
-                {
-                    secondaryFiring |= gun.IsFiring;
-                    if (inf) secondaryInf = true;
-                    else
-                    {
-                        secondaryRounds += gun.AmmoRemaining;
-                        secondaryCap += gun.AmmoCapacity;
-                    }
-                }
-                else
-                {
-                    primaryFiring |= gun.IsFiring;
-                    if (inf) primaryInf = true;
-                    else
-                    {
-                        primaryRounds += gun.AmmoRemaining;
-                        primaryCap += gun.AmmoCapacity;
-                    }
-                }
-            }
-
-            _hudBuilder.Append("GUN  ");
-            AppendAmmo(_hudBuilder, primaryInf, primaryRounds, primaryCap);
-            if (primaryFiring)
-                _hudBuilder.Append("  FIRING");
-            _hudBuilder.Append('\n');
-
-            _hudBuilder.Append("CAN  ");
-            AppendAmmo(_hudBuilder, secondaryInf, secondaryRounds, secondaryCap);
-            if (secondaryFiring)
-                _hudBuilder.Append("  FIRING");
-            _hudBuilder.Append('\n');
-            _hudBuilder.Append("LMB guns  LCtrl cannon");
-            _hudText = _hudBuilder.ToString();
-        }
-
-        private static void AppendAmmo(StringBuilder builder, bool infinite, int remaining, int capacity)
-        {
-            if (infinite)
-            {
-                builder.Append("∞");
-                return;
-            }
-
-            builder.Append(remaining).Append('/').Append(capacity);
         }
     }
 }

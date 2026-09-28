@@ -137,6 +137,7 @@ namespace Airplane.FlightSimulation
         private AircraftWeaponsController _weapons;
 
         public float Mass => mass;
+        public Vector3 MaxAngularSpeedDeg => maxAngularSpeedDeg;
         public Vector3 Position => _position;
         public Vector3 Velocity => _velocity;
         public Vector3 Acceleration => _acceleration;
@@ -642,20 +643,26 @@ namespace Airplane.FlightSimulation
             if (scale > 2.5f)
                 scale = 2.5f;
 
+            float pitchScale = scale;
+            float yawScale = scale;
+            float rollScale = scale;
             if (_controller && idleRateDamping > 0f)
             {
-                float stick = Mathf.Max(
-                    Mathf.Abs(_controller.RawPitch),
-                    Mathf.Abs(_controller.RawRoll),
-                    Mathf.Abs(_controller.RawYaw));
-                float idle = 1f - FlightSimMath.Saturate(stick / 0.2f);
-                scale *= 1f + idle * idleRateDamping;
+                pitchScale *= IdleDampingFactor(_controller.RawPitch);
+                yawScale *= IdleDampingFactor(_controller.RawYaw);
+                rollScale *= IdleDampingFactor(_controller.RawRoll);
             }
 
             AddTorque(new Vector3(
-                -angularDamping.z * _omegaBody.x * scale,
-                -angularDamping.y * _omegaBody.y * scale,
-                -angularDamping.x * _omegaBody.z * scale));
+                -angularDamping.z * _omegaBody.x * pitchScale,
+                -angularDamping.y * _omegaBody.y * yawScale,
+                -angularDamping.x * _omegaBody.z * rollScale));
+        }
+
+        private float IdleDampingFactor(float stick)
+        {
+            float idle = 1f - FlightSimMath.Saturate(Mathf.Abs(stick) / 0.2f);
+            return 1f + idle * idleRateDamping;
         }
 
         private void ContributeLandingGear()
