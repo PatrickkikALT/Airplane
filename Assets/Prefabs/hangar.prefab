@@ -48,6 +48,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: c2669013f8b25b1488a95ac93789f515, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: ab7ab7e3ffffee74488723db3ef08044, type: 2}
     - target: {fileID: 919132149155446097, guid: c2669013f8b25b1488a95ac93789f515, type: 3}
       propertyPath: m_Name
       value: hangar
