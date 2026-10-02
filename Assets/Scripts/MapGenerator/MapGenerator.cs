@@ -30,13 +30,15 @@ public class MapGenerator : MonoBehaviour
     [Header("Positions")]
     [SerializeField] private Vector3 minSpawnPosition;
     [SerializeField] private Vector3 maxSpawnPosition;
+    [SerializeField] private Transform spawnArea;
+    private Bounds _spawnAreaCollider;
 
     [Header("Amounts")]
     [SerializeField] private int minIslandAmount;
     [SerializeField] private int maxIslandAmount;
 
     [Header("Islands")]
-    [SerializeField] private GameObject island;
+    [SerializeField] private List<GameObject> islands = new List<GameObject>();
 
     [Header("Number Ranges")]
     [SerializeField] private List<NumberRanges> numberRanges = new List<NumberRanges>();
@@ -48,13 +50,21 @@ public class MapGenerator : MonoBehaviour
         StartCoroutine(SpawnIslands());
     }
 
+    public void StartSpawningIslands()
+    {
+        AssignLocation();
+        StartCoroutine(SpawnIslands());
+
+    }
+
     private IEnumerator SpawnIslands()
     {
+
         int islandAmount = Random.Range(minIslandAmount, maxIslandAmount + 1);
         for (int i = 0; i < islandAmount; i++)
         {
             Vector3 position = ReturnCheckedSpawnPosition();
-            Instantiate(island, position, Quaternion.identity);
+            Instantiate(islands[Random.Range(0, islands.Count)], position, Quaternion.identity);
             yield return null;
         }
 
@@ -117,6 +127,19 @@ public class MapGenerator : MonoBehaviour
 
         numberRanges.Add(numberRange);
         return false;
+    }
+
+    private void AssignLocation()
+    {
+
+        if (!spawnArea) return;
+        _spawnAreaCollider = spawnArea.GetComponent<Collider>().bounds;
+        minSpawnPosition.x = _spawnAreaCollider.min.x;
+        maxSpawnPosition.x = _spawnAreaCollider.max.x;
+        minSpawnPosition.y = _spawnAreaCollider.min.y;
+        maxSpawnPosition.y = _spawnAreaCollider.max.y;
+        minSpawnPosition.z = _spawnAreaCollider.min.z;
+        maxSpawnPosition.z = _spawnAreaCollider.max.z;
     }
 
 }

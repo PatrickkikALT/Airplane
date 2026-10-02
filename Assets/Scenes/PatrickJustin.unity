@@ -1241,6 +1241,7 @@ Transform:
   m_Children:
   - {fileID: 302349517}
   - {fileID: 1149940214}
+  - {fileID: 1344364910}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1095214796
@@ -1702,6 +1703,63 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1344364908
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1344364910}
+  - component: {fileID: 1344364909}
+  m_Layer: 0
+  m_Name: MapGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1344364909
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1344364908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b0e0afefe780314db4becff9dace008, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapGenerator
+  minSpawnPosition: {x: -100, y: -100, z: -100}
+  maxSpawnPosition: {x: 100, y: 100, z: 100}
+  minIslandAmount: 10
+  maxIslandAmount: 30
+  islands:
+  - {fileID: 6944617297588950579, guid: efa72ee57dd01f44fbaf72008c3cd44f, type: 3}
+  - {fileID: 6944617297588950579, guid: 1c1bf156f98f4524f96ccaf5042790f3, type: 3}
+  - {fileID: 6944617297588950579, guid: 0e64a24d92c36a04891b55a726fbda01, type: 3}
+  - {fileID: 2951634835176427559, guid: e73140d41710ec54f8d9f2cbdf1663c8, type: 3}
+  - {fileID: 2951634835176427559, guid: 286c7c529ceeb4048a1d410e8d31de4d, type: 3}
+  - {fileID: 2951634835176427559, guid: 192036466db6cf34bae045d1613a633f, type: 3}
+  numberRanges: []
+  rangedNumber: 20
+--- !u!4 &1344364910
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1344364908}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5524.646, y: 0.00009, z: -3916.3335}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1095214795}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1524813792
 GameObject:
