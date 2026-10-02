@@ -2170,7 +2170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f19e7690ffeedb2a8c131fa8062200a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomRigidBody6DOF
-  mass: 1200
+  mass: 2000
   inertiaIxx: 1760
   inertiaIyy: 4160
   inertiaIzz: 2880
@@ -2287,7 +2287,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAircraftEngine
   maxStaticThrust: 42000
-  zeroThrustAirspeed: 112
+  zeroThrustAirspeed: 141
   densityExponent: 1
   idleThrottle: 0.04
   thrustTransform: {fileID: 7392594022371023476}
@@ -2542,6 +2542,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: b4d5e6f7-0819-42a3-bd24-e5f60718293a
     m_ActionName: 'Plane/ResetOrbit[/Mouse/middleButton,/Gamepad/rightStickPress]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 3077578465483030603}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnTogglePauseMenu
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 95aa7ebf-c81f-4910-b24e-72b07f44de1c
+    m_ActionName: 'Plane/Button[/Keyboard/escape]'
   m_NeverAutoSwitchControlSchemes: 1
   m_DefaultControlScheme: 
   m_DefaultActionMap: Plane
@@ -2587,7 +2603,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.NetworkedAircraft
   ShowTopMostFoldoutHeaderGroup: 1
   sendRate: 25
-  interpolationDelay: 0.12
+  interpolationDelay: 0.042
   maxExtrapolation: 0.35
   positionSendThreshold: 0.01
   rotationSendThresholdDeg: 0.05

@@ -6,10 +6,12 @@ using Random = UnityEngine.Random;
 namespace Airplane.Weather
 {
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-100)]
     [AddComponentMenu("Airplane/Weather/Lightning System")]
     public sealed class LightningSystem : MonoBehaviour
     {
         public const int MaxBranches = 6;
+        public const string EnvironmentFlashPrefKey = "EnvironmentFlash";
         private const int MaxPulses = 4;
         private const int ThunderSources = 8;
         private const int RibbonSegments = 48;
@@ -27,7 +29,10 @@ namespace Airplane.Weather
         private static readonly int BranchLengthId = Shader.PropertyToID("_BranchLength");
         private static readonly int BranchSpreadId = Shader.PropertyToID("_BranchSpread");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
+        private static readonly int EmissionId = Shader.PropertyToID("_Emission");
         private static readonly int ProgressId = Shader.PropertyToID("_Progress");
+        private static readonly int LightningFlashId = Shader.PropertyToID("_LightningFlash");
+        private const float LumenScale = 4000f;
 
         [SerializeField] private Material boltMaterialOverride;
         [SerializeField] private Camera cameraOverride;
@@ -44,6 +49,7 @@ namespace Airplane.Weather
         [SerializeField] [Range(0f, 3f)] private float branchSpread = 0.85f;
         [SerializeField] private Color coreColor = new(1f, 1f, 1f, 1f);
         [SerializeField] private Color glowColor = new(0.55f, 0.7f, 1f, 1f);
+        [SerializeField] [Min(0f)] private float emission = 8f;
 
         [Header("Placement")]
         [SerializeField] [Min(0f)] private float minDistance = 500f;
@@ -56,6 +62,7 @@ namespace Airplane.Weather
         [SerializeField] [Min(0f)] private float flashIntensity = 1f;
         [SerializeField] [Min(0f)] private float lightIntensity = 900f;
         [SerializeField] [Min(1f)] private float lightRange = 4000f;
+        [SerializeField] [Min(0f)] private float environmentFlash = 1f;
         [SerializeField] [Min(0.01f)] private float strikeLifetime = 1.1f;
         [SerializeField] [Min(0.001f)] private float drawTime = 0.04f;
 
@@ -80,6 +87,11 @@ namespace Airplane.Weather
         private float _spawnAccumulator;
         private int _thunderCursor;
         private float _intensity = 1f;
+        private bool _environmentApplied;
+        private Color _ambientSkyAdd;
+        private Color _ambientEquatorAdd;
+        private Color _ambientGroundAdd;
+        private Color _fogAdd;
 
         private void OnEnable()
         {
@@ -93,6 +105,8 @@ namespace Airplane.Weather
 
         private void Update()
         {
+            RevertEnvironmentFlash();
+
             Camera cam = ResolveCamera();
             if (!cam)
                 return;
@@ -115,10 +129,15 @@ namespace Airplane.Weather
             }
 
             for (int i = 0; i < _strikes.Length; i++)
-                UpdateStrike(_strikes[i], dt);
+                UpdateStrike(_strikes[i], cam, dt);
         }
 
-        private void UpdateStrike(Strike strike, float dt)
+        private void LateUpdate()
+        {
+            ApplyEnvironmentFlash(ResolveCamera());
+        }
+
+        private void UpdateStrike(Strike strike, Camera cam, float dt)
         {
             if (!strike.Active)
                 return;
@@ -134,15 +153,29 @@ namespace Airplane.Weather
 
             float envelope = strike.Evaluate();
             float progress = Mathf.Clamp01(strike.Age / Mathf.Max(drawTime, 0.001f));
+            UpdateFlash(strike, cam, envelope);
+            DrawStrike(strike, envelope * flashIntensity * _intensity, progress);
+        }
 
-            if (strike.Flash)
+        private void UpdateFlash(Strike strike, Camera cam, float envelope)
+        {
+            Light flash = strike.Flash;
+            if (!flash)
+                return;
+
+            if (envelope <= 0.002f)
             {
-                strike.Flash.enabled = envelope > 0.002f;
-                strike.Flash.intensity = lightIntensity * flashIntensity * _intensity * envelope;
-                strike.Flash.color = glowColor;
+                flash.enabled = false;
+                return;
             }
 
-            DrawStrike(strike, envelope * flashIntensity * _intensity, progress);
+            Vector3 position = Vector3.Lerp(strike.Start, strike.End, 0.62f);
+            flash.transform.position = position;
+            float reach = cam ? Vector3.Distance(position, cam.transform.position) : lightRange;
+            flash.range = Mathf.Max(lightRange, reach * 1.8f);
+            flash.color = Color.Lerp(glowColor, coreColor, 0.8f);
+            flash.intensity = lightIntensity * LumenScale * flashIntensity * _intensity * envelope;
+            flash.enabled = true;
         }
 
         private void DrawStrike(Strike strike, float intensity, float progress)
@@ -170,6 +203,7 @@ namespace Airplane.Weather
                 props.SetFloat(BranchLengthId, trunk ? 0f : strike.BranchLength[i - 1]);
                 props.SetFloat(BranchSpreadId, branchSpread);
                 props.SetFloat(IntensityId, intensity * (trunk ? 1f : 0.6f));
+                props.SetFloat(EmissionId, emission);
                 props.SetFloat(ProgressId, progress);
 
                 RenderParams rp = new(_boltMaterial)
@@ -244,11 +278,7 @@ namespace Airplane.Weather
             strike.Bounds = BuildBounds(strike);
 
             if (strike.Flash)
-            {
-                strike.Flash.transform.position = Vector3.Lerp(strike.Start, strike.End, 0.25f);
-                strike.Flash.range = lightRange;
                 strike.Flash.enabled = true;
-            }
 
             PlayThunder(strike, camPos, toGround);
         }
@@ -435,6 +465,7 @@ namespace Airplane.Weather
 
             Light flash = go.AddComponent<Light>();
             flash.type = LightType.Point;
+            flash.renderMode = LightRenderMode.ForcePixel;
             flash.shadows = LightShadows.None;
             flash.range = lightRange;
             flash.enabled = false;
@@ -472,6 +503,8 @@ namespace Airplane.Weather
 
         private void Teardown()
         {
+            RevertEnvironmentFlash();
+            Shader.SetGlobalColor(LightningFlashId, Color.black);
             DestroyStrikes();
 
             if (_thunder != null)
@@ -539,6 +572,84 @@ namespace Airplane.Weather
             thunderVolume = Mathf.Clamp01(value);
         }
 
+        private void ApplyEnvironmentFlash(Camera cam)
+        {
+            Color flash = EvaluateEnvironmentFlash(cam);
+            Shader.SetGlobalColor(LightningFlashId, flash);
+            if (flash.maxColorComponent <= 0.001f)
+                return;
+
+            _ambientSkyAdd = flash;
+            _ambientEquatorAdd = flash * 0.7f;
+            _ambientGroundAdd = flash * 0.4f;
+            _fogAdd = flash * 0.5f;
+            _ambientSkyAdd.a = 0f;
+            _ambientEquatorAdd.a = 0f;
+            _ambientGroundAdd.a = 0f;
+            _fogAdd.a = 0f;
+
+            RenderSettings.ambientSkyColor += _ambientSkyAdd;
+            RenderSettings.ambientEquatorColor += _ambientEquatorAdd;
+            RenderSettings.ambientGroundColor += _ambientGroundAdd;
+            RenderSettings.fogColor += _fogAdd;
+            _environmentApplied = true;
+        }
+
+        private Color EvaluateEnvironmentFlash(Camera cam)
+        {
+            float flashScale = Mathf.Max(0f, PlayerPrefs.GetFloat(EnvironmentFlashPrefKey, environmentFlash));
+            if (_strikes == null || flashScale <= 0f || !cam)
+                return Color.black;
+
+            Color tint = Color.Lerp(glowColor, coreColor, 0.7f);
+            tint.a = 0f;
+            Color sum = Color.black;
+            float weight = 0f;
+            Vector3 camPos = cam.transform.position;
+            float horizon = Mathf.Max(maxDistance, 1f);
+
+            for (int i = 0; i < _strikes.Length; i++)
+            {
+                Strike strike = _strikes[i];
+                if (!strike.Active)
+                    continue;
+
+                float envelope = strike.Evaluate();
+                if (envelope <= 0.002f)
+                    continue;
+
+                Vector3 origin = Vector3.Lerp(strike.Start, strike.End, 0.62f);
+                float normalized = Vector3.Distance(origin, camPos) / horizon;
+                float falloff = 1f / (1f + normalized * normalized * 3f);
+                float contribution = envelope * flashIntensity * _intensity * falloff * flashScale;
+                sum += tint * contribution;
+                weight = Mathf.Max(weight, contribution);
+            }
+
+            float cap = 1.6f * Mathf.Max(1f, flashScale);
+            sum.r = Mathf.Min(sum.r, cap);
+            sum.g = Mathf.Min(sum.g, cap);
+            sum.b = Mathf.Min(sum.b, cap);
+            sum.a = Mathf.Clamp01(weight);
+            return sum;
+        }
+
+        private void RevertEnvironmentFlash()
+        {
+            if (!_environmentApplied)
+                return;
+
+            RenderSettings.ambientSkyColor -= _ambientSkyAdd;
+            RenderSettings.ambientEquatorColor -= _ambientEquatorAdd;
+            RenderSettings.ambientGroundColor -= _ambientGroundAdd;
+            RenderSettings.fogColor -= _fogAdd;
+            _ambientSkyAdd = Color.black;
+            _ambientEquatorAdd = Color.black;
+            _ambientGroundAdd = Color.black;
+            _fogAdd = Color.black;
+            _environmentApplied = false;
+        }
+
         private sealed class Strike
         {
             public bool Active;
@@ -582,8 +693,9 @@ namespace Airplane.Weather
                     value = Mathf.Max(value, Mathf.Exp(-since / PulseDecay[i]));
                 }
 
-                float tail = 1f - Mathf.SmoothStep(0.65f, 1f, Age / Mathf.Max(Lifetime, 1e-4f));
-                return value * tail;
+                float tail = 1f - Mathf.SmoothStep(0.45f, 0.72f, Age / Mathf.Max(Lifetime, 1e-4f));
+                float shaped = value * tail;
+                return shaped < 0.05f ? 0f : shaped;
             }
         }
     }

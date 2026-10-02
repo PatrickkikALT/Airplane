@@ -21,6 +21,7 @@ Shader "Airplane/Weather/Lightning Bolt URP"
 
         [Header(Look)]
         _Intensity("Intensity", Float) = 1
+        _Emission("Emission", Float) = 8
         _Progress("Progress", Range(0, 1)) = 1
         _DrawSharpness("Draw Sharpness", Float) = 14
         _CoreWidth("Core Width", Range(0.01, 1)) = 0.18
@@ -70,6 +71,7 @@ Shader "Airplane/Weather/Lightning Bolt URP"
                 float _BranchLength;
                 float _BranchSpread;
                 float _Intensity;
+                float _Emission;
                 float _Progress;
                 float _DrawSharpness;
                 float _CoreWidth;
@@ -170,12 +172,15 @@ Shader "Airplane/Weather/Lightning Bolt URP"
 
                 // the channel strikes downward over a few milliseconds
                 float draw = saturate((_Progress - t) * _DrawSharpness);
+                float drive = draw * _Intensity;
 
-                float energy = (glow * 0.65 + core) * draw * _Intensity * input.thickness;
-                float3 color = lerp(_GlowColor.rgb, _CoreColor.rgb, core);
+                float glowEnergy = glow * drive * input.thickness;
+                float coreEnergy = core * drive;
+                float3 emitted = _GlowColor.rgb * glowEnergy * (_Emission * 0.22)
+                    + _CoreColor.rgb * coreEnergy * _Emission;
 
-                clip(energy - 0.0015);
-                return float4(color * energy, energy);
+                clip(glowEnergy + coreEnergy - 0.0015);
+                return float4(emitted, 1.0);
             }
             ENDHLSL
         }

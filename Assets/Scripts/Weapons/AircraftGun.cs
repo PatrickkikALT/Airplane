@@ -85,7 +85,11 @@ namespace Airplane.Weapons
         private int _ammo;
         private float _reloadClock;
         private bool _isFiring;
+        private const string HitSparksResource = "Particles/AircraftHitSparks";
+
         private readonly RaycastHit[] _hits = new RaycastHit[16];
+        private static GameObject _hitSparksPrefab;
+        private static bool _hitSparksMissing;
         private AircraftProjectile[] _pool = System.Array.Empty<AircraftProjectile>();
         private int _poolCount;
 
@@ -307,6 +311,7 @@ namespace Airplane.Weapons
             }
 
             TargetLeadCrosshair.NotifyShooterHit(shooter);
+            PlayHitSparks(in report);
 
             if (victim.SimulationEnabled)
             {
@@ -328,7 +333,19 @@ namespace Airplane.Weapons
             if (victim.SimulationEnabled && hit.Impulse.sqrMagnitude > 1e-8f)
                 victim.ApplyImpulseAtPosition(hit.Impulse, hit.Point);
 
+            if (!hit.Shooter)
+                PlayHitSparks(in hit);
+
             victim.SendMessage("OnGunHit", hit, SendMessageOptions.DontRequireReceiver);
+        }
+
+        private static void PlayHitSparks(in GunHit hit)
+        {
+            if (!_hitSparksPrefab)
+                _hitSparksPrefab = Resources.Load<GameObject>(HitSparksResource);
+
+            Vector3 outward = hit.Normal.sqrMagnitude > 1e-8f ? hit.Normal.normalized : Vector3.up;
+            Instantiate(_hitSparksPrefab, hit.Point, Quaternion.LookRotation(outward));
         }
 
         private AircraftProjectile RentTracer()

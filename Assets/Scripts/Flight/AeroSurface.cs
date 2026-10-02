@@ -139,6 +139,47 @@ namespace Airplane.FlightSimulation
         public float LastCd => _lastCd;
         public float LastAlphaDeg => _lastAlphaDeg;
         public float Area => area;
+
+        public Quaternion AeroInBody(Transform bodyRoot)
+        {
+            if (!bodyRoot)
+                return transform.rotation * AeroFrameLocal;
+            return Quaternion.Inverse(bodyRoot.rotation) * transform.rotation * AeroFrameLocal;
+        }
+
+        public Vector3 ForceBody(Quaternion aeroInBody, Vector3 velocityBody, in AtmosphereSample atmo)
+        {
+            float speed = FlightSimMath.SafeMagnitude(velocityBody);
+            if (speed < minAirspeed)
+                return Vector3.zero;
+
+            Vector3 vLocal = Quaternion.Inverse(aeroInBody) * velocityBody;
+            float alpha = FlightSimMath.AngleOfAttack(vLocal);
+            float beta = FlightSimMath.Sideslip(vLocal);
+            if (wingDownwashFactor > 0f)
+                alpha -= wingDownwashFactor * FlightSimMath.BodyAngleOfAttack(velocityBody);
+
+            float cl, cd, cy;
+            if (surfaceMode == AeroSurfaceMode.BluffBody)
+                EvaluateBluff(alpha, beta, 0f, 0f, out cl, out cd, out cy);
+            else
+            {
+                EvaluateAirfoil(alpha, 0f, 0f, 0f, speed, atmo, out cl, out cd);
+                cy = 0f;
+            }
+
+            float qS = atmo.DynamicPressure(speed) * area;
+            Vector3 vHat = velocityBody / speed;
+            Vector3 spanHat = aeroInBody * Vector3.forward;
+            Vector3 liftDir = Vector3.Cross(spanHat, vHat);
+            float liftDirMag = liftDir.magnitude;
+            if (liftDirMag > 1e-5f)
+                liftDir /= liftDirMag;
+            else
+                liftDir = aeroInBody * Vector3.up;
+
+            return liftDir * (qS * cl) - vHat * (qS * cd) + spanHat * (qS * cy);
+        }
         public AeroControlType ControlType => controlType;
         public AeroSurfaceMode SurfaceMode => surfaceMode;
 

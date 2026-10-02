@@ -14,6 +14,8 @@ namespace Airplane.UI
         [SerializeField] private float maxDistance = 2500f;
         [SerializeField] private float acquireConeDeg = 18f;
         [SerializeField] private float readyConeDeg = 1.35f;
+        [SerializeField] private float pipperSize = 14f;
+        [SerializeField] private float boresightSize = 8f;
         [SerializeField] private Color pipperColor = new Color(1f, 0.82f, 0.28f, 0.95f);
         [SerializeField] private Color readyColor = new Color(0.45f, 1f, 0.55f, 0.95f);
         [SerializeField] private Color boresightColor = new Color(0.2f, 0.9f, 0.3f, 0.55f);
@@ -33,6 +35,9 @@ namespace Airplane.UI
         private Canvas _canvas;
         private readonly PlaneRigidbody[] _bodyScratch = new PlaneRigidbody[32];
         private float _hitFlashUntil;
+        private MarkerStyle _pipperStyle;
+        private MarkerStyle _boreStyle;
+        private MarkerStyle _caretStyle;
 
         public static bool Enabled { get; set; } = true;
 
@@ -65,6 +70,7 @@ namespace Airplane.UI
             _instance = this;
             if (overlay)
                 _canvas = overlay.GetComponentInParent<Canvas>();
+            BuildMarkers();
             Show(pipper, false);
             Show(boresight, false);
             Show(offscreenCaret, false);
@@ -125,7 +131,7 @@ namespace Airplane.UI
 
             Vector3 boreWorld = muzzle + shotAxis * FlightSimMath.SafeMagnitude(aimPoint - muzzle);
             if (TryProject(boreWorld, out Vector2 boreScreen, out bool boreOnScreen) && boreOnScreen)
-                Place(boresight, boreScreen, boreTint, 0f);
+                Place(boresight, boreScreen, boreTint, 0f, _boreStyle);
             else
                 Show(boresight, false);
 
@@ -138,7 +144,7 @@ namespace Airplane.UI
 
             if (leadOnScreen)
             {
-                Place(pipper, leadScreen, leadTint, 0f);
+                Place(pipper, leadScreen, leadTint, 0f, _pipperStyle);
                 Show(offscreenCaret, false);
             }
             else
@@ -147,8 +153,109 @@ namespace Airplane.UI
                 Vector2 center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
                 Vector2 dir = leadScreen - center;
                 float ang = dir.sqrMagnitude < 1e-4f ? 0f : Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg - 90f;
-                Place(offscreenCaret, leadScreen, edgeTint, ang);
+                Place(offscreenCaret, leadScreen, edgeTint, ang, _caretStyle);
             }
+        }
+
+        private void BuildMarkers()
+        {
+            float radius = pipperSize > 1f ? pipperSize : 14f;
+            const float pipperStroke = 1.6f;
+            const float tickOut = 5f;
+            const float tickIn = 1f;
+            float pipperExtent = radius + tickOut + pipperStroke;
+            int pipperPx = Mathf.CeilToInt(pipperExtent * 2f);
+            Vector2 pipperCenter = new Vector2(pipperPx * 0.5f, pipperPx * 0.5f);
+            _pipperStyle = Bake(pipperPx, pipperPx, pipperCenter, p =>
+            {
+                float ring = Band(Mathf.Abs(Vector2.Distance(p, pipperCenter) - radius), pipperStroke * 0.5f);
+                float ticks = Segment(p, pipperCenter + new Vector2(0f, -(radius - tickIn)), pipperCenter + new Vector2(0f, -(radius + tickOut)), pipperStroke * 0.5f);
+                ticks = Mathf.Max(ticks, Segment(p, pipperCenter + new Vector2(0f, radius - tickIn), pipperCenter + new Vector2(0f, radius + tickOut), pipperStroke * 0.5f));
+                ticks = Mathf.Max(ticks, Segment(p, pipperCenter + new Vector2(-(radius - tickIn), 0f), pipperCenter + new Vector2(-(radius + tickOut), 0f), pipperStroke * 0.5f));
+                ticks = Mathf.Max(ticks, Segment(p, pipperCenter + new Vector2(radius - tickIn, 0f), pipperCenter + new Vector2(radius + tickOut, 0f), pipperStroke * 0.5f));
+                return Mathf.Max(ring, ticks);
+            });
+
+            float arm = boresightSize > 1f ? boresightSize : 8f;
+            const float crossStroke = 5f;
+            float boreExtent = arm + crossStroke;
+            int borePx = Mathf.CeilToInt(boreExtent * 2f);
+            Vector2 boreCenter = new Vector2(borePx * 0.5f, borePx * 0.5f);
+            _boreStyle = Bake(borePx, borePx, boreCenter, p =>
+            {
+                float horizontal = Segment(p, boreCenter + new Vector2(-arm, 0f), boreCenter + new Vector2(arm, 0f), crossStroke * 0.5f);
+                float vertical = Segment(p, boreCenter + new Vector2(0f, -arm), boreCenter + new Vector2(0f, arm), crossStroke * 0.5f);
+                return Mathf.Max(horizontal, vertical);
+            });
+
+            const float caretLen = 16f;
+            const float caretHalf = 8f;
+            const float caretStroke = 1.8f;
+            int caretW = Mathf.CeilToInt(caretHalf * 2f + caretStroke + 2f);
+            int caretH = Mathf.CeilToInt(caretLen + caretStroke + 2f);
+            Vector2 tip = new Vector2(caretW * 0.5f, caretH - 1f - caretStroke * 0.5f);
+            Vector2 baseLeft = tip + new Vector2(-caretHalf, -caretLen);
+            Vector2 baseRight = tip + new Vector2(caretHalf, -caretLen);
+            _caretStyle = Bake(caretW, caretH, tip, p =>
+            {
+                float a = Segment(p, tip, baseLeft, caretStroke * 0.5f);
+                float b = Segment(p, tip, baseRight, caretStroke * 0.5f);
+                float c = Segment(p, baseLeft, baseRight, caretStroke * 0.5f);
+                return Mathf.Max(a, Mathf.Max(b, c));
+            });
+
+            Assign(_pipperStyle, pipper);
+            Assign(_boreStyle, boresight);
+            Assign(_caretStyle, offscreenCaret);
+        }
+
+        private static void Assign(MarkerStyle style, Image marker)
+        {
+            if (!marker || !style.Sprite)
+                return;
+            marker.sprite = style.Sprite;
+            marker.type = Image.Type.Simple;
+            marker.preserveAspect = false;
+            marker.raycastTarget = false;
+            marker.rectTransform.pivot = style.Pivot;
+        }
+
+        private static MarkerStyle Bake(int width, int height, Vector2 pivotPixels, System.Func<Vector2, float> coverage)
+        {
+            Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            tex.hideFlags = HideFlags.HideAndDontSave;
+            tex.filterMode = FilterMode.Bilinear;
+            tex.wrapMode = TextureWrapMode.Clamp;
+            Color32[] pixels = new Color32[width * height];
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    float a = coverage(new Vector2(x + 0.5f, y + 0.5f));
+                    byte alpha = (byte)Mathf.Clamp(Mathf.RoundToInt(Mathf.Clamp01(a) * 255f), 0, 255);
+                    pixels[y * width + x] = new Color32(255, 255, 255, alpha);
+                }
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply(false, true);
+            Vector2 pivot = new Vector2(pivotPixels.x / width, pivotPixels.y / height);
+            Sprite sprite = Sprite.Create(tex, new Rect(0f, 0f, width, height), pivot, 100f);
+            sprite.hideFlags = HideFlags.HideAndDontSave;
+            return new MarkerStyle { Sprite = sprite, Pivot = pivot };
+        }
+
+        private static float Band(float distance, float halfWidth)
+        {
+            return Mathf.Clamp01(halfWidth + 0.65f - distance);
+        }
+
+        private static float Segment(Vector2 p, Vector2 a, Vector2 b, float halfWidth)
+        {
+            Vector2 ab = b - a;
+            float len2 = ab.sqrMagnitude;
+            float t = len2 < 1e-6f ? 0f : Mathf.Clamp01(Vector2.Dot(p - a, ab) / len2);
+            return Band(Vector2.Distance(p, a + ab * t), halfWidth);
         }
 
         private void HideMarkers()
@@ -158,14 +265,28 @@ namespace Airplane.UI
             Show(offscreenCaret, false);
         }
 
-        private void Place(Image marker, Vector2 screen, Color color, float zRotation)
+        private void Place(Image marker, Vector2 screen, Color color, float zRotation, MarkerStyle style)
         {
             if (!marker)
                 return;
             Show(marker, true);
             marker.color = color;
+            if (style.Sprite)
+            {
+                float scale = _canvas && _canvas.scaleFactor > 0.01f ? _canvas.scaleFactor : 1f;
+                Texture2D tex = style.Sprite.texture;
+                marker.rectTransform.pivot = style.Pivot;
+                marker.rectTransform.sizeDelta = new Vector2(tex.width / scale, tex.height / scale);
+            }
+
             HudVisibility.Place(overlay, marker.rectTransform, screen, _canvas);
             marker.rectTransform.localEulerAngles = new Vector3(0f, 0f, zRotation);
+        }
+
+        private struct MarkerStyle
+        {
+            public Sprite Sprite;
+            public Vector2 Pivot;
         }
 
         private void Show(Image marker, bool visible)

@@ -40,6 +40,7 @@ namespace Airplane.Multiplayer
                 Set(statusText, string.IsNullOrEmpty(_fault) ? NetworkConnection.Status : _fault);
             };
             SeedFields();
+            
         }
 
         private void OnDisable()

@@ -36,13 +36,11 @@ namespace Utils.Core.SceneLockTool
 			this.onComplete = onComplete;
 		}
 
-		~RunningWebRequest()
-		{
-			Cleanup();
-		}
-
 		public void Run()
 		{
+			if (isCleaned)
+				return;
+
 			if (IsExpired())
 			{
 				IsDone = true;
@@ -52,10 +50,19 @@ namespace Utils.Core.SceneLockTool
 				return;
 			}
 
-			if (!ConnectedWebRequest.isDone)
+			if (!TryGetCompleted(out bool done, out UnityWebRequest.Result requestResult, out string body))
+			{
+				IsDone = true;
+				onComplete?.Invoke();
+				Cleanup();
+				callback?.Invoke(WebRequestResult.Unknown, "unknown");
+				return;
+			}
+
+			if (!done)
 				return;
 
-			if (ConnectedWebRequest.result is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError)
+			if (requestResult is UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError)
 			{
 				Result = "network";
 				IsDone = true;
@@ -66,11 +73,10 @@ namespace Utils.Core.SceneLockTool
 			}
 			else
 			{
-				string result = ConnectedWebRequest.downloadHandler.text;
-
-				result = result.Replace("\n", "");
-				result = result.Replace("\r", "");
-				Result = result;
+				body ??= string.Empty;
+				body = body.Replace("\n", "");
+				body = body.Replace("\r", "");
+				Result = body;
 				IsDone = true;
 				onComplete?.Invoke();
 				Cleanup();
@@ -105,11 +111,45 @@ namespace Utils.Core.SceneLockTool
 			{
 				isCleaned = true;
 				EditorApplication.update -= Run;
-				if (ConnectedWebRequest != null)
+				UnityWebRequest request = ConnectedWebRequest;
+				ConnectedWebRequest = null;
+				if (request == null)
+					return;
+
+				try
 				{
-					ConnectedWebRequest.Abort();
-					ConnectedWebRequest.Dispose();
+					request.Abort();
+					request.Dispose();
 				}
+				catch (Exception)
+				{
+				}
+			}
+		}
+
+		private bool TryGetCompleted(out bool done, out UnityWebRequest.Result requestResult, out string body)
+		{
+			done = false;
+			requestResult = UnityWebRequest.Result.InProgress;
+			body = string.Empty;
+
+			UnityWebRequest request = ConnectedWebRequest;
+			if (request == null)
+				return false;
+
+			try
+			{
+				done = request.isDone;
+				if (!done)
+					return true;
+
+				requestResult = request.result;
+				body = request.downloadHandler != null ? request.downloadHandler.text : string.Empty;
+				return true;
+			}
+			catch (NullReferenceException)
+			{
+				return false;
 			}
 		}
 

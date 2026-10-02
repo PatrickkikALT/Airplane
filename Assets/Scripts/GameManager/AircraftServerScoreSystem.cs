@@ -1,80 +1,102 @@
-using Airplane.Multiplayer;
 using System.Collections.Generic;
+using Airplane.Multiplayer;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem;
+
+public struct RoundStanding
+{
+    public string Name;
+    public int Points;
+}
 
 public class AircraftServerScoreSystem : NetworkBehaviour
 {
     public static AircraftServerScoreSystem Instance;
-    private Dictionary<NetworkedAircraft, int> playerPoints = new Dictionary<NetworkedAircraft, int>();
 
+    private readonly Dictionary<string, RoundStanding> _standings = new Dictionary<string, RoundStanding>();
+    private bool _roundActive;
 
     private void Awake()
     {
         if (!Instance)
-        {
             Instance = this;
-        }
-
     }
 
-    public void StartGame()
+    public void BeginRound()
     {
+        if (!IsServer)
+            return;
 
-        if (!NetworkManager.Singleton.IsHost) return;
+        _standings.Clear();
+        _roundActive = true;
 
-        foreach (NetworkedAircraft networkedAircraft in NetworkedAircraft.All)
+        IReadOnlyList<NetworkedAircraft> aircraft = NetworkedAircraft.All;
+        for (int i = 0; i < aircraft.Count; i++)
         {
-            playerPoints.Add(networkedAircraft, 0);
-        }
-    }
+            NetworkedAircraft pilot = aircraft[i];
+            if (!pilot)
+                continue;
 
-    private void Update()
-    {
-
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            StartGame();
-        }
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            HandlePointServerRpc(NetworkedAircraft.Local.OwnerClientId, NetworkedAircraft.Local.DisplayName);
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void HandlePointServerRpc(ulong shooterPlayerID, string shooterPlayerName)
-    {
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(shooterPlayerID, out NetworkClient client))
-        {
-            NetworkObject playerObject = client.OwnedObjects[0];
-
-            foreach (NetworkObject networkObject in client.OwnedObjects)
+            string key = KeyOf(pilot);
+            _standings[key] = new RoundStanding
             {
-                if (networkObject.TryGetComponent(out PlayerInput playerInput))
-                {
-                    playerObject = networkObject;
-                    break;
-                } 
-            }
-
-            if (playerObject.TryGetComponent(out NetworkedAircraft aircraft))
-            {
-                playerPoints[aircraft]++;
-            }
-
-            if (playerObject.TryGetComponent(out AircraftClientScoreSystem scoreSystem))
-            {
-                scoreSystem.HandlePointClientRpc(shooterPlayerID, playerPoints[aircraft]);
-            }
+                Name = pilot.DisplayName,
+                Points = 0
+            };
         }
-
     }
 
-    public Dictionary<NetworkedAircraft, int> ReturnPlayerPoints()
+    public void EndRound()
     {
-        return playerPoints;
+        _roundActive = false;
     }
 
+    public List<RoundStanding> CopyStandings()
+    {
+        List<RoundStanding> copy = new List<RoundStanding>(_standings.Count);
+        foreach (RoundStanding standing in _standings.Values)
+            copy.Add(standing);
+
+        copy.Sort((a, b) => b.Points.CompareTo(a.Points));
+        return copy;
+    }
+
+    [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Everyone)]
+    public void ReportKillRpc(NetworkObjectReference shooterRef)
+    {
+        if (!_roundActive)
+            return;
+        if (!shooterRef.TryGet(out NetworkObject shooterObject))
+            return;
+        if (!shooterObject.TryGetComponent(out NetworkedAircraft shooter))
+            return;
+
+        string key = KeyOf(shooter);
+        RoundStanding standing = _standings.TryGetValue(key, out RoundStanding existing)
+            ? existing
+            : new RoundStanding { Name = shooter.DisplayName, Points = 0 };
+
+        standing.Name = shooter.DisplayName;
+        standing.Points++;
+        _standings[key] = standing;
+
+        if (!shooter.IsBot)
+            ReportScoreRpc(shooter.OwnerClientId, standing.Points);
+    }
+
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void ReportScoreRpc(ulong ownerClientId, int points)
+    {
+        if (NetworkManager.LocalClientId != ownerClientId)
+            return;
+
+        RoundScoreHud.Instance?.SetScore(points);
+    }
+
+    private static string KeyOf(NetworkedAircraft aircraft)
+    {
+        if (aircraft.IsBot)
+            return "b:" + aircraft.DisplayName;
+        return "p:" + aircraft.OwnerClientId;
+    }
 }

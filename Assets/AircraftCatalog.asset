@@ -19,3 +19,6 @@ MonoBehaviour:
   - displayName: RAI R-43
     prefab: {fileID: 8366032937517303367, guid: fe773cb50ee75c4428b4d8a58a579ea1, type: 3}
     previewPrefab: {fileID: 8366032937517303367, guid: dd27134ed43526fc4830e3b09597d7fb, type: 3}
+  - displayName: NLI GO-46
+    prefab: {fileID: 3049803396400197431, guid: 00bf06368d5e08f409fd60cee900144d, type: 3}
+    previewPrefab: {fileID: 3049803396400197431, guid: 27055e4105bad03358f67ac5b149b402, type: 3}

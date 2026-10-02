@@ -336,6 +336,11 @@ namespace Airplane.Multiplayer
             AircraftChaseCamera.Active?.OnResetOrbit(context);
         }
 
+        public void OnTogglePauseMenu(InputAction.CallbackContext _)
+        {
+            PauseMenu.Instance.TogglePauseMenu();
+        }
+
         private void Update()
         {
             if (!IsSpawned)

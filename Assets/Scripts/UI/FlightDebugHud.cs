@@ -31,12 +31,20 @@ namespace Airplane.UI
 
         private void Start()
         {
-            Set(controlsText, "W/S pitch  A/D roll  Q/E yaw\nR/F throttle  X/Z flaps  Shift airbrake  Space wheel");
+            SetSibling(throttleText, 0);
+            SetSibling(airspeedText, 1);
+            SetSibling(machText, 2);
+            SetSibling(altitudeText, 3);
+            SetSibling(configurationText, 4);
+            SetSibling(surfacesText, 5);
+            Hide(anglesText);
+            Hide(loadText);
+            Hide(vitalityText);
+            Hide(controlsText);
         }
 
         private void Update()
         {
-            // Assert to the compiler that flight & body is infact initialized, because the compiler is stupid.
             AircraftFlightController flight = null!;
             PlaneRigidbody body = null!;
             bool show = HudVisibility.Visible && TryResolve(out flight, out body);
@@ -68,50 +76,52 @@ namespace Airplane.UI
                 return;
             }
 
-            SetActive(altitudeText, show);
+            SetActive(throttleText, show);
             SetActive(airspeedText, show);
             SetActive(machText, show);
-            SetActive(anglesText, show);
-            SetActive(loadText, show);
-            SetActive(throttleText, show);
+            SetActive(altitudeText, show);
             SetActive(configurationText, show);
             SetActive(surfacesText, show);
-            SetActive(vitalityText, show);
-            SetActive(controlsText, show);
+            Hide(anglesText);
+            Hide(loadText);
+            Hide(vitalityText);
+            Hide(controlsText);
         }
 
         private void Rebuild(AircraftFlightController flight, PlaneRigidbody body)
         {
             AtmosphereSample atmo = AtmosphericModel.SampleAt(body.Position);
             float tas = body.TrueAirspeed;
-            Vector3 vBody = body.InverseTransformDirection(body.Velocity - AtmosphericModel.SampleWind());
-            float aoa = FlightSimMath.BodyAngleOfAttack(vBody) * FlightSimMath.Rad2Deg;
-            float beta = FlightSimMath.BodySideslip(vBody) * FlightSimMath.Rad2Deg;
             float ias = tas * Mathf.Sqrt(atmo.Density / AtmosphericModel.StandardSeaLevelDensity);
-            float mach = atmo.SpeedOfSound > 1f ? tas / atmo.SpeedOfSound : 0f;
-            float knotsToKmh = FlightSimMath.AirSpeedToKnots * FlightSimMath.KnotsToKmh;
-            AircraftEngine engine = flight.Engine;
-            AircraftVitality vitality = flight.GetComponent<AircraftVitality>();
+            float kmh = FlightSimMath.AirSpeedToKnots * FlightSimMath.KnotsToKmh;
+            CountAmmo(flight, out int mg, out int cannon);
 
-            Set(altitudeText, "ALT  " + atmo.Altitude.ToString("F0") + " m");
-            Set(airspeedText,
-                "TAS  " + (tas * knotsToKmh).ToString("F0") + " km/u   IAS " + (ias * knotsToKmh).ToString("F0") + " km/u");
-            Set(machText, "M    " + mach.ToString("F2") + "    q " + atmo.DynamicPressure(tas).ToString("F0") + " Pa");
-            Set(anglesText, "AoA  " + aoa.ToString("F1") + "°    β " + beta.ToString("F1") + "°");
-            Set(loadText,
-                "G    " + body.LoadFactorNz.ToString("F2") + "    TRIM " + flight.ElevatorTrim.ToString("F2")
-                + "    ρ " + atmo.Density.ToString("F3") + " kg/m³");
-            Set(throttleText,
-                "THR  " + (flight.Throttle01 * 100f).ToString("F0") + "%   T "
-                + (engine != null ? engine.LastThrust.ToString("F0") : "0") + " N");
-            Set(configurationText,
-                "FLP  " + (flight.Flaps01 * 100f).ToString("F0") + "%   BRK "
-                + (flight.Airbrake01 * 100f).ToString("F0") + "%   WHL "
-                + (flight.WheelBrake01 * 100f).ToString("F0") + "%");
-            Set(surfacesText,
-                "A/E/R " + flight.Aileron01.ToString("F2") + "  "
-                + flight.Elevator01.ToString("F2") + "  " + flight.Rudder01.ToString("F2"));
-            Set(vitalityText, vitality ? "Vitality   " + vitality.HitPoints.ToString("F0") : "");
+            Set(throttleText, "Throttle - %" + (flight.Throttle01 * 100f).ToString("F0"));
+            Set(airspeedText, "IAS - " + (ias * kmh).ToString("F0") + "km/h");
+            Set(machText, "TAS - " + (tas * kmh).ToString("F0") + "km/h");
+            Set(altitudeText, "ALT - " + atmo.Altitude.ToString("F0") + "m");
+            Set(configurationText, "MG - " + mg.ToString());
+            Set(surfacesText, "CNN - " + cannon.ToString());
+        }
+
+        private static void CountAmmo(AircraftFlightController flight, out int mg, out int cannon)
+        {
+            mg = 0;
+            cannon = 0;
+            AircraftWeaponsController weapons = flight.GetComponent<AircraftWeaponsController>();
+            if (!weapons || weapons.Guns == null)
+                return;
+
+            foreach (AircraftGun gun in weapons.Guns)
+            {
+                if (!gun || gun.AmmoCapacity <= 0)
+                    continue;
+
+                if (gun.TriggerChannel == GunTriggerChannel.Secondary)
+                    cannon += gun.AmmoRemaining;
+                else
+                    mg += gun.AmmoRemaining;
+            }
         }
 
         private static bool TryResolve(out AircraftFlightController flight, out PlaneRigidbody body)
@@ -144,6 +154,19 @@ namespace Airplane.UI
             if (!text || text.text == value)
                 return;
             text.text = value;
+        }
+
+        private static void SetSibling(TMP_Text text, int index)
+        {
+            if (!text)
+                return;
+            text.transform.SetSiblingIndex(index);
+        }
+
+        private void Hide(TMP_Text text)
+        {
+            Set(text, "");
+            SetActive(text, false);
         }
 
         private void SetActive(TMP_Text text, bool visible)

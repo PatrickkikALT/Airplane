@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
@@ -8,35 +10,42 @@ public class MenuPanelSlider : MonoBehaviour
 {
     [SerializeField] private RectTransform mainMenu;
     [SerializeField] private RectTransform settings;
+    [SerializeField] private RectTransform[] extraPanels;
     [SerializeField] private float duration = 0.35f;
 
     private RectTransform _window;
     private RectTransform _track;
+    private RectTransform[] _panels;
     private Coroutine _slide;
     private float _shown;
+    private bool _ready;
+    private bool _hasPending;
+    private float _pending;
 
     private void Start()
     {
-        if (!mainMenu || !settings)
+        _panels = CollectPanels();
+        if (_panels.Length == 0)
         {
-            Debug.LogError("MenuPanelSlider needs the main menu and settings panels.", this);
+            Debug.LogError("MenuPanelSlider needs at least one panel.", this);
             return;
         }
 
-        mainMenu.gameObject.SetActive(true);
-        settings.gameObject.SetActive(true);
+        RectTransform first = _panels[0];
+        for (int i = 0; i < _panels.Length; i++)
+            _panels[i].gameObject.SetActive(true);
 
         var windowObject = new GameObject("MenuSlideWindow", typeof(RectTransform), typeof(RectMask2D));
         _window = windowObject.GetComponent<RectTransform>();
-        _window.SetParent(mainMenu.parent, false);
-        _window.SetSiblingIndex(mainMenu.GetSiblingIndex());
-        _window.anchorMin = mainMenu.anchorMin;
-        _window.anchorMax = mainMenu.anchorMax;
-        _window.pivot = mainMenu.pivot;
-        _window.anchoredPosition = mainMenu.anchoredPosition;
-        _window.sizeDelta = mainMenu.sizeDelta;
-        _window.localRotation = mainMenu.localRotation;
-        _window.localScale = mainMenu.localScale;
+        _window.SetParent(first.parent, false);
+        _window.SetSiblingIndex(first.GetSiblingIndex());
+        _window.anchorMin = first.anchorMin;
+        _window.anchorMax = first.anchorMax;
+        _window.pivot = first.pivot;
+        _window.anchoredPosition = first.anchoredPosition;
+        _window.sizeDelta = first.sizeDelta;
+        _window.localRotation = first.localRotation;
+        _window.localScale = first.localScale;
 
         var trackObject = new GameObject("MenuSlideTrack", typeof(RectTransform));
         _track = trackObject.GetComponent<RectTransform>();
@@ -47,28 +56,65 @@ public class MenuPanelSlider : MonoBehaviour
         _track.localScale = Vector3.one;
         _track.localRotation = Quaternion.identity;
 
-        Place(mainMenu, 0f, 0.5f);
-        Place(settings, 0.5f, 1f);
-        _shown = 0f;
+        for (int i = 0; i < _panels.Length; i++)
+        {
+            float min = i / (float)_panels.Length;
+            float max = (i + 1) / (float)_panels.Length;
+            Place(_panels[i], min, max);
+        }
+
+        _ready = true;
+        _shown = _hasPending ? _pending : 0f;
+        _hasPending = false;
         Canvas.ForceUpdateCanvases();
         Apply();
         SetInteractable(true);
     }
 
-    public void ShowSettings()
-    {
-        SlideTo(1f);
-    }
-
     public void ShowMainMenu()
     {
-        SlideTo(0f);
+        Show(0);
+    }
+
+    public void ShowSettings()
+    {
+        Show(1);
+    }
+
+    public void Show(int index)
+    {
+        if (_ready && (index < 0 || index >= _panels.Length))
+            return;
+        SlideTo(index);
+    }
+
+    public void Hide()
+    {
+        SlideTo(-1f);
     }
 
     private void LateUpdate()
     {
         if (_track && _slide == null)
             Apply();
+    }
+
+    private RectTransform[] CollectPanels()
+    {
+        var list = new List<RectTransform>();
+        AddPanel(list, mainMenu);
+        AddPanel(list, settings);
+        if (extraPanels == null)
+            return list.ToArray();
+        for (int i = 0; i < extraPanels.Length; i++)
+            AddPanel(list, extraPanels[i]);
+        return list.ToArray();
+    }
+
+    private static void AddPanel(List<RectTransform> list, RectTransform panel)
+    {
+        if (panel && !list.Contains(panel))
+            list.Add(panel);
     }
 
     private void Place(RectTransform panel, float anchorMinX, float anchorMaxX)
@@ -85,9 +131,14 @@ public class MenuPanelSlider : MonoBehaviour
 
     private void SlideTo(float target)
     {
-        if (!_track)
+        if (!_ready)
+        {
+            _pending = target;
+            _hasPending = true;
             return;
-        if (_slide == null && Mathf.Approximately(_shown, target))
+        }
+
+        if (_slide == null && Mathf.Approximately(_shown, target)) 
             return;
         if (_slide != null)
             StopCoroutine(_slide);
@@ -117,14 +168,14 @@ public class MenuPanelSlider : MonoBehaviour
     private void Apply()
     {
         float width = _window.rect.width;
-        _track.sizeDelta = new Vector2(width * 2f, 0f);
+        _track.sizeDelta = new Vector2(width * _panels.Length, 0f);
         _track.anchoredPosition = new Vector2(-_shown * width, 0f);
     }
 
     private void SetInteractable(bool settled)
     {
-        SetGroup(mainMenu, settled && _shown < 0.5f);
-        SetGroup(settings, settled && _shown >= 0.5f);
+        for (int i = 0; i < _panels.Length; i++)
+            SetGroup(_panels[i], settled && Mathf.Abs(_shown - i) < 0.5f);
     }
 
     private static void SetGroup(RectTransform panel, bool on)

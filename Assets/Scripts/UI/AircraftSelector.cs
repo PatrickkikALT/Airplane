@@ -15,12 +15,14 @@ namespace Airplane.UI
         [SerializeField] private AircraftCatalog catalog;
         [SerializeField] private Button aircraftButton;
         [SerializeField] private GameObject view;
+        [SerializeField] private float slideDuration = 0.35f;
         [SerializeField] private Button previousButton;
         [SerializeField] private Button nextButton;
         [SerializeField] private Button backButton;
         [SerializeField] private TMP_Text label;
         [SerializeField] private TMP_Text massStat;
         [SerializeField] private TMP_Text speedStat;
+        [SerializeField] private TMP_Text zeroThrustStat;
         [SerializeField] private TMP_Text thrustStat;
         [SerializeField] private TMP_Text rollStat;
         [SerializeField] private TMP_Text pitchStat;
@@ -30,6 +32,16 @@ namespace Airplane.UI
         private readonly List<GameObject> _originalChildren = new List<GameObject>();
         private GameObject _preview;
         private bool _hidOriginal;
+        private RectTransform _panel;
+        private Coroutine _slide;
+        private float _shown;
+        private bool _poseReady;
+        private Vector2 _restAnchored;
+        private Vector2 _anchorMin;
+        private Vector2 _anchorMax;
+        private Vector2 _pivot;
+        private Vector2 _sizeDelta;
+        private float _slideDistance;
 
         private void Awake()
         {
@@ -62,17 +74,100 @@ namespace Airplane.UI
 
         public void Open()
         {
-            if (!view || view.activeSelf)
+            if (!ResolvePanel())
                 return;
 
-            view.SetActive(true);
             ShowCurrent();
+            SlidePanel(1f);
         }
 
         public void Close()
         {
-            if (view)
+            if (!ResolvePanel())
+                return;
+
+            SlidePanel(0f);
+        }
+
+        private bool ResolvePanel()
+        {
+            if (!view)
+            {
+                MenuPanelSlider slider = FindAnyObjectByType<MenuPanelSlider>();
+                Transform found = slider ? slider.transform.Find("AircraftSelector") : null;
+                if (found)
+                    view = found.gameObject;
+            }
+
+            _panel = view ? view.transform as RectTransform : null;
+            if (!_panel)
+                return false;
+
+            if (_poseReady)
+                return true;
+
+            _anchorMin = _panel.anchorMin;
+            _anchorMax = _panel.anchorMax;
+            _pivot = _panel.pivot;
+            _sizeDelta = _panel.sizeDelta;
+            _restAnchored = _panel.anchoredPosition;
+            RectTransform parent = _panel.parent as RectTransform;
+            float span = parent ? Mathf.Abs(_anchorMax.x - _anchorMin.x) * parent.rect.width : _panel.rect.width;
+            _slideDistance = Mathf.Max(1f, span + _sizeDelta.x);
+            _poseReady = true;
+            _shown = view.activeSelf ? 1f : 0f;
+            return true;
+        }
+
+        private void SlidePanel(float target)
+        {
+            if (_slide != null)
+                StopCoroutine(_slide);
+            _slide = StartCoroutine(Slide(target));
+        }
+
+        private System.Collections.IEnumerator Slide(float target)
+        {
+            view.SetActive(true);
+            ApplyPanel(_shown);
+            SetPanelInteractive(false);
+            float from = _shown;
+            float t = 0f;
+            while (t < slideDuration)
+            {
+                t += Time.unscaledDeltaTime;
+                float u = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / Mathf.Max(0.01f, slideDuration)));
+                _shown = Mathf.Lerp(from, target, u);
+                ApplyPanel(_shown);
+                yield return null;
+            }
+
+            _shown = target;
+            ApplyPanel(_shown);
+            SetPanelInteractive(target >= 1f);
+            if (target <= 0f)
                 view.SetActive(false);
+            _slide = null;
+        }
+
+        private void ApplyPanel(float shown)
+        {
+            _panel.anchorMin = _anchorMin;
+            _panel.anchorMax = _anchorMax;
+            _panel.pivot = _pivot;
+            _panel.sizeDelta = _sizeDelta;
+            _panel.localRotation = Quaternion.identity;
+            _panel.localScale = Vector3.one;
+            _panel.anchoredPosition = _restAnchored + new Vector2(-(1f - shown) * _slideDistance, 0f);
+        }
+
+        private void SetPanelInteractive(bool on)
+        {
+            CanvasGroup group = view.GetComponent<CanvasGroup>();
+            if (!group)
+                group = view.AddComponent<CanvasGroup>();
+            group.interactable = on;
+            group.blocksRaycasts = on;
         }
 
         public void Previous()
@@ -190,8 +285,12 @@ namespace Airplane.UI
             GameObject prefab = count > 0 ? catalog.GetPrefab(LocalPlayerIdentity.AircraftIndex) : null;
             PlaneRigidbody body = prefab ? prefab.GetComponent<PlaneRigidbody>() : null;
             AircraftEngine engine = prefab ? prefab.GetComponentInChildren<AircraftEngine>(true) : null;
+            AircraftEngine[] engines = prefab ? prefab.GetComponentsInChildren<AircraftEngine>(true) : null;
+            AeroSurface[] surfaces = prefab ? prefab.GetComponentsInChildren<AeroSurface>(true) : null;
+            float levelSpeed = body ? LevelFlightSpeed.SeaLevelTrueAirspeed(body, engines, surfaces) : 0f;
             SetStat(massStat, body ? $"{body.Mass:0} kg" : "—");
-            SetStat(speedStat, engine ? $"{engine.ZeroThrustAirspeed * 3.6f:0} km/h" : "—");
+            SetStat(speedStat, levelSpeed > 1f ? $"{levelSpeed * 3.6f:0} km/h" : "—");
+            SetStat(zeroThrustStat, engine ? $"{engine.ZeroThrustAirspeed * 3.6f:0} km/h" : "—");
             SetStat(thrustStat, engine ? $"{engine.MaxStaticThrust / 1000f:0.0} kN" : "—");
             SetStat(rollStat, body ? $"{body.MaxAngularSpeedDeg.x:0} °/s" : "—");
             SetStat(pitchStat, body ? $"{body.MaxAngularSpeedDeg.z:0} °/s" : "—");

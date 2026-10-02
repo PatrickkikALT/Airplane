@@ -7,6 +7,16 @@
             "id": "c0718e2c-3a7d-4827-8cce-7951d7b09047",
             "actions": [
                 {
+                    "name": "Flaps",
+                    "type": "Value",
+                    "id": "7e1c9a2b-4d3f-4a8e-9c1b-2f6d8e0a4b17",
+                    "expectedControlType": "Axis",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true,
+                    "priority": 0
+                },
+                {
                     "name": "Pitch",
                     "type": "Value",
                     "id": "29446c21-2dd4-4135-a8f7-a725c64f8ef3",
@@ -40,16 +50,6 @@
                     "name": "Throttle",
                     "type": "Value",
                     "id": "4a4ef0cf-b266-47f2-863b-bb68f7d91295",
-                    "expectedControlType": "Axis",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true,
-                    "priority": 0
-                },
-                {
-                    "name": "Flaps",
-                    "type": "Value",
-                    "id": "7e1c9a2b-4d3f-4a8e-9c1b-2f6d8e0a4b17",
                     "expectedControlType": "Axis",
                     "processors": "",
                     "interactions": "",
@@ -131,6 +131,16 @@
                     "type": "Button",
                     "id": "b4d5e6f7-0819-42a3-bd24-e5f60718293a",
                     "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "PauseMenu",
+                    "type": "Button",
+                    "id": "95aa7ebf-c81f-4910-b24e-72b07f44de1c",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false,
@@ -707,6 +717,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "ResetOrbit",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "4d283443-07a8-48f8-8349-d1940b334a5f",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PauseMenu",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f8d9bfef-2784-4c5d-9e6b-79a117765d67",
+                    "path": "<Gamepad>/start",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "PauseMenu",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

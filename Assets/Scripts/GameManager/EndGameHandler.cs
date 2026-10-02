@@ -1,4 +1,3 @@
-using Airplane.Multiplayer;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -7,53 +6,91 @@ using UnityEngine;
 
 public class EndGameHandler : NetworkBehaviour
 {
-    [SerializeField] private GameObject playerTag;
     [SerializeField] private Transform resultTagParent;
-    private AircraftServerScoreSystem _aircraftServerScoreSystem;
+    [SerializeField] private TMP_Text resultsTitle;
+    [SerializeField] private float resultsHoldSeconds = 6f;
+
+    private Coroutine _hold;
 
     private void Awake()
     {
-        _aircraftServerScoreSystem = GetComponent<AircraftServerScoreSystem>();
+        Hide();
     }
 
-    public void HandleResults()
+    public void Present(List<RoundStanding> standings)
     {
-        HandlePlayerTag();
-        StartCoroutine(ShowResults());
-    }
-    private void HandlePlayerTag()
-    {
-        Dictionary<NetworkedAircraft, int> playerResults = _aircraftServerScoreSystem.ReturnPlayerPoints();
+        if (!IsServer)
+            return;
 
-        foreach (var points in playerResults)
-        {
-            NetworkedAircraft aircraft = points.Key;
-            int pointValue = points.Value;
-            ShowPointsClientRpc(aircraft.DisplayName, pointValue);
-            
-        }
+        ShowResultsRpc(standings.Count);
+        for (int i = 0; i < standings.Count; i++)
+            SetResultRowRpc(i, standings[i].Name, standings[i].Points);
+        if (_hold != null)
+            StopCoroutine(_hold);
+        _hold = StartCoroutine(HoldResults());
     }
 
-    [ClientRpc]
-    private void ShowPointsClientRpc(string aircraftName, int pointValue)
+    public void Hide()
     {
-        Transform playerTagClone = Instantiate(playerTag, resultTagParent).transform;
-        TMP_Text nameText = playerTagClone.GetChild(0).GetComponent<TMP_Text>();
-        TMP_Text pointText = playerTagClone.GetChild(1).GetComponent<TMP_Text>();
-        nameText.text = aircraftName;
-        pointText.text = pointValue.ToString();
+        ClearRows();
+        if (resultTagParent)
+            resultTagParent.gameObject.SetActive(false);
     }
 
-    private IEnumerator ShowResults()
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void ShowResultsRpc(int count)
     {
+        if (resultsTitle)
+            resultsTitle.text = "Round over";
+
+        if (!resultTagParent)
+            return;
+
         resultTagParent.gameObject.SetActive(true);
-        yield return new WaitForSeconds(5);
-        resultTagParent.gameObject.SetActive(false);
-        EndGame();
+        int shown = Mathf.Min(count, resultTagParent.childCount);
+        for (int i = 0; i < resultTagParent.childCount; i++)
+            resultTagParent.GetChild(i).gameObject.SetActive(i < shown);
     }
 
-    private void EndGame()
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void SetResultRowRpc(int index, string pilotName, int points)
     {
-        GameManager.Instance.EndGame();
+        if (!resultTagParent || index < 0 || index >= resultTagParent.childCount)
+            return;
+
+        Transform row = resultTagParent.GetChild(index);
+        row.gameObject.SetActive(true);
+        if (row.childCount < 2)
+            return;
+
+        TMP_Text nameText = row.GetChild(0).GetComponent<TMP_Text>();
+        TMP_Text pointText = row.GetChild(1).GetComponent<TMP_Text>();
+        if (nameText)
+            nameText.text = pilotName;
+        if (pointText)
+            pointText.text = points.ToString();
+    }
+
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void HideResultsRpc()
+    {
+        Hide();
+    }
+
+    private IEnumerator HoldResults()
+    {
+        yield return new WaitForSeconds(resultsHoldSeconds);
+        _hold = null;
+        HideResultsRpc();
+        GameManager.Instance.CompleteRound();
+    }
+
+    private void ClearRows()
+    {
+        if (!resultTagParent)
+            return;
+
+        for (int i = 0; i < resultTagParent.childCount; i++)
+            resultTagParent.GetChild(i).gameObject.SetActive(false);
     }
 }

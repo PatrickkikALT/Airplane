@@ -1,199 +1,173 @@
 using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
-using Airplane.Weapons;
 using System.Collections;
-using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEditor.SearchService;
 using UnityEngine;
-using UnityEngine.Android;
 
 public enum Direction
 {
     Left = 0, Right = 1, Forward = 2, Back = 3,
 }
+
 public class GameManager : NetworkBehaviour
 {
-
     public static GameManager Instance;
-
-    private IReadOnlyList<NetworkedAircraft> _readOnlyAircrafts = new List<NetworkedAircraft>();
-    private List<NetworkedAircraft> _aircrafts = new List<NetworkedAircraft>();
 
     [SerializeField] private FadeHandler fadeHandler;
     [SerializeField] private Transform fightArea;
-    private Bounds _bounds;
+    [SerializeField] private float spawnAltitude = 970f;
+    [SerializeField] private GameObject startButton;
 
-    private bool _hasGameStarted;
+    private Bounds _bounds;
+    private bool _roundRunning;
+    private bool _endingRound;
 
     private AircraftServerScoreSystem _aircraftServerScoreSystem;
     private EndGameHandler _endGameHandler;
     private JoinHandler _joinHandler;
 
-    [SerializeField] private GameObject startButton;
-
     private void Awake()
     {
-        _bounds = fightArea.GetComponent<Collider>().bounds;
+        if (fightArea)
+            _bounds = fightArea.GetComponent<Collider>().bounds;
 
         if (!Instance)
-        {
             Instance = this;
-        }
 
         _aircraftServerScoreSystem = GetComponent<AircraftServerScoreSystem>();
         _endGameHandler = GetComponent<EndGameHandler>();
         _joinHandler = GetComponent<JoinHandler>();
-
     }
 
     public void StartGame()
     {
-        Debug.Log("StartGame");
-        CollectPlayers();
-        //stops here, figure out why this is not running on the host
-        StartSpawningPlayersClientRpc();
-        StartGameJoinHandler();
-    }
-
-    private void StartGameJoinHandler()
-    {
-        _joinHandler?.StartGame();
-    }
-
-    private void CollectPlayers()
-    {
-        Debug.Log("CollectPlayers");
-        if (!NetworkManager.Singleton.IsHost) return;
-        Debug.Log("Player is the host, collecting aircrafts");
-        _readOnlyAircrafts = NetworkedAircraft.All;
-
-        for (int i = 0; i < _readOnlyAircrafts.Count; i++)
+        if (!IsSpawned || !IsServer || _roundRunning)
+            return;
+        if (!fightArea)
         {
-            _aircrafts.Add(_readOnlyAircrafts[i]);
+            Debug.LogError("GameManager needs a Fight Area with a collider.", this);
+            return;
         }
 
-    }
-    [ClientRpc]
-    private void StartSpawningPlayersClientRpc()
-    {
-        Debug.Log("StartSpawningPlayersClientRpc");
-        StartCoroutine(SpawnPlayers());
-    }
-    private IEnumerator SpawnPlayers()
-    {
-        Debug.Log("SpawnPlayers");
-        yield return StartCoroutine(fadeHandler.FadeIn());
-        TeleportPlayers();
-        yield return StartCoroutine(fadeHandler.FadeOut());
-        BeginSession();
+        _bounds = fightArea.GetComponent<Collider>().bounds;
+        _roundRunning = true;
+        _endingRound = false;
+        _joinHandler?.NotifyRoundStarted();
+        if (startButton)
+            startButton.SetActive(false);
+
+        StartRoundRpc(Random.Range(0, 4));
     }
 
-    private IEnumerator FadingEnding()
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void StartRoundRpc(int edge)
     {
-        yield return StartCoroutine(fadeHandler.FadeIn());
-        yield return StartCoroutine(fadeHandler.FadeOut());
-        EndSession();
+        StartCoroutine(SpawnPlayers((Direction)edge));
+    }
+
+    private IEnumerator SpawnPlayers(Direction edge)
+    {
+        if (fightArea)
+            _bounds = fightArea.GetComponent<Collider>().bounds;
+
+        if (fadeHandler)
+            yield return StartCoroutine(fadeHandler.FadeIn());
+
+        TeleportPlayers(edge);
+
+        if (fadeHandler)
+            yield return StartCoroutine(fadeHandler.FadeOut());
+
+        BeginSession();
     }
 
     private void BeginSession()
     {
-        _hasGameStarted = true;
-        _aircraftServerScoreSystem.StartGame();
-        Timer.Instance.TurnTimerOn();
+        RoundScoreHud.Instance?.SetScore(0);
+        if (!IsServer)
+            return;
+
+        _aircraftServerScoreSystem.BeginRound();
+        Timer.Instance.BeginRound();
     }
 
-    private void TeleportPlayers()
+    private void TeleportPlayers(Direction edge)
     {
-        int randomSide = Random.Range(0, 4);
-        Direction dir = (Direction)randomSide;
-        Vector3 spawnPosition = ReturnSpawnPosition(dir);
-        Quaternion spawnRotation = ReturnSpawnRotation(dir);
+        Vector3 spawnPosition = ReturnSpawnPosition(edge);
+        Vector3 inward = _bounds.center - spawnPosition;
+        inward.y = 0f;
+        if (inward.sqrMagnitude < 0.01f)
+            inward = Vector3.forward;
 
-        PlaneRigidbody rb = NetworkedAircraft.Local.Body;
-        if (rb)
-        {
-            rb.Teleport(spawnPosition, spawnRotation, Vector3.zero, Vector3.zero);
-        }
+        PlaneRigidbody body = NetworkedAircraft.Local ? NetworkedAircraft.Local.Body : null;
+        if (body)
+            body.Teleport(spawnPosition, Quaternion.LookRotation(inward), Vector3.zero, Vector3.zero);
     }
 
-    private Vector3 ReturnSpawnPosition(Direction randomPosition)
+    private Vector3 ReturnSpawnPosition(Direction edge)
     {
+        float insetX = Mathf.Min(400f, _bounds.extents.x * 0.15f);
+        float insetZ = Mathf.Min(400f, _bounds.extents.z * 0.15f);
+        float x = Random.Range(_bounds.min.x + insetX, _bounds.max.x - insetX);
+        float z = Random.Range(_bounds.min.z + insetZ, _bounds.max.z - insetZ);
 
-        Vector3 spawnPosition = Vector3.zero;
-        switch (randomPosition)
-        {
-            case Direction.Left:
-                spawnPosition = new Vector3(Random.Range(_bounds.min.x, _bounds.max.x), _bounds.center.y, _bounds.min.z);
-                break;
-            case Direction.Right:
-                spawnPosition = new Vector3(Random.Range(_bounds.min.x, _bounds.max.x), _bounds.center.y, _bounds.max.z);
-                break;
-            case Direction.Forward:
-                spawnPosition = new Vector3(_bounds.min.x, _bounds.center.y, Random.Range(_bounds.min.z, _bounds.max.z));
-                break;
-            case Direction.Back:
-                spawnPosition = new Vector3(_bounds.max.x, _bounds.center.y, Random.Range(_bounds.min.z, _bounds.max.z));
-                break;
-            default:
-                spawnPosition = Vector3.zero;
-                break;
-        }
-
-        return spawnPosition;
-    }
-
-    private Quaternion ReturnSpawnRotation(Direction randomSide)
-    {
-
-        Vector3 direction = Vector3.zero;
-        switch (randomSide)
+        switch (edge)
         {
             case Direction.Left:
-                direction = Vector3.left;
+                z = _bounds.min.z + insetZ;
                 break;
             case Direction.Right:
-                direction = Vector3.right;
+                z = _bounds.max.z - insetZ;
                 break;
             case Direction.Forward:
-                direction = Vector3.forward;
+                x = _bounds.min.x + insetX;
                 break;
             case Direction.Back:
-                direction = Vector3.back;
+                x = _bounds.max.x - insetX;
                 break;
-
         }
 
-        Quaternion rotation = Quaternion.LookRotation(direction);
-
-        return rotation;
+        return new Vector3(x, spawnAltitude, z);
     }
 
-    public void HandleResults()
+    public void FinishRound()
     {
-        _endGameHandler?.HandleResults();
+        if (!IsServer || !_roundRunning || _endingRound)
+            return;
+
+        _endingRound = true;
+        Timer.Instance?.StopRound();
+        _aircraftServerScoreSystem.EndRound();
+        _endGameHandler.Present(_aircraftServerScoreSystem.CopyStandings());
     }
 
-    public void EndGame()
+    public void CompleteRound()
     {
-        StartCoroutine(FadingEnding());
+        if (!IsServer || !_roundRunning)
+            return;
+
+        EndRoundRpc();
     }
 
-    private void EndSession()
+    [Rpc(SendTo.ClientsAndHost, InvokePermission = RpcInvokePermission.Server)]
+    private void EndRoundRpc()
     {
-        _joinHandler?.EndGame();
-        startButton?.SetActive(true);
+        StartCoroutine(FadeOutOfRound());
     }
 
-    private void EndGameJoinHandler()
+    private IEnumerator FadeOutOfRound()
     {
-        _joinHandler?.EndGame();
+        _endGameHandler?.Hide();
+        if (fadeHandler)
+            yield return StartCoroutine(fadeHandler.FadeIn());
+        if (fadeHandler)
+            yield return StartCoroutine(fadeHandler.FadeOut());
+
+        if (!IsServer)
+            yield break;
+
+        _roundRunning = false;
+        _endingRound = false;
+        _joinHandler?.NotifyRoundEnded();
     }
-
-
-    
-
-
-
-
 }

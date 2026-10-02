@@ -114,6 +114,25 @@ namespace Airplane.FlightSimulation
         public float LastThrust => _lastThrust;
         public float MaxStaticThrust => maxStaticThrust;
         public float ZeroThrustAirspeed => zeroThrustAirspeed;
+
+        public float ThrustAt(float trueAirspeed, float density, float throttle01)
+        {
+            float densityRatio = density / AtmosphericModel.StandardSeaLevelDensity;
+            if (densityRatio < 0.05f)
+                densityRatio = 0.05f;
+
+            float tEff = idleThrottle + (1f - idleThrottle) * FlightSimMath.Saturate(throttle01);
+            float speedLapse = 1f - FlightSimMath.Saturate(trueAirspeed / Mathf.Max(10f, zeroThrustAirspeed));
+            speedLapse = 0.08f + 0.92f * speedLapse;
+            return maxStaticThrust * tEff * Mathf.Pow(densityRatio, densityExponent) * speedLapse;
+        }
+
+        public Vector3 ThrustAxisBody(Transform bodyRoot)
+        {
+            Transform mount = ThrustTransform;
+            Quaternion localRot = bodyRoot ? Quaternion.Inverse(bodyRoot.rotation) * mount.rotation : mount.localRotation;
+            return localRot * localThrustAxis.normalized;
+        }
         public Transform ThrustTransform => thrustTransform != null ? thrustTransform : transform;
 
         public void SetThrustTransform(Transform t)
@@ -186,16 +205,7 @@ namespace Airplane.FlightSimulation
 
             GetThrustWorld(body, out Vector3 point, out Vector3 axisWorld);
             
-            float tas = body.TrueAirspeed;
-            float densityRatio = atmo.Density / AtmosphericModel.StandardSeaLevelDensity;
-            if (densityRatio < 0.05f)
-                densityRatio = 0.05f;
-            
-            float tEff = idleThrottle + (1f - idleThrottle) * FlightSimMath.Saturate(_throttle01);
-            float speedLapse = 1f - FlightSimMath.Saturate(tas / Mathf.Max(10f, zeroThrustAirspeed));
-            speedLapse = 0.08f + 0.92f * speedLapse;
-            
-            float thrust = maxStaticThrust * tEff * Mathf.Pow(densityRatio, densityExponent) * speedLapse;
+            float thrust = ThrustAt(body.TrueAirspeed, atmo.Density, _throttle01);
             _lastThrust = thrust;
             _lastThrustWorld = axisWorld * thrust;
             _lastThrustPoint = point;
@@ -210,6 +220,7 @@ namespace Airplane.FlightSimulation
 
             if (enableGyroPrecession && propellerInertia > 0f)
             {
+                float tEff = idleThrottle + (1f - idleThrottle) * FlightSimMath.Saturate(_throttle01);
                 float omegaProp = (fullThrottleRpm * tEff) * (2f * Mathf.PI / 60f);
                 Vector3 lPropWorld = axisWorld * (propellerSpinSign * propellerInertia * omegaProp);
                 Vector3 tauGyro = Vector3.Cross(body.AngularVelocityWorld, lPropWorld);

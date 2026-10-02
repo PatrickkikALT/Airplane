@@ -189,6 +189,7 @@ VolumetricRayResult TraceVolumetricRay(CloudRay cloudRay)
                 half3 ambientTermBottom = EvaluateVolumetricCloudsAmbientProbe(half3(0.0, -1.0, 0.0));
             #endif
                 half3 ambient = max(0, lerp(ambientTermBottom, ambientTermTop, relativeHeight) * _AmbientProbeDimmer);
+                ambient += _LightningFlash.rgb;
 
                 volumetricRay.scattering = sunColor * volumetricRay.scattering;
                 volumetricRay.scattering += ambient * volumetricRay.ambient;

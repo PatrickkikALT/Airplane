@@ -391,6 +391,7 @@ Shader "Hidden/Sky/VolumetricClouds"
                 prevColor.rgb = clamp(prevColor.rgb, boxMin, boxMax);
 
                 half intensity = saturate(min(_AccumulationFactor - (abs(velocity.x)) * _AccumulationFactor, _AccumulationFactor - (abs(velocity.y)) * _AccumulationFactor));
+                intensity *= saturate(1.0 - _LightningFlash.a);
 
                 return half4(prevColor.rgb, intensity);
             }

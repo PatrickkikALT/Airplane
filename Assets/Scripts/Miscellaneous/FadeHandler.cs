@@ -5,40 +5,39 @@ using UnityEngine.UI;
 public class FadeHandler : MonoBehaviour
 {
     [SerializeField] private Image blackScreen;
+    [SerializeField] private float fadeDuration = 1.25f;
 
-
-    [SerializeField] private Animator fadeAnimator;
-    [SerializeField] private float fadeDuration;
-
-    public void StartFadeIn()
-    {
-        StartCoroutine(FadeIn());
-    }
-
-    public void StartFadeOut()
-    {
-        StartCoroutine(FadeOut());
-    }
     public IEnumerator FadeIn()
     {
-        float t = 0;
-        while (t < 1)
-        {
-            t += Time.deltaTime / fadeDuration;
-            blackScreen.color = new Color(blackScreen.color.r, blackScreen.color.g, blackScreen.color.b, t);
-            yield return null;
-        }
+        yield return Fade(1f);
     }
 
     public IEnumerator FadeOut()
     {
-        float t = 1;
+        yield return Fade(0f);
+    }
 
-        while (t > 0)
+    private IEnumerator Fade(float target)
+    {
+        if (!blackScreen)
+            yield break;
+
+        float duration = Mathf.Max(0.05f, fadeDuration);
+        Color color = blackScreen.color;
+        float start = color.a;
+        float t = 0f;
+        blackScreen.raycastTarget = true;
+
+        while (t < 1f)
         {
-            t -= Time.deltaTime / fadeDuration;
-            blackScreen.color = new Color(blackScreen.color.r, blackScreen.color.g, blackScreen.color.b, t);
+            t += Time.deltaTime / duration;
+            color.a = Mathf.Lerp(start, target, Mathf.Clamp01(t));
+            blackScreen.color = color;
             yield return null;
         }
+
+        color.a = target;
+        blackScreen.color = color;
+        blackScreen.raycastTarget = target > 0.01f;
     }
 }

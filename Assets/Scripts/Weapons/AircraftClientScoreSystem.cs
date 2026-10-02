@@ -1,41 +1,40 @@
 using Airplane.Multiplayer;
 using Airplane.Weapons;
-using TMPro;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.UIElements.Experimental;
 
 [RequireComponent(typeof(AircraftVitality))]
 public class AircraftClientScoreSystem : NetworkBehaviour
 {
-
-    [SerializeField] private TMP_Text _pointText;
     private AircraftVitality _aircraftVitality;
-
-    
 
     private void Awake()
     {
-        _pointText = PlayerCanvasScript.Instance.GetComponentInChildren<TMP_Text>();
         _aircraftVitality = GetComponent<AircraftVitality>();
+    }
+
+    public override void OnNetworkSpawn()
+    {
         _aircraftVitality.OnDeathEvent += HandleDeath;
     }
 
-    [ClientRpc]
-    public void HandlePointClientRpc(ulong shooterId, int point)
+    public override void OnNetworkDespawn()
     {
-        if (NetworkManager.Singleton.LocalClientId == shooterId)
-        {
-            _pointText.text = point.ToString();
-        }
-        
+        if (_aircraftVitality)
+            _aircraftVitality.OnDeathEvent -= HandleDeath;
     }
 
     private void HandleDeath(GunHit gunHit)
     {
-        if (gunHit.Shooter.TryGetComponent(out NetworkedAircraft networkedAircraft)) 
-        {
-            AircraftServerScoreSystem.Instance.HandlePointServerRpc(networkedAircraft.OwnerClientId, networkedAircraft.DisplayName);
-        }
+        if (!IsSpawned || !IsOwner)
+            return;
+        if (!gunHit.Shooter || gunHit.Shooter == gunHit.Victim)
+            return;
+
+        NetworkedAircraft shooter = gunHit.Shooter.GetComponent<NetworkedAircraft>();
+        if (!shooter || !shooter.IsSpawned)
+            return;
+
+        AircraftServerScoreSystem.Instance?.ReportKillRpc(shooter.NetworkObject);
     }
 }

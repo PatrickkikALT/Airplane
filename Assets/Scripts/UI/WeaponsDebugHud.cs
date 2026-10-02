@@ -1,4 +1,3 @@
-using System.Text;
 using Airplane.FlightSimulation;
 using Airplane.Multiplayer;
 using Airplane.Weapons;
@@ -19,19 +18,17 @@ namespace Airplane.UI
         [SerializeField] private TMP_Text cannonText;
         [SerializeField] private TMP_Text controlsText;
 
-        private readonly StringBuilder _builder = new StringBuilder(64);
         private float _hudClock = 1f;
         private bool _shown;
         private bool _hasShown;
 
         private void Start()
         {
-            Set(controlsText, "LMB guns  LCtrl cannon");
+            Hide(controlsText);
         }
 
         private void Update()
         {
-            // Assert that weapons is in fact initialized, because the compiler is stupid lol.
             AircraftWeaponsController weapons = null!;
             bool show = HudVisibility.Visible && TryResolve(out weapons);
             if (!_hasShown || show != _shown)
@@ -40,7 +37,6 @@ namespace Airplane.UI
                 _shown = show;
                 ApplyShown(show);
                 _hudClock = 1f;
-                
             }
 
             if (!show)
@@ -60,78 +56,40 @@ namespace Airplane.UI
             {
                 if (panel.activeSelf != show)
                     panel.SetActive(show);
-                return;
+            }
+            else
+            {
+                SetActive(gunText, show);
+                SetActive(cannonText, show);
             }
 
-            SetActive(gunText, show);
-            SetActive(cannonText, show);
-            SetActive(controlsText, show);
+            Hide(controlsText);
         }
 
         private void Rebuild(AircraftWeaponsController weapons)
         {
-            AircraftGun[] guns = weapons.Guns;
-            if (guns == null || guns.Length == 0)
-            {
-                Set(gunText, "no guns mounted");
-                Set(cannonText, "");
-                return;
-            }
-
-            int primaryRounds = 0;
-            int secondaryRounds = 0;
-            int primaryCap = 0;
-            int secondaryCap = 0;
-            bool primaryInf = false;
-            bool secondaryInf = false;
-            bool primaryFiring = false;
-            bool secondaryFiring = false;
-
-            foreach (AircraftGun gun in guns)
-            {
-                if (!gun)
-                    continue;
-
-                bool inf = gun.AmmoCapacity <= 0;
-                if (gun.TriggerChannel == GunTriggerChannel.Secondary)
-                {
-                    secondaryFiring |= gun.IsFiring;
-                    if (inf)
-                        secondaryInf = true;
-                    else
-                    {
-                        secondaryRounds += gun.AmmoRemaining;
-                        secondaryCap += gun.AmmoCapacity;
-                    }
-                }
-                else
-                {
-                    primaryFiring |= gun.IsFiring;
-                    if (inf)
-                        primaryInf = true;
-                    else
-                    {
-                        primaryRounds += gun.AmmoRemaining;
-                        primaryCap += gun.AmmoCapacity;
-                    }
-                }
-            }
-
-            Set(gunText, FormatLine("GUN  ", primaryInf, primaryRounds, primaryCap, primaryFiring));
-            Set(cannonText, FormatLine("CAN  ", secondaryInf, secondaryRounds, secondaryCap, secondaryFiring));
+            CountAmmo(weapons, out int mg, out int cannon);
+            Set(gunText, "MG - " + mg.ToString());
+            Set(cannonText, "CNN - " + cannon.ToString());
         }
 
-        private string FormatLine(string label, bool infinite, int remaining, int capacity, bool firing)
+        private static void CountAmmo(AircraftWeaponsController weapons, out int mg, out int cannon)
         {
-            _builder.Length = 0;
-            _builder.Append(label);
-            if (infinite)
-                _builder.Append('∞');
-            else
-                _builder.Append(remaining).Append('/').Append(capacity);
-            if (firing)
-                _builder.Append("  FIRING");
-            return _builder.ToString();
+            mg = 0;
+            cannon = 0;
+            if (!weapons || weapons.Guns == null)
+                return;
+
+            foreach (AircraftGun gun in weapons.Guns)
+            {
+                if (!gun || gun.AmmoCapacity <= 0)
+                    continue;
+
+                if (gun.TriggerChannel == GunTriggerChannel.Secondary)
+                    cannon += gun.AmmoRemaining;
+                else
+                    mg += gun.AmmoRemaining;
+            }
         }
 
         private static bool TryResolve(out AircraftWeaponsController weapons)
@@ -161,6 +119,12 @@ namespace Airplane.UI
             if (!text || text.text == value)
                 return;
             text.text = value;
+        }
+
+        private void Hide(TMP_Text text)
+        {
+            Set(text, "");
+            SetActive(text, false);
         }
 
         private void SetActive(TMP_Text text, bool visible)

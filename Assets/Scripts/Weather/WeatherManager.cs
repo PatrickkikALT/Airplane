@@ -7,6 +7,7 @@ using Unity.Netcode;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 [Serializable]
 public class WeatherPreset
@@ -93,6 +94,25 @@ public class WeatherPreset
     public VolumetricClouds.CloudFadeInMode FadeInMode = VolumetricClouds.CloudFadeInMode.Automatic;
     public float FadeInStart;
     public float FadeInDistance = 5000.0f;
+
+    [Header("Scene Light")]
+    public Color SunColor = new(1f, 0.74f, 0.46f, 1f);
+    public float SunIntensity = 2.45f;
+    public float SunShadowStrength = 0.9f;
+    public Color AmbientSkyColor = new(0.42f, 0.5f, 0.68f, 1f);
+    public Color AmbientEquatorColor = new(0.78f, 0.5f, 0.28f, 1f);
+    public Color AmbientGroundColor = new(0.09f, 0.05f, 0.035f, 1f);
+    public float AmbientIntensity = 0.85f;
+    public float SkyExposure = 1f;
+    public Color SkyTint = new(1f, 0.84f, 0.66f, 1f);
+    public float GradeTemperature = 8f;
+    public float GradeTint = 4f;
+    public float GradeContrast = 12f;
+    public float GradeSaturation = 8f;
+    public float GradeExposure = 0.12f;
+    public Color SplitShadow = new(0.32f, 0.46f, 0.58f, 1f);
+    public Color SplitHighlight = new(0.78f, 0.56f, 0.32f, 1f);
+    public float BloomIntensity = 0.48f;
 
     public void ApplyCloudLook(VolumetricClouds.CloudPresets look)
     {
@@ -420,6 +440,11 @@ namespace Airplane.Weather
         private LightningSnapshot _toLightning;
         private FogSnapshot _fromFog;
         private FogSnapshot _toFog;
+        private LightingSnapshot _fromLight;
+        private LightingSnapshot _toLight;
+        private Material _skybox;
+        private static readonly int SkyExposureId = Shader.PropertyToID("_Exposure");
+        private static readonly int SkyTintId = Shader.PropertyToID("_Tint");
 
         public bool IsBlending => _blending;
         public int CurrentPresetIndex => currentPreset;
@@ -566,6 +591,7 @@ namespace Airplane.Weather
             _fromTornadoShape = TornadoShape.FromSystem(tornadoSystem);
             _fromLightning = LightningSnapshot.FromSystem(lightningSystem);
             _fromFog = FogSnapshot.FromRenderSettings();
+            _fromLight = LightingSnapshot.FromScene(this);
             _fromWind = weatherSystem != null ? weatherSystem.Wind : AtmosphericModel.SampleWind();
             _fromClouds = TryGetClouds(out VolumetricClouds clouds)
                 ? CloudSnapshot.FromVolume(clouds)
@@ -580,6 +606,7 @@ namespace Airplane.Weather
             _toTornadoShape = TornadoShape.FromPreset(target);
             _toLightning = LightningSnapshot.FromPreset(target);
             _toFog = FogSnapshot.FromPreset(target);
+            _toLight = LightingSnapshot.FromPreset(target);
             _toCloudPreset = target.CloudPreset;
             _toClouds = CloudSnapshot.FromPreset(target);
             ApplyWind(target);
@@ -599,17 +626,20 @@ namespace Airplane.Weather
 
             ApplyTornadoBlend(t, wind);
             ApplyLightningBlend(t);
+            ApplyFogBlend(t);
+            ApplyLightingBlend(t);
 
             if (!TryGetClouds(out VolumetricClouds clouds))
                 return;
 
             CloudSnapshot.Lerp(_fromClouds, _toClouds, t, _curveKeys, clouds);
             OverrideCloudParams(clouds);
-            ApplyFogBlend(t);
-            
+
             if (t >= 1f - Mathf.Epsilon)
             {
                 clouds.cloudPreset = _toCloudPreset;
+                CloudSnapshot.Lerp(_fromClouds, _toClouds, 1f, _curveKeys, clouds);
+                OverrideCloudParams(clouds);
             }
 
 #if UNITY_EDITOR
@@ -708,9 +738,10 @@ namespace Airplane.Weather
             if (volume == null)
                 return null;
 
-            return volume.HasInstantiatedProfile()
-                ? volume.profile
-                : volume.sharedProfile;
+            if (Application.isPlaying)
+                return volume.profile;
+
+            return volume.sharedProfile;
         }
 
         private static void OverrideCloudParams(VolumetricClouds clouds)
@@ -870,6 +901,203 @@ namespace Airplane.Weather
             RenderSettings.fogEndDistance = Mathf.Lerp(_fromFog.End, _toFog.End, t);
             RenderSettings.fogMode = t < 0.5f ? _fromFog.Mode : _toFog.Mode;
             RenderSettings.fog = t >= 1f ? _toFog.Enabled : (_fromFog.Enabled || _toFog.Enabled);
+        }
+
+        private void ApplyLightingBlend(float t)
+        {
+            LightingSnapshot light = LightingSnapshot.Lerp(_fromLight, _toLight, t);
+            Light sun = RenderSettings.sun;
+            if (sun != null)
+            {
+                sun.color = light.SunColor;
+                sun.intensity = light.SunIntensity;
+                sun.shadowStrength = light.SunShadowStrength;
+            }
+
+            RenderSettings.ambientMode = AmbientMode.Trilight;
+            RenderSettings.ambientSkyColor = light.AmbientSky;
+            RenderSettings.ambientEquatorColor = light.AmbientEquator;
+            RenderSettings.ambientGroundColor = light.AmbientGround;
+            RenderSettings.ambientIntensity = light.AmbientIntensity;
+
+            Material sky = SkyboxInstance();
+            if (sky != null)
+            {
+                sky.SetFloat(SkyExposureId, light.SkyExposure);
+                sky.SetColor(SkyTintId, light.SkyTint);
+            }
+
+            VolumeProfile profile = GetProfile();
+            if (profile == null)
+                return;
+
+            if (profile.TryGet(out ColorAdjustments grade))
+            {
+                grade.postExposure.overrideState = true;
+                grade.contrast.overrideState = true;
+                grade.saturation.overrideState = true;
+                grade.postExposure.value = light.GradeExposure;
+                grade.contrast.value = light.GradeContrast;
+                grade.saturation.value = light.GradeSaturation;
+            }
+
+            if (profile.TryGet(out WhiteBalance balance))
+            {
+                balance.temperature.overrideState = true;
+                balance.tint.overrideState = true;
+                balance.temperature.value = light.GradeTemperature;
+                balance.tint.value = light.GradeTint;
+            }
+
+            if (profile.TryGet(out SplitToning split))
+            {
+                split.shadows.overrideState = true;
+                split.highlights.overrideState = true;
+                split.shadows.value = light.SplitShadow;
+                split.highlights.value = light.SplitHighlight;
+            }
+
+            if (profile.TryGet(out Bloom bloom))
+            {
+                bloom.intensity.overrideState = true;
+                bloom.intensity.value = light.BloomIntensity;
+            }
+        }
+
+        private Material SkyboxInstance()
+        {
+            if (_skybox != null)
+                return _skybox;
+
+            if (RenderSettings.skybox == null)
+                return null;
+
+            _skybox = new Material(RenderSettings.skybox);
+            RenderSettings.skybox = _skybox;
+            return _skybox;
+        }
+
+        private struct LightingSnapshot
+        {
+            public Color SunColor;
+            public float SunIntensity;
+            public float SunShadowStrength;
+            public Color AmbientSky;
+            public Color AmbientEquator;
+            public Color AmbientGround;
+            public float AmbientIntensity;
+            public float SkyExposure;
+            public Color SkyTint;
+            public float GradeTemperature;
+            public float GradeTint;
+            public float GradeContrast;
+            public float GradeSaturation;
+            public float GradeExposure;
+            public Color SplitShadow;
+            public Color SplitHighlight;
+            public float BloomIntensity;
+
+            public static LightingSnapshot FromPreset(WeatherPreset preset)
+            {
+                return new LightingSnapshot
+                {
+                    SunColor = preset.SunColor,
+                    SunIntensity = preset.SunIntensity,
+                    SunShadowStrength = preset.SunShadowStrength,
+                    AmbientSky = preset.AmbientSkyColor,
+                    AmbientEquator = preset.AmbientEquatorColor,
+                    AmbientGround = preset.AmbientGroundColor,
+                    AmbientIntensity = preset.AmbientIntensity,
+                    SkyExposure = preset.SkyExposure,
+                    SkyTint = preset.SkyTint,
+                    GradeTemperature = preset.GradeTemperature,
+                    GradeTint = preset.GradeTint,
+                    GradeContrast = preset.GradeContrast,
+                    GradeSaturation = preset.GradeSaturation,
+                    GradeExposure = preset.GradeExposure,
+                    SplitShadow = preset.SplitShadow,
+                    SplitHighlight = preset.SplitHighlight,
+                    BloomIntensity = preset.BloomIntensity
+                };
+            }
+
+            public static LightingSnapshot FromScene(WeatherManager manager)
+            {
+                LightingSnapshot snapshot = FromPreset(new WeatherPreset());
+                Light sun = RenderSettings.sun;
+                if (sun != null)
+                {
+                    snapshot.SunColor = sun.color;
+                    snapshot.SunIntensity = sun.intensity;
+                    snapshot.SunShadowStrength = sun.shadowStrength;
+                }
+
+                snapshot.AmbientSky = RenderSettings.ambientSkyColor;
+                snapshot.AmbientEquator = RenderSettings.ambientEquatorColor;
+                snapshot.AmbientGround = RenderSettings.ambientGroundColor;
+                snapshot.AmbientIntensity = RenderSettings.ambientIntensity;
+
+                Material sky = manager._skybox != null ? manager._skybox : RenderSettings.skybox;
+                if (sky != null)
+                {
+                    if (sky.HasProperty(SkyExposureId))
+                        snapshot.SkyExposure = sky.GetFloat(SkyExposureId);
+                    if (sky.HasProperty(SkyTintId))
+                        snapshot.SkyTint = sky.GetColor(SkyTintId);
+                }
+
+                VolumeProfile profile = manager.GetProfile();
+                if (profile == null)
+                    return snapshot;
+
+                if (profile.TryGet(out ColorAdjustments grade))
+                {
+                    snapshot.GradeExposure = grade.postExposure.value;
+                    snapshot.GradeContrast = grade.contrast.value;
+                    snapshot.GradeSaturation = grade.saturation.value;
+                }
+
+                if (profile.TryGet(out WhiteBalance balance))
+                {
+                    snapshot.GradeTemperature = balance.temperature.value;
+                    snapshot.GradeTint = balance.tint.value;
+                }
+
+                if (profile.TryGet(out SplitToning split))
+                {
+                    snapshot.SplitShadow = split.shadows.value;
+                    snapshot.SplitHighlight = split.highlights.value;
+                }
+
+                if (profile.TryGet(out Bloom bloom))
+                    snapshot.BloomIntensity = bloom.intensity.value;
+
+                return snapshot;
+            }
+
+            public static LightingSnapshot Lerp(in LightingSnapshot a, in LightingSnapshot b, float t)
+            {
+                return new LightingSnapshot
+                {
+                    SunColor = Color.Lerp(a.SunColor, b.SunColor, t),
+                    SunIntensity = Mathf.Lerp(a.SunIntensity, b.SunIntensity, t),
+                    SunShadowStrength = Mathf.Lerp(a.SunShadowStrength, b.SunShadowStrength, t),
+                    AmbientSky = Color.Lerp(a.AmbientSky, b.AmbientSky, t),
+                    AmbientEquator = Color.Lerp(a.AmbientEquator, b.AmbientEquator, t),
+                    AmbientGround = Color.Lerp(a.AmbientGround, b.AmbientGround, t),
+                    AmbientIntensity = Mathf.Lerp(a.AmbientIntensity, b.AmbientIntensity, t),
+                    SkyExposure = Mathf.Lerp(a.SkyExposure, b.SkyExposure, t),
+                    SkyTint = Color.Lerp(a.SkyTint, b.SkyTint, t),
+                    GradeTemperature = Mathf.Lerp(a.GradeTemperature, b.GradeTemperature, t),
+                    GradeTint = Mathf.Lerp(a.GradeTint, b.GradeTint, t),
+                    GradeContrast = Mathf.Lerp(a.GradeContrast, b.GradeContrast, t),
+                    GradeSaturation = Mathf.Lerp(a.GradeSaturation, b.GradeSaturation, t),
+                    GradeExposure = Mathf.Lerp(a.GradeExposure, b.GradeExposure, t),
+                    SplitShadow = Color.Lerp(a.SplitShadow, b.SplitShadow, t),
+                    SplitHighlight = Color.Lerp(a.SplitHighlight, b.SplitHighlight, t),
+                    BloomIntensity = Mathf.Lerp(a.BloomIntensity, b.BloomIntensity, t)
+                };
+            }
         }
 
         private struct LightningSnapshot
@@ -1065,11 +1293,6 @@ namespace Airplane.Weather
             public static CloudSnapshot FromPreset(WeatherPreset preset)
             {
                 WeatherPreset source = preset;
-                if (preset.CloudPreset != VolumetricClouds.CloudPresets.Custom)
-                {
-                    source = ClonePreset(preset);
-                    source.ApplyCloudLook(preset.CloudPreset);
-                }
 
                 return new CloudSnapshot
                 {
@@ -1118,58 +1341,6 @@ namespace Airplane.Weather
                 };
             }
 
-            private static WeatherPreset ClonePreset(WeatherPreset p)
-            {
-                return new WeatherPreset
-                {
-                    Name = p.Name,
-                    RainCount = p.RainCount,
-                    CloudsEnabled = p.CloudsEnabled,
-                    LocalClouds = p.LocalClouds,
-                    CloudPreset = p.CloudPreset,
-                    DensityMultiplier = p.DensityMultiplier,
-                    DensityCurve = CloneCurve(p.DensityCurve),
-                    ShapeFactor = p.ShapeFactor,
-                    ShapeScale = p.ShapeScale,
-                    ErosionFactor = p.ErosionFactor,
-                    ErosionScale = p.ErosionScale,
-                    ErosionCurve = CloneCurve(p.ErosionCurve),
-                    AmbientOcclusionCurve = CloneCurve(p.AmbientOcclusionCurve),
-                    MicroErosion = p.MicroErosion,
-                    MicroErosionFactor = p.MicroErosionFactor,
-                    MicroErosionScale = p.MicroErosionScale,
-                    BottomAltitude = p.BottomAltitude,
-                    AltitudeRange = p.AltitudeRange,
-                    ShapeOffset = p.ShapeOffset,
-                    EarthCurvature = p.EarthCurvature,
-                    GlobalSpeed = p.GlobalSpeed,
-                    GlobalOrientation = p.GlobalOrientation,
-                    ShapeSpeedMultiplier = p.ShapeSpeedMultiplier,
-                    ErosionSpeedMultiplier = p.ErosionSpeedMultiplier,
-                    AltitudeDistortion = p.AltitudeDistortion,
-                    VerticalShapeWindSpeed = p.VerticalShapeWindSpeed,
-                    VerticalErosionWindSpeed = p.VerticalErosionWindSpeed,
-                    AmbientLightProbeDimmer = p.AmbientLightProbeDimmer,
-                    SunLightDimmer = p.SunLightDimmer,
-                    ErosionOcclusion = p.ErosionOcclusion,
-                    ScatteringTint = p.ScatteringTint,
-                    PowderEffectIntensity = p.PowderEffectIntensity,
-                    MultiScattering = p.MultiScattering,
-                    Shadows = p.Shadows,
-                    ShadowResolution = p.ShadowResolution,
-                    ShadowDistance = p.ShadowDistance,
-                    ShadowOpacity = p.ShadowOpacity,
-                    ShadowOpacityFallback = p.ShadowOpacityFallback,
-                    TemporalAccumulationFactor = p.TemporalAccumulationFactor,
-                    PerceptualBlending = p.PerceptualBlending,
-                    NumPrimarySteps = p.NumPrimarySteps,
-                    NumLightSteps = p.NumLightSteps,
-                    FadeInMode = p.FadeInMode,
-                    FadeInStart = p.FadeInStart,
-                    FadeInDistance = p.FadeInDistance
-                };
-            }
-
             public static void Lerp(in CloudSnapshot a, in CloudSnapshot b, float t, Keyframe[] keys,
                 VolumetricClouds clouds)
             {
@@ -1202,10 +1373,13 @@ namespace Airplane.Weather
                 clouds.scatteringTint.value = Color.Lerp(a.scatteringTint, b.scatteringTint, t);
                 clouds.powderEffectIntensity.value = Mathf.Lerp(a.powderEffectIntensity, b.powderEffectIntensity, t);
                 clouds.multiScattering.value = Mathf.Lerp(a.multiScattering, b.multiScattering, t);
-                clouds.shadows.value = t < 0.5f ? a.shadows : b.shadows;
+                float fromShadow = a.shadows ? a.shadowOpacity : 0f;
+                float toShadow = b.shadows ? b.shadowOpacity : 0f;
+                float shadow = Mathf.Lerp(fromShadow, toShadow, t);
+                clouds.shadows.value = shadow > 0.001f;
                 clouds.shadowResolution.value = t < 0.5f ? a.shadowResolution : b.shadowResolution;
                 clouds.shadowDistance.value = Mathf.Lerp(a.shadowDistance, b.shadowDistance, t);
-                clouds.shadowOpacity.value = Mathf.Lerp(a.shadowOpacity, b.shadowOpacity, t);
+                clouds.shadowOpacity.value = shadow;
                 clouds.shadowOpacityFallback.value = Mathf.Lerp(a.shadowOpacityFallback, b.shadowOpacityFallback, t);
                 clouds.temporalAccumulationFactor.value =
                     Mathf.Lerp(a.temporalAccumulationFactor, b.temporalAccumulationFactor, t);

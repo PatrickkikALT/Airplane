@@ -1,87 +1,125 @@
-using Airplane.Multiplayer;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
 using Unity.Netcode;
+using UnityEngine;
 
 public class JoinHandler : NetworkBehaviour
 {
-
-    [Header("UI Handling")]
     [SerializeField] private TMP_Text playerText;
     [SerializeField] private GameObject startButton;
-    private int _playerCount;
 
-    private bool _hasStarted;
-    private void Start()
+    private readonly NetworkVariable<int> _connectedCount = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> _canStart = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> _inRound = new NetworkVariable<bool>(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private bool _roundActive;
+
+    public override void OnNetworkSpawn()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += AddPlayerCount;
-        NetworkManager.Singleton.OnClientConnectedCallback += CheckIfGameStart;
-        NetworkManager.Singleton.OnClientDisconnectCallback += RemovePlayerCount;
+        _connectedCount.OnValueChanged += OnCountChanged;
+        _canStart.OnValueChanged += OnFlagChanged;
+        _inRound.OnValueChanged += OnFlagChanged;
+        ApplyLobby();
 
+        if (!IsServer)
+            return;
+
+        NetworkManager.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
+        RefreshLobby();
     }
 
-   
-    private void AddPlayerCount(ulong playerID)
+    public override void OnNetworkDespawn()
     {
-        if (_hasStarted)
+        _connectedCount.OnValueChanged -= OnCountChanged;
+        _canStart.OnValueChanged -= OnFlagChanged;
+        _inRound.OnValueChanged -= OnFlagChanged;
+
+        if (NetworkManager == null)
+            return;
+
+        NetworkManager.OnClientConnectedCallback -= OnClientConnected;
+        NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
+    }
+
+    public void NotifyRoundStarted()
+    {
+        if (!IsServer)
+            return;
+
+        _roundActive = true;
+        RefreshLobby();
+    }
+
+    public void NotifyRoundEnded()
+    {
+        if (!IsServer)
+            return;
+
+        _roundActive = false;
+        RefreshLobby();
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        if (!IsServer)
+            return;
+
+        if (_roundActive && clientId != NetworkManager.LocalClientId)
         {
-            NetworkManager.Singleton.DisconnectClient(playerID);
+            NetworkManager.DisconnectClient(clientId);
             return;
         }
 
-
-        if (!NetworkManager.Singleton.IsHost) return;
-        _playerCount++;
-        print("A new player has joined the party " + _playerCount);
+        RefreshLobby();
     }
 
-    private void RemovePlayerCount(ulong playerID)
+    private void OnClientDisconnected(ulong clientId)
     {
-        
-        if (!NetworkManager.Singleton.IsHost)
+        if (!IsServer)
+            return;
+
+        RefreshLobby();
+    }
+
+    private void OnCountChanged(int previous, int current)
+    {
+        ApplyLobby();
+    }
+
+    private void OnFlagChanged(bool previous, bool current)
+    {
+        ApplyLobby();
+    }
+
+    private void RefreshLobby()
+    {
+        int count = NetworkManager.ConnectedClientsIds.Count;
+        _connectedCount.Value = count;
+        _inRound.Value = _roundActive;
+        _canStart.Value = !_roundActive && count >= 1;
+    }
+
+    private void ApplyLobby()
+    {
+        int playerCount = _connectedCount.Value;
+        bool roundActive = _inRound.Value;
+
+        if (playerText)
         {
-            _playerCount--;
-
-        }
-    }
-    private void CheckIfGameStart(ulong playerID)
-    {
-
-        print("Yes the client has joined.");
-
-        if (!NetworkManager.Singleton.IsHost) return;
-        if (_playerCount >= 1)
-        {
-            startButton.SetActive(true);
-            ShowPlayerTextClientRpc($"There are {_playerCount} players in this server.");       
+            if (roundActive)
+                playerText.text = playerCount + " in this round";
+            else if (playerCount <= 0)
+                playerText.text = "Waiting for players...";
+            else if (playerCount == 1)
+                playerText.text = "1 pilot in the lobby";
+            else
+                playerText.text = playerCount + " pilots in the lobby";
         }
 
-        else
-        {
-            startButton.SetActive(false);
-            ShowPlayerTextClientRpc("Waiting for players to join...");
-        }
-
-
+        if (startButton)
+            startButton.SetActive(IsServer && _canStart.Value);
     }
-
-    public void StartGame()
-    {
-        _hasStarted = true;
-    }
-
-    public void EndGame()
-    {
-        _hasStarted = false;
-    }
-    [ClientRpc]
-    private void ShowPlayerTextClientRpc(string text)
-    {
-        playerText.text = text;
-    }
-
-
-
 }

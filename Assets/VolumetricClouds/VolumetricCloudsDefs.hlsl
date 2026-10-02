@@ -38,6 +38,8 @@ half _NormalizationFactor;
 half _CloudNearPlane;
 CBUFFER_END
 
+half4 _LightningFlash;
+
 // Ambient Probe (unity_SH)
 half4 clouds_SHAr;
 half4 clouds_SHAg;

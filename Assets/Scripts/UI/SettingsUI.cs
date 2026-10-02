@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Airplane.Multiplayer;
+using Airplane.Weather;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SettingsUI : MonoBehaviour
 {
     [SerializeField] private bool fullscreen;
     [SerializeField] private TMP_Dropdown dropdown;
+    [SerializeField] private Slider environmentFlashSlider;
     private Resolution[] _resolutions;
     private List<string> _options;
 
@@ -16,6 +19,8 @@ public class SettingsUI : MonoBehaviour
     {
         FillResolutions();
         SetToCurrentResolution();
+        if (environmentFlashSlider)
+            environmentFlashSlider.SetValueWithoutNotify(PlayerPrefs.GetFloat(LightningSystem.EnvironmentFlashPrefKey, 1f));
     }
 
     private void FillResolutions()
@@ -33,6 +38,12 @@ public class SettingsUI : MonoBehaviour
             int index = Array.IndexOf(_resolutions, Screen.currentResolution);
             dropdown.SetValueWithoutNotify(index);    
         }
+    }
+
+    public void SetEnvironmentFlash(float value)
+    {
+        PlayerPrefs.SetFloat(LightningSystem.EnvironmentFlashPrefKey, Mathf.Max(0f, value));
+        PlayerPrefs.Save();
     }
 
     public void SetFullscreen(bool value)
