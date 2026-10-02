@@ -901,7 +901,7 @@ MonoBehaviour:
     m_ActionName: 'Plane/Look[/Mouse/delta,/Gamepad/rightStick]'
   - m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 3457276733709705678, guid: e68d797e28f56847b98937e65c93668b, type: 3}
+      - m_Target: {fileID: 2094358408664591833}
         m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
         m_MethodName: OnOrbitHold
         m_Mode: 0
@@ -986,7 +986,7 @@ MonoBehaviour:
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
-  m_InScenePlaced: 1
+  m_InScenePlaced: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1

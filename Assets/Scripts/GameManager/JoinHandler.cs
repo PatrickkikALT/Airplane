@@ -16,6 +16,35 @@ public class JoinHandler : NetworkBehaviour
 
     private bool _roundActive;
 
+    private void Start()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (!manager)
+            return;
+
+        if (manager.IsListening)
+            TrySpawn();
+        else
+            manager.OnServerStarted += TrySpawn;
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton)
+            NetworkManager.Singleton.OnServerStarted -= TrySpawn;
+    }
+
+    private void TrySpawn()
+    {
+        if (NetworkManager.Singleton)
+            NetworkManager.Singleton.OnServerStarted -= TrySpawn;
+
+        if (IsSpawned || !NetworkManager.Singleton || !NetworkManager.Singleton.IsServer)
+            return;
+
+        NetworkObject.Spawn();
+    }
+
     public override void OnNetworkSpawn()
     {
         _connectedCount.OnValueChanged += OnCountChanged;
@@ -97,9 +126,13 @@ public class JoinHandler : NetworkBehaviour
     private void RefreshLobby()
     {
         int count = NetworkManager.ConnectedClientsIds.Count;
+        if (IsServer && count < 1)
+            count = 1;
+
         _connectedCount.Value = count;
         _inRound.Value = _roundActive;
         _canStart.Value = !_roundActive && count >= 1;
+        ApplyLobby();
     }
 
     private void ApplyLobby()
@@ -119,7 +152,8 @@ public class JoinHandler : NetworkBehaviour
                 playerText.text = playerCount + " pilots in the lobby";
         }
 
+        bool server = NetworkManager.Singleton && NetworkManager.Singleton.IsServer;
         if (startButton)
-            startButton.SetActive(IsServer && _canStart.Value);
+            startButton.SetActive(server && _canStart.Value);
     }
 }

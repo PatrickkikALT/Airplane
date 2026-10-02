@@ -1,4 +1,5 @@
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -84,6 +85,20 @@ namespace Airplane.Multiplayer
                 _fault = "Scene not in Build Settings: " + gameScene;
                 return;
             }
+
+            NetworkManager manager = NetworkManager.Singleton;
+            if (manager && manager.IsListening && manager.IsServer && manager.NetworkConfig.EnableSceneManagement)
+            {
+                SceneEventProgressStatus status = manager.SceneManager.LoadScene(gameScene, LoadSceneMode.Single);
+                if (status == SceneEventProgressStatus.Started)
+                    return;
+
+                _fault = "Could not load " + gameScene + " (" + status + ")";
+                Set(statusText, _fault);
+            }
+
+            if (manager && manager.IsListening && !manager.IsServer)
+                return;
 
             SceneManager.LoadScene(gameScene);
         }
