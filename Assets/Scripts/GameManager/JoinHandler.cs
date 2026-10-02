@@ -14,6 +14,8 @@ public class JoinHandler : NetworkBehaviour
     [SerializeField] private TMP_Text playerText;
     [SerializeField] private GameObject startButton;
     private int _playerCount;
+
+    private bool _hasStarted;
     private void Start()
     {
         networkManager.OnClientConnectedCallback += AddPlayerCount;
@@ -26,6 +28,13 @@ public class JoinHandler : NetworkBehaviour
 
     private void AddPlayerCount(ulong playerID)
     {
+        if (_hasStarted)
+        {
+            NetworkManager.Singleton.DisconnectClient(playerID);
+            return;
+        }
+
+
         if (!NetworkManager.Singleton.IsHost) return;
         _playerCount++;
         print("A new player has joined the party " + _playerCount);
@@ -33,6 +42,7 @@ public class JoinHandler : NetworkBehaviour
 
     private void RemovePlayerCount(ulong playerID)
     {
+        
         if (!NetworkManager.Singleton.IsHost)
         {
             _playerCount--;
@@ -60,6 +70,15 @@ public class JoinHandler : NetworkBehaviour
 
     }
 
+    public void StartGame()
+    {
+        _hasStarted = true;
+    }
+
+    public void EndGame()
+    {
+        _hasStarted = false;
+    }
     [ClientRpc]
     private void ShowPlayerTextClientRpc(string text)
     {

@@ -4,6 +4,7 @@ using Airplane.Weapons;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+using UnityEditor.SearchService;
 using UnityEngine;
 using UnityEngine.Android;
 
@@ -27,6 +28,9 @@ public class GameManager : NetworkBehaviour
 
     private AircraftServerScoreSystem _aircraftServerScoreSystem;
     private EndGameHandler _endGameHandler;
+    private JoinHandler _joinHandler;
+
+    [SerializeField] private GameObject startButton;
 
     private void Awake()
     {
@@ -39,6 +43,7 @@ public class GameManager : NetworkBehaviour
 
         _aircraftServerScoreSystem = GetComponent<AircraftServerScoreSystem>();
         _endGameHandler = GetComponent<EndGameHandler>();
+        _joinHandler = GetComponent<JoinHandler>();
 
     }
 
@@ -46,6 +51,12 @@ public class GameManager : NetworkBehaviour
     {
         CollectPlayers();
         StartSpawningPlayersClientRpc();
+        StartGameJoinHandler();
+    }
+
+    private void StartGameJoinHandler()
+    {
+        _joinHandler?.StartGame();
     }
 
     private void CollectPlayers()
@@ -71,6 +82,13 @@ public class GameManager : NetworkBehaviour
         TeleportPlayers();
         yield return StartCoroutine(fadeHandler.FadeOut());
         BeginSession();
+    }
+
+    private IEnumerator FadingEnding()
+    {
+        yield return StartCoroutine(fadeHandler.FadeIn());
+        yield return StartCoroutine(fadeHandler.FadeOut());
+        EndSession();
     }
 
     private void BeginSession()
@@ -146,9 +164,25 @@ public class GameManager : NetworkBehaviour
         return rotation;
     }
 
-    public void EndGame()
+    public void HandleResults()
     {
         _endGameHandler?.HandleResults();
+    }
+
+    public void EndGame()
+    {
+        StartCoroutine(FadingEnding());
+    }
+
+    private void EndSession()
+    {
+        _joinHandler?.EndGame();
+        startButton?.SetActive(true);
+    }
+
+    private void EndGameJoinHandler()
+    {
+        _joinHandler?.EndGame();
     }
 
 

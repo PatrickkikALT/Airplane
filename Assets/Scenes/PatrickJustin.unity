@@ -677,13 +677,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09044c3fdaae8cbe2a390fbaa8dfcad0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.NetworkSessionUi
+  autoStartHost: 0
+  autoStartClient: 0
   address: 127.0.0.1
   port: 7777
   serverBindAddress: 0.0.0.0
-  autoStartHost: 0
-  autoStartClient: 0
-  panelPosition: {x: 16, y: 319.6}
-  panelWidth: 320
+  menuScene: 
+  root: {fileID: 0}
+  serverControls: {fileID: 0}
+  roleText: {fileID: 0}
+  statusText: {fileID: 0}
+  rosterText: {fileID: 0}
+  disconnectButton: {fileID: 0}
+  dummyButton: {fileID: 0}
+  botCountText: {fileID: 0}
+  botsDownButton: {fileID: 0}
+  botsUpButton: {fileID: 0}
 --- !u!4 &664962658
 Transform:
   m_ObjectHideFlags: 0
@@ -786,6 +795,18 @@ MonoBehaviour:
         m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
         m_MethodName: StartGame
         m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 902318772}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -1279,6 +1300,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fadeHandler: {fileID: 1095214799}
   fightArea: {fileID: 302349517}
+  startButton: {fileID: 902318772}
 --- !u!114 &1095214799
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1334,6 +1356,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 061d100988acfca47a12fb1aee014386, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndGameHandler
+  ShowTopMostFoldoutHeaderGroup: 1
   playerTag: {fileID: 1885173754545710201, guid: 64093b7f74e0707458902b6ff4baee93, type: 3}
   resultTagParent: {fileID: 1032739996}
 --- !u!1 &1139830513
@@ -1640,6 +1663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48e3ec572209ca8e38f8fb7517efea6d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.AircraftNetworkSpawner
+  catalog: {fileID: 0}
   aircraftPrefab: {fileID: 1911544054002264119, guid: 4d9356e36a69efad7b71be2bcc489460, type: 3}
   clearPlayerPrefab: 1
   spawnPoints:

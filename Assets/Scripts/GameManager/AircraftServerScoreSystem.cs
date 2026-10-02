@@ -1,3 +1,4 @@
+using Airplane.Multiplayer;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -6,7 +7,7 @@ using UnityEngine.InputSystem;
 public class AircraftServerScoreSystem : NetworkBehaviour
 {
     public static AircraftServerScoreSystem Instance;
-    private Dictionary<ulong, int> playerPoints = new Dictionary<ulong, int>();
+    private Dictionary<NetworkedAircraft, int> playerPoints = new Dictionary<NetworkedAircraft, int>();
 
 
     private void Awake()
@@ -23,9 +24,9 @@ public class AircraftServerScoreSystem : NetworkBehaviour
 
         if (!NetworkManager.Singleton.IsHost) return;
 
-        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        foreach (NetworkedAircraft networkedAircraft in NetworkedAircraft.All)
         {
-            playerPoints.Add(clientId, 0);
+            playerPoints.Add(networkedAircraft, 0);
         }
     }
 
@@ -38,16 +39,14 @@ public class AircraftServerScoreSystem : NetworkBehaviour
         }
         if (Input.GetKeyDown(KeyCode.T))
         {
-            HandlePointServerRpc(NetworkManager.Singleton.LocalClientId);
+            HandlePointServerRpc(NetworkedAircraft.Local.OwnerClientId, NetworkedAircraft.Local.DisplayName);
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void HandlePointServerRpc(ulong shooterPlayer)
+    public void HandlePointServerRpc(ulong shooterPlayerID, string shooterPlayerName)
     {
-        playerPoints[shooterPlayer]++;
-        Debug.LogError(shooterPlayer);
-        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(shooterPlayer, out NetworkClient client))
+        if (NetworkManager.Singleton.ConnectedClients.TryGetValue(shooterPlayerID, out NetworkClient client))
         {
             NetworkObject playerObject = client.OwnedObjects[0];
 
@@ -59,15 +58,21 @@ public class AircraftServerScoreSystem : NetworkBehaviour
                     break;
                 } 
             }
+
+            if (playerObject.TryGetComponent(out NetworkedAircraft aircraft))
+            {
+                playerPoints[aircraft]++;
+            }
+
             if (playerObject.TryGetComponent(out AircraftClientScoreSystem scoreSystem))
             {
-                scoreSystem.HandlePointClientRpc(shooterPlayer, playerPoints[shooterPlayer]);
+                scoreSystem.HandlePointClientRpc(shooterPlayerID, playerPoints[aircraft]);
             }
         }
 
     }
 
-    public Dictionary<ulong, int> ReturnPlayerPoints()
+    public Dictionary<NetworkedAircraft, int> ReturnPlayerPoints()
     {
         return playerPoints;
     }

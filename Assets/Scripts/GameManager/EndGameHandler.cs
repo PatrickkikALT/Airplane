@@ -1,3 +1,4 @@
+using Airplane.Multiplayer;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -22,21 +23,24 @@ public class EndGameHandler : NetworkBehaviour
     }
     private void HandlePlayerTag()
     {
-        Dictionary<ulong, int> playerResults = _aircraftServerScoreSystem.ReturnPlayerPoints();
+        Dictionary<NetworkedAircraft, int> playerResults = _aircraftServerScoreSystem.ReturnPlayerPoints();
 
         foreach (var points in playerResults)
         {
+            NetworkedAircraft aircraft = points.Key;
             int pointValue = points.Value;
-            ShowPointsClientRpc(pointValue);
+            ShowPointsClientRpc(aircraft.DisplayName, pointValue);
             
         }
     }
 
     [ClientRpc]
-    private void ShowPointsClientRpc(int pointValue)
+    private void ShowPointsClientRpc(string aircraftName, int pointValue)
     {
         Transform playerTagClone = Instantiate(playerTag, resultTagParent).transform;
+        TMP_Text nameText = playerTagClone.GetChild(0).GetComponent<TMP_Text>();
         TMP_Text pointText = playerTagClone.GetChild(1).GetComponent<TMP_Text>();
+        nameText.text = aircraftName;
         pointText.text = pointValue.ToString();
     }
 
@@ -45,5 +49,11 @@ public class EndGameHandler : NetworkBehaviour
         resultTagParent.gameObject.SetActive(true);
         yield return new WaitForSeconds(5);
         resultTagParent.gameObject.SetActive(false);
+        EndGame();
+    }
+
+    private void EndGame()
+    {
+        GameManager.Instance.EndGame();
     }
 }

@@ -42,7 +42,7 @@ public class Timer : NetworkBehaviour
 
         }
 
-        GameManager.Instance.EndGame();
+        GameManager.Instance.HandleResults();
     }
 
     [ClientRpc]

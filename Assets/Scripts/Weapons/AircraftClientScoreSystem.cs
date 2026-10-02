@@ -33,9 +33,9 @@ public class AircraftClientScoreSystem : NetworkBehaviour
 
     private void HandleDeath(GunHit gunHit)
     {
-        if (gunHit.Shooter.TryGetComponent(out NetworkObject networkObject)) 
+        if (gunHit.Shooter.TryGetComponent(out NetworkedAircraft networkedAircraft)) 
         {
-            AircraftServerScoreSystem.Instance.HandlePointServerRpc(networkObject.OwnerClientId);
+            AircraftServerScoreSystem.Instance.HandlePointServerRpc(networkedAircraft.OwnerClientId, networkedAircraft.DisplayName);
         }
     }
 }
