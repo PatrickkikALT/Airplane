@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!4 &38578373 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3895781197131657569, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+  m_PrefabInstance: {fileID: 2418704245586941317}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &304367248
 GameObject:
   m_ObjectHideFlags: 0
@@ -587,8 +592,547 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941324}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941323}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941322}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941321}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941320}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941319}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941329}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941328}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941327}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941326}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2418704245586941325}
   m_SourcePrefab: {fileID: 100100000, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+--- !u!1 &2418704245586941318 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+  m_PrefabInstance: {fileID: 2418704245586941317}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2418704245586941319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2393592242
+  InScenePlacedSourceGlobalObjectIdHash: 1679653618
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &2418704245586941320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.PlayerInput
+  m_Actions: {fileID: -944628639613478452, guid: b4bbef9d4d836a138b11884b6e8ea42e, type: 3}
+  m_NotificationBehavior: 2
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents:
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnPitch
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 29446c21-2dd4-4135-a8f7-a725c64f8ef3
+    m_ActionName: 'Plane/Pitch[/Keyboard/w,/Keyboard/s,/Gamepad/leftStick/up,/Gamepad/leftStick/down]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnRoll
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 027d3fd3-8b77-4741-ac58-60163ef82338
+    m_ActionName: 'Plane/Roll[/Keyboard/d,/Keyboard/a,/Gamepad/leftStick/left,/Gamepad/leftStick/right]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnYaw
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 6c8d4fdb-070c-4ccf-8173-5af1076ab47a
+    m_ActionName: 'Plane/Yaw[/Keyboard/e,/Keyboard/q,/Gamepad/dpad/left,/Gamepad/dpad/right]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnThrottle
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 4a4ef0cf-b266-47f2-863b-bb68f7d91295
+    m_ActionName: 'Plane/Throttle[/Keyboard/f,/Keyboard/r,/Gamepad/dpad/down,/Gamepad/dpad/up]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnFlaps
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 7e1c9a2b-4d3f-4a8e-9c1b-2f6d8e0a4b17
+    m_ActionName: 'Plane/Flaps[/Keyboard/z,/Keyboard/x]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnAirbrakes
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: a3b5c7d9-e1f2-430b-8c9d-0e1f2a3b4c5d
+    m_ActionName: 'Plane/Airbrakes[/Keyboard/leftShift]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941323}
+        m_TargetAssemblyTypeName: Airplane.FlightSimulation.AircraftFlightController,
+          Assembly-CSharp
+        m_MethodName: OnWheelBrakes
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: b4c6d8e0-f1a2-4b3c-9d0e-1f2a3b4c5d6e
+    m_ActionName: 'Plane/WheelBrakes[/Keyboard/space]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941328}
+        m_TargetAssemblyTypeName: Airplane.Weapons.AircraftWeaponsController, Assembly-CSharp
+        m_MethodName: OnFire
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: c5d7e9f1-a2b3-4c5d-8e9f-0a1b2c3d4e5f
+    m_ActionName: 'Plane/Fire[/Mouse/leftButton,/Gamepad/rightTrigger]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941328}
+        m_TargetAssemblyTypeName: Airplane.Weapons.AircraftWeaponsController, Assembly-CSharp
+        m_MethodName: OnFireSecondary
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: d6e8f0a2-b3c4-4d5e-9f0a-1b2c3d4e5f60
+    m_ActionName: 'Plane/FireSecondary[/Keyboard/leftCtrl,/Gamepad/leftShoulder]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941329}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnLook
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: e1a2b3c4-d5e6-4f70-8a91-b2c3d4e5f607
+    m_ActionName: 'Plane/Look[/Mouse/delta,/Gamepad/rightStick]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941329}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnOrbitHold
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: f2b3c4d5-e6f7-4081-9b02-c3d4e5f60718
+    m_ActionName: 'Plane/OrbitHold[/Mouse/rightButton]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941329}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnZoom
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: a3c4d5e6-f708-4192-ac13-d4e5f6071829
+    m_ActionName: 'Plane/Zoom[/Mouse/scroll/y,/Gamepad/leftTrigger,/Gamepad/rightShoulder]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941329}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnResetOrbit
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: b4d5e6f7-0819-42a3-bd24-e5f60718293a
+    m_ActionName: 'Plane/ResetOrbit[/Mouse/middleButton,/Gamepad/rightStickPress]'
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 2418704245586941329}
+        m_TargetAssemblyTypeName: Airplane.Multiplayer.NetworkedAircraft, Assembly-CSharp
+        m_MethodName: OnTogglePauseMenu
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 95aa7ebf-c81f-4910-b24e-72b07f44de1c
+    m_ActionName: 'Plane/Button[/Keyboard/escape]'
+  m_NeverAutoSwitchControlSchemes: 1
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Plane
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
+--- !u!114 &2418704245586941321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60b8cd8c8b1b0983ebf46363119b6dab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomAircraftEngine
+  maxStaticThrust: 520000
+  zeroThrustAirspeed: 250
+  densityExponent: 1
+  idleThrottle: 0.04
+  thrustTransform: {fileID: 38578373}
+  localThrustAxis: {x: 0, y: 0, z: 1}
+  propellerRadius: 1.05
+  slipstreamLength: 11
+  torqueReactionPerNewton: 0.012
+  propellerSpinSign: 1
+  enableGyroPrecession: 0
+  propellerInertia: 8
+  fullThrottleRpm: 2700
+  propellerVisual: {fileID: 38578373}
+  drawGizmos: 1
+  gizmoThrustScale: 0.0005
+--- !u!114 &2418704245586941322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bceb3b538f3008ff8bf9b8b8135a84d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.AtmosphericModel
+  seaLevelY: 0
+  seaLevelDensity: 1.225
+  scaleHeight: 8500
+  seaLevelTemperature: 288.15
+  lapseRate: 0.0065
+  tropopauseTemperature: 216.65
+  windWorld: {x: 0, y: 0, z: 0}
+  overrideGravity: 0
+  gravityOverride: {x: 0, y: -9.80665, z: 0}
+--- !u!114 &2418704245586941323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07d5f440453bf3f40b239641fbee05ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.AircraftFlightController
+  rollSpeed: 1
+  yawSpeed: 1
+  pitchStickBackNoseUp: 1
+  invertPitch: 1
+  invertRoll: 0
+  invertYaw: 0
+  throttleIsRate: 1
+  throttleRate: 0.45
+  initialThrottle: 0.65
+  flapsIsRate: 1
+  flapsRate: 0.5
+  airbrakeRate: 1.2
+  referenceDynamicPressure: 3900
+  qStiffeningGain: 0.25
+  highSpeedIasKmh: 1500
+  stickFollowSeconds: 0
+  aileronRudderMix: 1.5
+  sideslipYawGain: 1.2
+  elevatorTrim: -0.1
+  autoElevatorTrim: 0
+  autoTrimRate: 0.4
+  autoTrimStickDeadzone: 0.08
+--- !u!114 &2418704245586941324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f19e7690ffeedb2a8c131fa8062200a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.FlightSimulation.CustomRigidBody6DOF
+  mass: 5000
+  inertiaIxx: 3400
+  inertiaIyy: 8000
+  inertiaIzz: 5500
+  inertiaIxy: 0
+  inertiaIxz: 0
+  inertiaIyz: 0
+  centerOfMassBody: {x: 0, y: 0, z: 0.01}
+  integrationScheme: 0
+  substeps: 4
+  interpolateTransform: 1
+  maxLinearAcceleration: 2000
+  maxAngularAcceleration: 6
+  initialVelocityBody: {x: 0, y: 0, z: 50}
+  initialAngularVelocityBody: {x: 0, y: 0, z: 0}
+  enableLandingGear: 1
+  groundPlaneY: 0
+  raycastGround: 0
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  gearAttachBody:
+  - {x: -2.4, y: 0.2, z: 0}
+  - {x: 1, y: -0.35, z: -1.25}
+  - {x: 1, y: -0.35, z: 1.25}
+  gearRestLength: 0.95
+  gearSpring: 55000
+  gearDamper: 6500
+  rollingFriction: 0.025
+  brakingFriction: 0.75
+  noseGearIndex: 0
+  noseWheelSteerDeg: 35
+  noseSteerFadeSpeed: 25
+  enableColliderContact: 1
+  collisionMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  collisionIterations: 4
+  collisionRestitution: 0.15
+  collisionFriction: 0.4
+  collisionSlop: 0.015
+  collisionBaumgarte: 0.7
+  angularDamping: {x: 8000, y: 7000, z: 7000}
+  dampingReferenceQ: 1800
+  maxAngularSpeedDeg: {x: 30, y: 20, z: 20}
+  idleRateDamping: 2.2
+  drawGizmos: 1
+  gizmoForceScale: 0.0004
+  gizmoVelocityScale: 0.15
+--- !u!114 &2418704245586941325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b730dcff6ae006743963a1e87433670e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AircraftClientScoreSystem
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &2418704245586941326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f27a02c00e0637b758dcce912b899f80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CollisionTest
+--- !u!114 &2418704245586941327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b0d3f8c2e6a914f7d5b203e8f1a0c53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftVitality
+  hitPoints: 100
+--- !u!114 &2418704245586941328
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f3c1a9e2b4d6e80c7a5f193d4e6b208, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftWeaponsController
+--- !u!114 &2418704245586941329
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2418704245586941318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a64b2600fac3835de95ed19f2dd39259, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Multiplayer.NetworkedAircraft
+  ShowTopMostFoldoutHeaderGroup: 1
+  sendRate: 25
+  interpolationDelay: 0.12
+  maxExtrapolation: 0.35
+  positionSendThreshold: 0.01
+  rotationSendThresholdDeg: 0.05
+  crashSpeedKmh: 50
+  displayNameFallback: 
 --- !u!1001 &3043973413007164846
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -640,6 +1184,10 @@ PrefabInstance:
     - target: {fileID: 3049803396400197431, guid: 00bf06368d5e08f409fd60cee900144d, type: 3}
       propertyPath: m_Name
       value: Aircraft2A
+      objectReference: {fileID: 0}
+    - target: {fileID: 4578452661764072487, guid: 00bf06368d5e08f409fd60cee900144d, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2973312568
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
