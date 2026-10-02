@@ -49,7 +49,9 @@ public class GameManager : NetworkBehaviour
 
     public void StartGame()
     {
+        Debug.Log("StartGame");
         CollectPlayers();
+        //stops here, figure out why this is not running on the host
         StartSpawningPlayersClientRpc();
         StartGameJoinHandler();
     }
@@ -61,8 +63,9 @@ public class GameManager : NetworkBehaviour
 
     private void CollectPlayers()
     {
+        Debug.Log("CollectPlayers");
         if (!NetworkManager.Singleton.IsHost) return;
-
+        Debug.Log("Player is the host, collecting aircrafts");
         _readOnlyAircrafts = NetworkedAircraft.All;
 
         for (int i = 0; i < _readOnlyAircrafts.Count; i++)
@@ -74,10 +77,12 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void StartSpawningPlayersClientRpc()
     {
+        Debug.Log("StartSpawningPlayersClientRpc");
         StartCoroutine(SpawnPlayers());
     }
     private IEnumerator SpawnPlayers()
     {
+        Debug.Log("SpawnPlayers");
         yield return StartCoroutine(fadeHandler.FadeIn());
         TeleportPlayers();
         yield return StartCoroutine(fadeHandler.FadeOut());

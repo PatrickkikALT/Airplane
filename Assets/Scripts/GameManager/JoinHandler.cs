@@ -8,8 +8,6 @@ using Unity.Netcode;
 public class JoinHandler : NetworkBehaviour
 {
 
-    [SerializeField] private NetworkManager networkManager;
-
     [Header("UI Handling")]
     [SerializeField] private TMP_Text playerText;
     [SerializeField] private GameObject startButton;
@@ -18,14 +16,13 @@ public class JoinHandler : NetworkBehaviour
     private bool _hasStarted;
     private void Start()
     {
-        networkManager.OnClientConnectedCallback += AddPlayerCount;
-        networkManager.OnClientConnectedCallback += CheckIfGameStart;
-        networkManager.OnClientDisconnectCallback += RemovePlayerCount;
+        NetworkManager.Singleton.OnClientConnectedCallback += AddPlayerCount;
+        NetworkManager.Singleton.OnClientConnectedCallback += CheckIfGameStart;
+        NetworkManager.Singleton.OnClientDisconnectCallback += RemovePlayerCount;
 
     }
 
-    
-
+   
     private void AddPlayerCount(ulong playerID)
     {
         if (_hasStarted)
