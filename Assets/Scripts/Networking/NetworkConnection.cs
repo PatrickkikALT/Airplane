@@ -42,15 +42,31 @@ namespace Airplane.Multiplayer
             return Manager.IsListening;
         }
 
+        public static void Report(string status)
+        {
+            Status = string.IsNullOrEmpty(status) ? "Offline" : status;
+        }
+
         public static void Disconnect()
+        {
+            if (GameLobby.Current != null)
+            {
+                _ = GameLobby.Leave();
+                return;
+            }
+
+            ShutdownManager();
+            Status = "Offline";
+            AdminSession.Reset();
+        }
+
+        public static void ShutdownManager()
         {
             NetworkManager manager = Manager;
             if (!manager || !manager.IsListening)
                 return;
 
             manager.Shutdown();
-            Status = "Offline";
-            AdminSession.Reset();
         }
 
         private static bool Apply(string address, ushort port, string bindAddress, bool listening)
@@ -117,7 +133,9 @@ namespace Airplane.Multiplayer
             if (!manager || clientId != manager.LocalClientId)
                 return;
 
-            Status = manager.IsHost ? $"Hosting on {Port}" : $"Connected to {Address}:{Port}";
+            Status = GameLobby.Current != null
+                ? GameLobby.Describe()
+                : manager.IsHost ? $"Hosting on {Port}" : $"Connected to {Address}:{Port}";
         }
 
         private static void OnDisconnected(ulong clientId)

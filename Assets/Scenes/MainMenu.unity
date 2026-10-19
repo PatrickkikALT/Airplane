@@ -7587,7 +7587,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2100000012
 Transform:
   m_ObjectHideFlags: 0
@@ -8896,27 +8896,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4165801465636402731, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4165801465636402731, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4165801465636402731, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 304.87076
       objectReference: {fileID: 0}
     - target: {fileID: 4165801465636402731, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 49.31
       objectReference: {fileID: 0}
     - target: {fileID: 4165801465636402731, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 152.43538
       objectReference: {fileID: 0}
     - target: {fileID: 4165801465636402731, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -147.275
+      objectReference: {fileID: 0}
+    - target: {fileID: 5232120002542176868, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5232120002542176868, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 1744830463
       objectReference: {fileID: 0}
     - target: {fileID: 5426955156356401767, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_AnchorMax.y
@@ -9169,6 +9177,26 @@ PrefabInstance:
     - target: {fileID: 8322646017575969761, guid: 3f92611f58327358891a353f557c3738, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
       value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000001102, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000001102, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000001102, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000001102, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9100000000000001102, guid: 3f92611f58327358891a353f557c3738, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

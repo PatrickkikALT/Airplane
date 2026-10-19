@@ -103,6 +103,7 @@ namespace Airplane.FlightSimulation
         private float _lastThrust;
         private Vector3 _lastThrustWorld;
         private Vector3 _lastThrustPoint;
+        private Vector3 _lastWakeAxis;
         private float _lastExcessWake;
         private AircraftFlightController _controller;
         private PlaneRigidbody _body;
@@ -179,6 +180,13 @@ namespace Airplane.FlightSimulation
             _thrustPoseCached = true;
         }
 
+        private Vector3 WakeAxis(PlaneRigidbody body, Vector3 thrustAxisWorld)
+        {
+            Vector3 thrustBody = Quaternion.Inverse(body.Orientation) * thrustAxisWorld;
+            float ahead = Vector3.Dot(_thrustLocalPos - body.CenterOfMassBody, thrustBody);
+            return ahead < -0.05f ? -thrustAxisWorld : thrustAxisWorld;
+        }
+
         private void GetThrustWorld(PlaneRigidbody body, out Vector3 point, out Vector3 axisWorld)
         {
             if (!_thrustPoseCached)
@@ -204,7 +212,8 @@ namespace Airplane.FlightSimulation
                 _throttle01 = _controller.Throttle01;
 
             GetThrustWorld(body, out Vector3 point, out Vector3 axisWorld);
-            
+            _lastWakeAxis = WakeAxis(body, axisWorld);
+
             float thrust = ThrustAt(body.TrueAirspeed, atmo.Density, _throttle01);
             _lastThrust = thrust;
             _lastThrustWorld = axisWorld * thrust;
@@ -243,10 +252,11 @@ namespace Airplane.FlightSimulation
             if (_body != null)
             {
                 GetThrustWorld(_body, out Vector3 point, out Vector3 axisWorld);
+                Vector3 wake = _lastWakeAxis.sqrMagnitude > 0.5f ? _lastWakeAxis : WakeAxis(_body, axisWorld);
                 return new PropWashState(
                     _lastExcessWake > 0.05f,
                     point,
-                    axisWorld,
+                    wake,
                     propellerRadius * 0.85f,
                     slipstreamLength,
                     _lastExcessWake);

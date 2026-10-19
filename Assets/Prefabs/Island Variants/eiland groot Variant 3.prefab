@@ -13,6 +13,18 @@ PrefabInstance:
       value: eiland groot Variant 3
       objectReference: {fileID: 0}
     - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.4075696
       objectReference: {fileID: 0}
@@ -64,8 +76,38 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 793989226521319985}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6937319331217291284, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2942629036163714577}
   m_SourcePrefab: {fileID: 100100000, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+--- !u!1 &6944617297588950579 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6937319331217291284, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+  m_PrefabInstance: {fileID: 10823104137440807}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &2942629036163714577
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6944617297588950579}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 3613567641014311022, guid: ebaa7bff915eef34f8b40ebcb0df32f0, type: 3}
 --- !u!4 &7722525538604207241 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}

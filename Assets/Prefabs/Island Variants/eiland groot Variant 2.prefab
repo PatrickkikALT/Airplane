@@ -13,6 +13,18 @@ PrefabInstance:
       value: eiland groot Variant 2
       objectReference: {fileID: 0}
     - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 50
+      objectReference: {fileID: 0}
+    - target: {fileID: 7713997115371315886, guid: 712325fec0169cd4c96532e0d049920b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.4075696
       objectReference: {fileID: 0}

@@ -1,5 +1,10 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Multiplayer;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,69 +15,125 @@ namespace Airplane.Multiplayer
     [AddComponentMenu("Airplane/Networking/Main Menu Session UI")]
     public sealed class MainMenuSessionUi : MonoBehaviour
     {
-        [Header("Connection")]
-        [SerializeField] private string address = "127.0.0.1";
-        [SerializeField] private ushort port = 7777;
-
-        [Tooltip("Address the server binds to. 0.0.0.0 accepts connections on every interface.")]
-        [SerializeField] private string serverBindAddress = "0.0.0.0";
+        [Header("Session")]
+        [SerializeField] private int maxPlayers = GameLobby.DefaultMaxPlayers;
 
         [Header("Scene")]
-        [Tooltip("Loaded after Host, Join, or Server succeeds. Must be in Build Settings.")]
+        [Tooltip("Loaded when the host starts the flight. Must be in Build Settings.")]
         [SerializeField] private string gameScene = "Patrick";
 
         [Header("UI")]
         [SerializeField] private TMP_InputField addressInput;
-        [SerializeField] private TMP_InputField portInput;
         [SerializeField] private Button hostButton;
+        [SerializeField] private Button startButton;
         [SerializeField] private Button joinButton;
+        [SerializeField] private Button leaveButton;
         [SerializeField] private Toggle serverToggle;
         [SerializeField] private TMP_Text statusText;
+        [SerializeField] private LobbyRow[] lobbyRows;
 
-        private bool _seeded;
+        [Serializable]
+        public sealed class LobbyRow
+        {
+            public Button button;
+            public TMP_Text label;
+        }
+
+        private readonly StringBuilder _builder = new StringBuilder(256);
+        private Coroutine _poll;
         private string _fault;
-        private bool _shouldStartAsServer;
 
         private void OnEnable()
         {
             Wire(true);
-            NetworkConnection.OnConnectFail += () =>
-            {
-                Set(statusText, string.IsNullOrEmpty(_fault) ? NetworkConnection.Status : _fault);
-            };
-            SeedFields();
-            
+            GameLobby.Changed += Refresh;
+            NetworkConnection.OnConnectFail += Refresh;
+            Refresh();
+            _poll = StartCoroutine(Poll());
         }
 
         private void OnDisable()
         {
+            if (_poll != null)
+                StopCoroutine(_poll);
+            _poll = null;
+            GameLobby.Changed -= Refresh;
+            NetworkConnection.OnConnectFail -= Refresh;
             Wire(false);
         }
 
         public void StartHost()
         {
-            if (_shouldStartAsServer)
+            if (GameLobby.Current != null)
             {
-                StartServer();
+                if (GameLobby.Current.IsHost)
+                    _ = StartFlight();
                 return;
             }
-            PullFields();
-            if (NetworkConnection.StartHost(address, port, serverBindAddress))
-                LoadGame();
+
+            _ = CreateLobby();
         }
 
         public void StartServer()
         {
-            PullFields();
-            if (NetworkConnection.StartServer(address, port, serverBindAddress))
-                LoadGame();
+            if (serverToggle)
+                serverToggle.SetIsOnWithoutNotify(true);
+            StartHost();
         }
 
         public void StartClient()
         {
-            PullFields();
-            if (NetworkConnection.StartClient(address, port, serverBindAddress))
-                LoadGame();
+            _fault = null;
+            if (GameLobby.Current != null)
+            {
+                _ = GameLobby.Leave();
+                return;
+            }
+
+            string code = addressInput ? addressInput.text : "";
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                if (GameLobby.OpenSessions.Count == 0)
+                {
+                    NetworkConnection.Report("No open lobbies");
+                    Refresh();
+                    return;
+                }
+
+                _ = GameLobby.JoinId(GameLobby.OpenSessions[0].Id);
+                return;
+            }
+
+            _ = GameLobby.JoinCode(code);
+        }
+
+        public void JoinListed(int index)
+        {
+            if (GameLobby.Current != null || GameLobby.Busy)
+                return;
+            if (index < 0 || index >= GameLobby.OpenSessions.Count)
+                return;
+            _ = GameLobby.JoinId(GameLobby.OpenSessions[index].Id);
+        }
+
+        public void Quit()
+        {
+            Application.Quit();
+        }
+
+        private async System.Threading.Tasks.Task CreateLobby()
+        {
+            _fault = null;
+            bool isPrivate = serverToggle && serverToggle.isOn;
+            string name = LocalPlayerIdentity.PilotName;
+            await GameLobby.Create(name, maxPlayers, isPrivate);
+        }
+
+        private async System.Threading.Tasks.Task StartFlight()
+        {
+            if (!await GameLobby.Lock())
+                return;
+            LoadGame();
         }
 
         private void LoadGame()
@@ -83,11 +144,19 @@ namespace Airplane.Multiplayer
             if (!Application.CanStreamedLevelBeLoaded(gameScene))
             {
                 _fault = "Scene not in Build Settings: " + gameScene;
+                Set(statusText, _fault);
                 return;
             }
 
             NetworkManager manager = NetworkManager.Singleton;
-            if (manager && manager.IsListening && manager.IsServer && manager.NetworkConfig.EnableSceneManagement)
+            if (!manager || !manager.IsListening)
+            {
+                _fault = string.IsNullOrEmpty(NetworkConnection.Status) ? "Not connected" : NetworkConnection.Status;
+                Set(statusText, _fault);
+                return;
+            }
+
+            if (manager.IsServer && manager.NetworkConfig.EnableSceneManagement)
             {
                 SceneEventProgressStatus status = manager.SceneManager.LoadScene(gameScene, LoadSceneMode.Single);
                 if (status == SceneEventProgressStatus.Started)
@@ -103,45 +172,176 @@ namespace Airplane.Multiplayer
             SceneManager.LoadScene(gameScene);
         }
 
-        public void Quit()
+        private IEnumerator Poll()
         {
-            Application.Quit();
+            yield return null;
+            yield return StartCoroutine(Wait(GameLobby.Refresh()));
+            WaitForSeconds wait = new WaitForSeconds(4f);
+            while (true)
+            {
+                yield return wait;
+                if (GameLobby.Current == null && !GameLobby.Busy)
+                    yield return StartCoroutine(Wait(GameLobby.Refresh()));
+            }
         }
 
-        private void SeedFields()
+        private IEnumerator Wait(System.Threading.Tasks.Task task)
         {
-            if (_seeded)
+            while (task != null && !task.IsCompleted)
+                yield return null;
+        }
+
+        private void Refresh()
+        {
+            bool inLobby = GameLobby.Current != null;
+            bool busy = GameLobby.Busy;
+            bool host = inLobby && GameLobby.Current.IsHost;
+
+            Shown(hostButton, !inLobby);
+            Shown(startButton, host);
+            Shown(joinButton, !inLobby);
+            Shown(leaveButton, inLobby);
+            Shown(addressInput, !inLobby);
+            Shown(serverToggle, !inLobby);
+
+            if (hostButton) hostButton.interactable = !busy;
+            if (startButton) startButton.interactable = !busy;
+            if (joinButton) joinButton.interactable = !busy;
+            if (leaveButton) leaveButton.interactable = !busy;
+            if (addressInput) addressInput.interactable = !busy;
+            if (serverToggle) serverToggle.interactable = !busy;
+
+            Set(statusText, BuildStatus());
+            FillRows(inLobby || busy);
+        }
+
+        private string BuildStatus()
+        {
+            if (!string.IsNullOrEmpty(_fault) && GameLobby.Current == null && !GameLobby.Busy)
+                return _fault;
+
+            ISession session = GameLobby.Current;
+            if (session != null)
+            {
+                _builder.Length = 0;
+                _builder.Append(session.Name).Append("   ").Append(session.Code).Append('\n');
+                if (session.Players != null)
+                {
+                    for (int i = 0; i < session.Players.Count; i++)
+                    {
+                        IReadOnlyPlayer player = session.Players[i];
+                        _builder.Append(GameLobby.CallsignOf(player));
+                        if (player != null && player.Id == session.Host)
+                            _builder.Append("  ·  host");
+                        _builder.Append('\n');
+                    }
+                }
+
+                if (!session.IsHost)
+                    _builder.Append("Waiting for the host");
+                if (!string.IsNullOrEmpty(_fault))
+                    _builder.Append('\n').Append(_fault);
+                return _builder.ToString();
+            }
+
+            if (GameLobby.Busy)
+                return "Contacting lobby…";
+
+            IReadOnlyList<ISessionInfo> open = GameLobby.OpenSessions;
+            if (open.Count == 0)
+            {
+                string status = NetworkConnection.Status;
+                return string.IsNullOrEmpty(status) ? "No open lobbies" : status;
+            }
+
+            bool listedOnButtons = lobbyRows != null && lobbyRows.Length > 0;
+            _builder.Length = 0;
+            _builder.Append("Open lobbies  ·  ").Append(open.Count);
+            if (listedOnButtons)
+                return _builder.ToString();
+
+            int shown = Mathf.Min(open.Count, 4);
+            for (int i = 0; i < shown; i++)
+            {
+                ISessionInfo info = open[i];
+                int players = info.MaxPlayers - info.AvailableSlots;
+                _builder.Append('\n').Append(info.Name).Append("  ").Append(players).Append('/').Append(info.MaxPlayers);
+            }
+
+            if (string.IsNullOrWhiteSpace(addressInput ? addressInput.text : ""))
+                _builder.Append("\nJOIN enters the first");
+            return _builder.ToString();
+        }
+
+        private void FillRows(bool hide)
+        {
+            if (lobbyRows == null)
                 return;
-            _seeded = true;
 
-            if (addressInput)
-                addressInput.SetTextWithoutNotify(address);
-            if (portInput)
-                portInput.SetTextWithoutNotify(port.ToString());
-        }
+            for (int i = 0; i < lobbyRows.Length; i++)
+            {
+                LobbyRow row = lobbyRows[i];
+                if (row == null || !row.button)
+                    continue;
 
-        private void PullFields()
-        {
-            if (addressInput && !string.IsNullOrWhiteSpace(addressInput.text))
-                address = addressInput.text.Trim();
-            if (portInput && ushort.TryParse(portInput.text, out ushort parsed))
-                port = parsed;
+                bool show = !hide && i < GameLobby.OpenSessions.Count;
+                if (row.button.gameObject.activeSelf != show)
+                    row.button.gameObject.SetActive(show);
+                if (!show)
+                    continue;
+
+                ISessionInfo info = GameLobby.OpenSessions[i];
+                int players = info.MaxPlayers - info.AvailableSlots;
+                TMP_Text label = row.label ? row.label : row.button.GetComponentInChildren<TMP_Text>();
+                Set(label, info.Name + "   " + players + "/" + info.MaxPlayers);
+                row.button.interactable = !GameLobby.Busy;
+            }
         }
-        
 
         private void Wire(bool subscribe)
         {
             if (subscribe)
             {
                 if (hostButton) hostButton.onClick.AddListener(StartHost);
+                if (startButton) startButton.onClick.AddListener(StartHost);
                 if (joinButton) joinButton.onClick.AddListener(StartClient);
-                if (serverToggle) serverToggle.onValueChanged.AddListener((value) => _shouldStartAsServer = value);
+                if (leaveButton) leaveButton.onClick.AddListener(StartClient);
+                if (lobbyRows != null)
+                {
+                    for (int i = 0; i < lobbyRows.Length; i++)
+                    {
+                        int index = i;
+                        LobbyRow row = lobbyRows[i];
+                        if (row != null && row.button)
+                            row.button.onClick.AddListener(() => JoinListed(index));
+                    }
+                }
+
                 return;
             }
 
             if (hostButton) hostButton.onClick.RemoveListener(StartHost);
+            if (startButton) startButton.onClick.RemoveListener(StartHost);
             if (joinButton) joinButton.onClick.RemoveListener(StartClient);
-            if (serverToggle) serverToggle.onValueChanged.RemoveAllListeners();
+            if (leaveButton) leaveButton.onClick.RemoveListener(StartClient);
+            if (lobbyRows == null)
+                return;
+
+            for (int i = 0; i < lobbyRows.Length; i++)
+            {
+                LobbyRow row = lobbyRows[i];
+                if (row != null && row.button)
+                    row.button.onClick.RemoveAllListeners();
+            }
+        }
+
+        private static void Shown(Component control, bool shown)
+        {
+            if (!control)
+                return;
+            GameObject target = control.gameObject;
+            if (target.activeSelf != shown)
+                target.SetActive(shown);
         }
 
         private static void Set(TMP_Text text, string value)

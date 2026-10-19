@@ -14,17 +14,14 @@ namespace Airplane.Multiplayer
     public sealed class NetworkSessionUi : MonoBehaviour
     {
         [Header("Auto Start")]
-        [Tooltip("Start a host immediately on Play. Handy while iterating with ParrelSync clones.")]
+        [Tooltip("Create a lobby as soon as Play starts.")]
         [SerializeField] private bool autoStartHost;
 
-        [Tooltip("Start as a client immediately on Play. Ignored if Auto Start Host is set.")]
+        [Tooltip("Join a lobby as soon as Play starts. Ignored if Auto Start Host is set. Address is the join code.")]
         [SerializeField] private bool autoStartClient;
 
-        [SerializeField] private string address = "127.0.0.1";
-        [SerializeField] private ushort port = 7777;
-
-        [Tooltip("Address the server binds to. 0.0.0.0 accepts connections on every interface.")]
-        [SerializeField] private string serverBindAddress = "0.0.0.0";
+        [Tooltip("Lobby name when Auto Start Host is set. Join code when Auto Start Client is set.")]
+        [SerializeField] private string address = "Local";
 
         [Header("Scene")]
         [Tooltip("Loaded after Disconnect. Leave empty to stay in this scene.")]
@@ -62,15 +59,18 @@ namespace Airplane.Multiplayer
             Wire(false);
         }
 
-        private void Start()
+        private async void Start()
         {
             if (Manager && Manager.IsListening)
                 return;
 
             if (autoStartHost)
-                NetworkConnection.StartHost(address, port, serverBindAddress);
-            else if (autoStartClient)
-                NetworkConnection.StartClient(address, port, serverBindAddress);
+            {
+                string name = string.IsNullOrWhiteSpace(address) || address.IndexOf('.') >= 0 ? "Local" : address.Trim();
+                await GameLobby.Create(name, GameLobby.DefaultMaxPlayers, false);
+            }
+            else if (autoStartClient && !string.IsNullOrWhiteSpace(address) && address.IndexOf('.') < 0)
+                await GameLobby.JoinCode(address.Trim());
         }
 
         private void Update()
@@ -140,6 +140,8 @@ namespace Airplane.Multiplayer
             if (roleText)
             {
                 string role = Manager.IsHost ? "Host" : Manager.IsServer ? "Server" : "Client";
+                if (GameLobby.Current != null && !string.IsNullOrEmpty(GameLobby.Current.Code))
+                    role += "  ·  " + GameLobby.Current.Code;
                 Set(roleText, role + "  ·  client id " + Manager.LocalClientId);
             }
 

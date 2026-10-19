@@ -95,6 +95,14 @@ public class MapLoadingScreen : MonoBehaviour
 
         while (!generator.IsComplete)
         {
+            if (!generator.HasSeed)
+            {
+                SetStatus("Waiting for map");
+                SetProgress(0f);
+                yield return null;
+                continue;
+            }
+
             int target = Mathf.Max(generator.IslandTarget, 1);
             SetStatus("Generating map  " + generator.IslandSpawned + "/" + generator.IslandTarget);
             SetProgress(generator.IslandTarget == 0 ? 1f : generator.IslandSpawned / (float)target);

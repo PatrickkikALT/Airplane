@@ -1,7 +1,5 @@
-using System;
 using Airplane.Extensions;
 using Airplane.Multiplayer;
-using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,11 +14,7 @@ public class PauseMenu : SingletonMonoBehaviour<PauseMenu>
 
     public void Leave()
     {
-        ulong currentClient = NetworkedAircraft.Local.OwnerClientId;
-        if (NetworkManager.Singleton.IsHost)
-            NetworkManager.Singleton.Shutdown();
-        else
-            NetworkManager.Singleton.DisconnectClient(currentClient);
+        NetworkConnection.Disconnect();
         SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(0));
     }
 }
