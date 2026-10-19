@@ -385,6 +385,7 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
     public class VolumetricCloudsPass : ScriptableRenderPass
     {
         private const string rasterPassProfilerTag = "Trace Volumetric Clouds";
+        private const string resolvePassProfilerTag = "Resolve Volumetric Clouds Scene Color";
         private const string profilerTag = "Volumetric Clouds";
         private readonly ProfilingSampler m_ProfilingSampler = new ProfilingSampler(profilerTag);
 
@@ -481,6 +482,7 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
         private const string _VolumetricCloudsColorTexture = "_VolumetricCloudsColorTexture";
         private const string _VolumetricCloudsHistoryTexture = "_VolumetricCloudsHistoryTexture";
         private const string _VolumetricCloudsAccumulationTexture = "_VolumetricCloudsAccumulationTexture";
+        private const string _VolumetricCloudsResolvedColorTexture = "_VolumetricCloudsResolvedColorTexture";
         private const string _VolumetricCloudsDepthTexture = "_VolumetricCloudsDepthTexture";
         private const string _VolumetricCloudsLightingTexture = "_VolumetricCloudsLightingTexture"; // Same as "_VolumetricCloudsColorTexture"
         private const string _CameraTempDepthTexture = "_CameraTempDepthTexture";
@@ -818,6 +820,8 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
 
             internal bool canCopy;
             internal bool denoiseClouds;
+            internal bool resetHistory;
+            internal bool isMsaa;
             internal bool dynamicAmbientProbe;
             internal bool outputDepth;
             internal bool outputToSceneDepth;
@@ -830,6 +834,7 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
             internal TextureHandle cloudsDepthHandle;
             internal TextureHandle accumulateHandle;
             internal TextureHandle historyHandle;
+            internal TextureHandle resolvedColorHandle;
 
             internal TextureHandle cameraTempDepthHandle;
         }
@@ -862,7 +867,12 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
             if (data.denoiseClouds)
             {
                 // Prepare Temporal Reprojection (copy source buffer: colorHandle.rgb + cloudsHandle.a)
-                Blitter.BlitCameraTexture(cmd, data.cameraColorHandle, data.accumulateHandle, data.cloudsMaterial, pass: 2);
+                Blitter.BlitCameraTexture(cmd, ResolveIfNeeded(cmd, data.cameraColorHandle, data.resolvedColorHandle, data.isMsaa), data.accumulateHandle, data.cloudsMaterial, pass: 2);
+
+                if (data.resetHistory)
+                    Blitter.BlitCameraTexture(cmd, data.accumulateHandle, data.historyHandle);
+
+                data.cloudsMaterial.SetTexture(volumetricCloudsHistoryTexture, data.historyHandle);
 
                 // Temporal Reprojection
                 Blitter.BlitCameraTexture(cmd, data.accumulateHandle, data.cameraColorHandle, data.cloudsMaterial, pass: 3);
@@ -871,12 +881,60 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
                 if (data.canCopy)
                     cmd.CopyTexture(data.cameraColorHandle, data.historyHandle);
                 else
-                    Blitter.BlitCameraTexture(cmd, data.cameraColorHandle, data.historyHandle, RenderBufferLoadAction.Load, RenderBufferStoreAction.Store, data.cloudsMaterial, pass: 2);
-
-                data.cloudsMaterial.SetTexture(volumetricCloudsHistoryTexture, data.historyHandle);
+                    Blitter.BlitCameraTexture(cmd, ResolveIfNeeded(cmd, data.cameraColorHandle, data.resolvedColorHandle, data.isMsaa), data.historyHandle, RenderBufferLoadAction.Load, RenderBufferStoreAction.Store, data.cloudsMaterial, pass: 2);
             }
 
             context.cmd.SetRenderTarget(data.cameraColorHandle, data.activeDepthHandle);
+        }
+
+        private class ResolvePassData
+        {
+            internal TextureHandle source;
+            internal TextureHandle destination;
+        }
+
+        static RTHandle ResolveIfNeeded(CommandBuffer cmd, RTHandle source, RTHandle destination, bool isMsaa)
+        {
+            if (!isMsaa)
+                return source;
+
+            if (source.rt != null && source.rt.antiAliasing > 1)
+                cmd.ResolveAntiAliasedSurface(source.rt, destination.rt);
+            else
+                Blitter.BlitCameraTexture(cmd, source, destination);
+
+            return destination;
+        }
+
+        private TextureHandle CreateResolvedColorTexture(RenderGraph renderGraph, UniversalCameraData cameraData)
+        {
+            RenderTextureDescriptor desc = cameraData.cameraTargetDescriptor;
+            desc.msaaSamples = 1;
+            desc.useMipMap = false;
+            desc.depthBufferBits = 0;
+            return UniversalRenderer.CreateRenderGraphTexture(renderGraph, desc, name: _VolumetricCloudsResolvedColorTexture, false, FilterMode.Point, TextureWrapMode.Clamp);
+        }
+
+        private TextureHandle ResolveCameraColor(RenderGraph renderGraph, UniversalCameraData cameraData, TextureHandle source)
+        {
+            TextureHandle destination = CreateResolvedColorTexture(renderGraph, cameraData);
+
+            using (var builder = renderGraph.AddUnsafePass<ResolvePassData>(resolvePassProfilerTag, out var passData))
+            {
+                passData.source = source;
+                passData.destination = destination;
+
+                builder.UseTexture(passData.source, AccessFlags.Read);
+                builder.UseTexture(passData.destination, AccessFlags.Write);
+
+                builder.SetRenderFunc((ResolvePassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+                    ResolveIfNeeded(cmd, data.source, data.destination, true);
+                });
+            }
+
+            return destination;
         }
 
         static void ExecuteRasterPass(RasterPassData data, RasterGraphContext rgContext)
@@ -897,6 +955,9 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
 
+            bool isMsaa = cameraData.cameraTargetDescriptor.msaaSamples > 1;
+            TextureHandle sceneColorHandle = isMsaa ? ResolveCameraColor(renderGraph, cameraData, resourceData.activeColorTexture) : resourceData.activeColorTexture;
+
             // add a raster render pass to the render graph, specifying the name and the data type that will be passed to the ExecuteRasterPass function
             using (var builder = renderGraph.AddRasterRenderPass<RasterPassData>(rasterPassProfilerTag, out var rasterPassData))
             {
@@ -904,7 +965,7 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
                 UpdateClouds(mainLight, cameraData.camera);
 
                 // Get the active color texture through the frame data, and set it as the source texture for the blit
-                rasterPassData.cameraColorHandle = resourceData.activeColorTexture;
+                rasterPassData.cameraColorHandle = sceneColorHandle;
                 rasterPassData.cameraDepthHandle = resourceData.cameraDepthTexture;
 
                 RenderTextureFormat cloudsHandleFormat = RenderTextureFormat.ARGBHalf; // lighting.rgb + transmittance.a
@@ -943,8 +1004,9 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
 
                 ConfigureInput(ScriptableRenderPassInput.Depth);
 
-                builder.UseTexture(rasterPassData.cameraColorHandle, AccessFlags.ReadWrite);
+                builder.UseTexture(rasterPassData.cameraColorHandle, isMsaa ? AccessFlags.Read : AccessFlags.ReadWrite);
                 builder.UseTexture(rasterPassData.cameraDepthHandle, AccessFlags.Read);
+                builder.AllowPassCulling(false);
 
                 builder.SetRenderAttachment(cloudsTextureHandle, 0);
 
@@ -971,7 +1033,8 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
                 desc.colorFormat = cloudsHandleFormat;
 
                 TextureHandle accumulateHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, desc, name: _VolumetricCloudsAccumulationTexture, false, FilterMode.Point, TextureWrapMode.Clamp);
-                TextureHandle historyHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, desc, name: _VolumetricCloudsHistoryTexture, false, FilterMode.Point, TextureWrapMode.Clamp);
+                bool resetHistory = RenderingUtils.ReAllocateHandleIfNeeded(ref historyHandle, desc, FilterMode.Point, TextureWrapMode.Clamp, name: _VolumetricCloudsHistoryTexture);
+                TextureHandle historyTextureHandle = renderGraph.ImportTexture(historyHandle);
 
                 // Full resolution camera texture descriptor
                 RenderTextureDescriptor tempDepthDesc = desc;
@@ -1011,7 +1074,15 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
 
                 passData.cloudsColorHandle = cloudsTextureHandle;
                 passData.accumulateHandle = accumulateHandle;
-                passData.historyHandle = historyHandle;
+                passData.historyHandle = historyTextureHandle;
+                passData.resetHistory = resetHistory;
+                passData.isMsaa = isMsaa;
+
+                if (isMsaa && denoiseClouds)
+                {
+                    passData.resolvedColorHandle = CreateResolvedColorTexture(renderGraph, cameraData);
+                    builder.UseTexture(passData.resolvedColorHandle, AccessFlags.Write);
+                }
 
                 ConfigureInput(ScriptableRenderPassInput.Depth);
 
@@ -1128,7 +1199,7 @@ public class VolumetricCloudsURP : ScriptableRendererFeature
 
             for (int i = 0; i < 6; i++)
             {
-                CoreUtils.SetRenderTarget(cmd, data.probeColorHandle, ClearFlag.None, 0, (CubemapFace)i);
+                CoreUtils.SetRenderTarget(cmd, data.probeColorHandle, ClearFlag.Color, Color.black, 0, (CubemapFace)i);
 
                 Matrix4x4 skyMatrixVP = skyMatrixP * data.skyViewMatrices[i];
 
