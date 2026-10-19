@@ -42,33 +42,64 @@ public class MapGenerator : MonoBehaviour
 
     [Header("Number Ranges")]
     [SerializeField] private List<NumberRanges> numberRanges = new List<NumberRanges>();
-    [SerializeField] private float rangedNumber;   
-    
+    [SerializeField] private float rangedNumber;
+
+    private bool _generating;
+    private bool _complete;
+
+    public bool IsGenerating => _generating;
+    public bool IsComplete => _complete;
+    public float Progress { get; private set; }
+    public int IslandTarget { get; private set; }
+    public int IslandSpawned { get; private set; }
 
     private void Start()
     {
-        StartCoroutine(SpawnIslands());
+        if (MapLoadGate.IsHeld)
+            return;
+        StartSpawningIslands();
     }
 
     public void StartSpawningIslands()
     {
-        AssignLocation();
-        StartCoroutine(SpawnIslands());
-
+        StartCoroutine(Generate());
     }
 
-    private IEnumerator SpawnIslands()
+    public IEnumerator Generate()
     {
+        if (_complete)
+            yield break;
 
-        int islandAmount = Random.Range(minIslandAmount, maxIslandAmount + 1);
+        if (_generating)
+        {
+            while (!_complete)
+                yield return null;
+            yield break;
+        }
+
+        _generating = true;
+        AssignLocation();
+
+        int islandAmount = 0;
+        if (islands != null && islands.Count > 0)
+            islandAmount = Random.Range(minIslandAmount, maxIslandAmount + 1);
+
+        IslandTarget = islandAmount;
+        IslandSpawned = 0;
+        Progress = islandAmount == 0 ? 1f : 0f;
+
         for (int i = 0; i < islandAmount; i++)
         {
             Vector3 position = ReturnCheckedSpawnPosition();
             Instantiate(islands[Random.Range(0, islands.Count)], position, Quaternion.identity);
+            IslandSpawned = i + 1;
+            Progress = IslandSpawned / (float)islandAmount;
             yield return null;
         }
 
-
+        Progress = 1f;
+        _complete = true;
+        _generating = false;
     }
 
     private Vector3 ReturnCheckedSpawnPosition()
@@ -119,7 +150,6 @@ public class MapGenerator : MonoBehaviour
 
             if (isInRange)
             {
-                print("Object was in range");
                 return true;
             }
         }

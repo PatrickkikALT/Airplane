@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Airplane.AI;
 using Airplane.FlightSimulation;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -89,7 +90,13 @@ namespace Airplane.Multiplayer
         private int _nextDummyIndex;
         private int _desiredBots;
         private bool _subscribed;
+        private bool _gateSubscribed;
+        private bool _spawnDeferred;
+        private bool _readyHandlerRegistered;
+        private Coroutine _announce;
         private NetworkManager _manager;
+        private readonly HashSet<ulong> _worldReadyClients = new HashSet<ulong>();
+        private const string MapLoadReadyMessage = "Airplane.MapLoadReady";
 
         public static AircraftNetworkSpawner Instance { get; private set; }
 
@@ -114,6 +121,9 @@ namespace Airplane.Multiplayer
             if (!manager)
                 manager = FindAnyObjectByType<NetworkManager>();
             AircraftSelection.Catalog?.Register(manager);
+
+            MapLoadGate.Ready += OnWorldReady;
+            _gateSubscribed = true;
         }
 
         private void Start()
@@ -143,6 +153,14 @@ namespace Airplane.Multiplayer
 
         private void OnDestroy()
         {
+            if (_gateSubscribed)
+            {
+                MapLoadGate.Ready -= OnWorldReady;
+                _gateSubscribed = false;
+            }
+
+            UnregisterReadyHandler();
+
             if (_subscribed && _manager)
             {
                 _manager.OnServerStarted -= HandleServerStarted;
@@ -170,11 +188,16 @@ namespace Airplane.Multiplayer
         {
             if (!IsServerActive)
                 return;
-            
-            foreach (ulong clientId in Manager.ConnectedClientsIds)
-                SpawnFor(clientId);
 
-            SetBotCount(botCount);
+            RegisterReadyHandler();
+
+            if (MapLoadGate.IsHeld && !MapLoadGate.LocalReady)
+            {
+                _spawnDeferred = true;
+                return;
+            }
+
+            SpawnConnectedPlayersAndBots();
         }
 
         private void HandleServerStopped(bool wasHost)
@@ -187,6 +210,8 @@ namespace Airplane.Multiplayer
             _nextBotIndex = 0;
             _nextDummyIndex = 0;
             _desiredBots = 0;
+            _spawnDeferred = false;
+            _worldReadyClients.Clear();
             AircraftSelection.Clear();
             BotCallsigns.Reset();
             AdminSession.Reset();
@@ -196,12 +221,13 @@ namespace Airplane.Multiplayer
         {
             if (!IsServerActive)
                 return;
-            SpawnFor(clientId);
+            TrySpawnPlayer(clientId);
         }
 
         private void HandleClientDisconnected(ulong clientId)
         {
             AircraftSelection.Forget(clientId);
+            _worldReadyClients.Remove(clientId);
             _slotByClient.Remove(clientId);
 
             if (!_aircraftByClient.Remove(clientId, out NetworkObject aircraft))
@@ -212,6 +238,109 @@ namespace Airplane.Multiplayer
 
             if (aircraft && aircraft.IsSpawned)
                 aircraft.Despawn();
+        }
+
+        private void OnWorldReady()
+        {
+            if (_manager == null)
+                _manager = Manager;
+
+            if (_manager != null && _manager.IsServer)
+            {
+                if (!_spawnDeferred)
+                    return;
+
+                _spawnDeferred = false;
+                SpawnConnectedPlayersAndBots();
+                return;
+            }
+
+            if (_announce == null)
+                _announce = StartCoroutine(AnnounceReady());
+        }
+
+        private void SpawnConnectedPlayersAndBots()
+        {
+            if (!IsServerActive)
+                return;
+
+            foreach (ulong clientId in Manager.ConnectedClientsIds)
+                TrySpawnPlayer(clientId);
+
+            SetBotCount(botCount);
+        }
+
+        private void TrySpawnPlayer(ulong clientId)
+        {
+            if (!IsServerActive || !IsClientWorldReady(clientId))
+                return;
+
+            SpawnFor(clientId);
+        }
+
+        private bool IsClientWorldReady(ulong clientId)
+        {
+            if (!MapLoadGate.IsHeld)
+                return true;
+            if (!MapLoadGate.LocalReady)
+                return false;
+            if (_manager != null && clientId == _manager.LocalClientId)
+                return true;
+            return _worldReadyClients.Contains(clientId);
+        }
+
+        private void RegisterReadyHandler()
+        {
+            if (_readyHandlerRegistered || _manager == null || _manager.CustomMessagingManager == null)
+                return;
+
+            _manager.CustomMessagingManager.RegisterNamedMessageHandler(MapLoadReadyMessage, OnMapLoadReady);
+            _readyHandlerRegistered = true;
+        }
+
+        private void UnregisterReadyHandler()
+        {
+            if (!_readyHandlerRegistered || _manager == null || _manager.CustomMessagingManager == null)
+                return;
+
+            _manager.CustomMessagingManager.UnregisterNamedMessageHandler(MapLoadReadyMessage);
+            _readyHandlerRegistered = false;
+        }
+
+        private void OnMapLoadReady(ulong sender, FastBufferReader reader)
+        {
+            _worldReadyClients.Add(sender);
+            TrySpawnPlayer(sender);
+        }
+
+        private IEnumerator AnnounceReady()
+        {
+            while (this)
+            {
+                NetworkManager manager = Manager;
+                if (manager == null || !manager.IsListening)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                if (manager.IsServer || NetworkedAircraft.Local)
+                    yield break;
+
+                if (manager.CustomMessagingManager != null)
+                {
+                    FastBufferWriter writer = new FastBufferWriter(1, Allocator.Temp);
+                    writer.WriteValueSafe((byte)1);
+                    manager.CustomMessagingManager.SendNamedMessage(
+                        MapLoadReadyMessage,
+                        NetworkManager.ServerClientId,
+                        writer,
+                        NetworkDelivery.Reliable);
+                    writer.Dispose();
+                }
+
+                yield return new WaitForSecondsRealtime(0.5f);
+            }
         }
 
         public void SpawnFor(ulong clientId, bool replaceExisting = false)
