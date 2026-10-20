@@ -219,6 +219,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6809452369769266765, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3104550970723184369}
+    - targetCorrespondingSourceObject: {fileID: -746186172556145313, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3569868495359970601}
+    - targetCorrespondingSourceObject: {fileID: 6162583871730536078, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3549053701974489651}
+    - targetCorrespondingSourceObject: {fileID: -5060664090860804390, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4883566125962535921}
+    - targetCorrespondingSourceObject: {fileID: -4062194029082576291, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3664537303194505497}
     - targetCorrespondingSourceObject: {fileID: 8680618401834210944, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7337549269410354693}
@@ -238,6 +250,54 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 5907708995468368791}
   m_SourcePrefab: {fileID: 100100000, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+--- !u!1 &394038066091487049 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -4062194029082576291, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3664537303194505497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 394038066091487049}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 7191847801988349553}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 0
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6
+--- !u!4 &1587092194622070214 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6111855784418789586, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1644263917666814290 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -3168758601224725434, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
@@ -292,6 +352,49 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!1 &1680461567667231642 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6162583871730536078, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3549053701974489651
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1680461567667231642}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 4301392854893363797}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 0
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6
 --- !u!1 &2042346555914414937 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6809452369769266765, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
@@ -400,6 +503,49 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!1 &3995489071235799115 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -746186172556145313, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3569868495359970601
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3995489071235799115}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 7295365420813640772}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 0
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6
 --- !u!1 &4224402790744621972 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8680618401834210944, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
@@ -454,6 +600,11 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!4 &4301392854893363797 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8747760166119544641, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4998273174965711615 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
@@ -492,8 +643,6 @@ MonoBehaviour:
   initialVelocityBody: {x: 0, y: 0, z: 50}
   initialAngularVelocityBody: {x: 0, y: 0, z: 0}
   enableLandingGear: 1
-  groundPlaneY: 0
-  raycastGround: 0
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -881,7 +1030,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3077785294
+  GlobalObjectIdHash: 2393592242
   InScenePlacedSourceGlobalObjectIdHash: 1679653618
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1073,6 +1222,59 @@ MonoBehaviour:
   drawGizmos: 1
   gizmoForceScale: 0.0008
   gizmoColor: {r: 0.3, g: 0.75, b: 1, a: 0.9}
+--- !u!4 &7191847801988349553 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2385013334555290469, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7295365420813640772 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -6347384181029375664, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &8868501735898231758 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -5060664090860804390, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
+  m_PrefabInstance: {fileID: 4816555292769424660}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4883566125962535921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8868501735898231758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d7e4b2a9c6f80e3a5b7192d4c8e0f31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Weapons.AircraftGun
+  muzzle: {fileID: 1587092194622070214}
+  localMuzzleAxis: {x: 0, y: 0, z: 1}
+  triggerChannel: 0
+  fireMode: 0
+  roundsPerSecond: 12
+  muzzleSpeed: 800
+  maxRange: 900
+  spreadDeg: 0.35
+  recoilImpulse: 45
+  impactImpulse: 900
+  damage: 8
+  projectileMass: 0.01
+  projectileArea: 0.000046
+  projectileCd: 0.3
+  projectileLifetime: 4
+  ammoCapacity: 250
+  reloadSeconds: 6
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  projectilePrefab: {fileID: 3416034441140349829, guid: d0fbef5f732bd7922a8605bc2cbb98a0, type: 3}
+  tracerColor: {r: 1, g: 0.75, b: 0.2, a: 1}
+  tracerWidth: 0.045
+  tracerLifetime: 0.12
+  drawGizmos: 1
+  gizmoLength: 1.6
 --- !u!1 &9050867467834417072 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4561288284501985956, guid: 3133ff4285e3d494d9ac69d272565f30, type: 3}
