@@ -1,3 +1,4 @@
+using System;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -50,6 +51,9 @@ namespace Airplane.Weather
                 return;
             }
 
+            if (!IsCycled(_manager.GetPreset(current)))
+                return;
+
             _holdRemaining -= Time.deltaTime;
             if (_holdRemaining > 0f)
                 return;
@@ -77,7 +81,7 @@ namespace Airplane.Weather
         {
             float min = Mathf.Min(minHoldSeconds, maxHoldSeconds);
             float max = Mathf.Max(minHoldSeconds, maxHoldSeconds);
-            return Random.Range(min, max);
+            return UnityEngine.Random.Range(min, max);
         }
 
         private bool TryPickNext(int currentIndex, out string nextName)
@@ -97,7 +101,7 @@ namespace Airplane.Weather
             else if (position >= _order.Length - 1)
                 nextPosition = _order.Length - 2;
             else
-                nextPosition = Random.value < worsenChance ? position + 1 : position - 1;
+                nextPosition = UnityEngine.Random.value < worsenChance ? position + 1 : position - 1;
 
             int nextIndex = _order[nextPosition];
             WeatherPreset preset = _manager.GetPreset(nextIndex);
@@ -110,17 +114,29 @@ namespace Airplane.Weather
 
         private void RebuildOrder()
         {
-            int count = _manager.PresetCount;
-            if (_order == null || _order.Length != count)
+            int available = 0;
+            int total = _manager.PresetCount;
+            for (int i = 0; i < total; i++)
             {
-                _order = new int[count];
-                _severity = new float[count];
+                if (IsCycled(_manager.GetPreset(i)))
+                    available++;
             }
 
-            for (int i = 0; i < count; i++)
+            if (_order == null || _order.Length != available)
+                _order = new int[available];
+            if (_severity == null || _severity.Length != total)
+                _severity = new float[total];
+
+            int count = 0;
+            for (int i = 0; i < total; i++)
             {
-                _order[i] = i;
-                _severity[i] = Severity(_manager.GetPreset(i));
+                WeatherPreset preset = _manager.GetPreset(i);
+                _severity[i] = Severity(preset);
+                if (!IsCycled(preset))
+                    continue;
+
+                _order[count] = i;
+                count++;
             }
 
             for (int i = 1; i < count; i++)
@@ -147,6 +163,20 @@ namespace Airplane.Weather
             }
 
             return -1;
+        }
+
+        private static bool IsCycled(WeatherPreset preset)
+        {
+            if (preset == null || string.IsNullOrEmpty(preset.Name))
+                return false;
+
+            if (string.Equals(preset.Name, "Tornado", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (string.Equals(preset.Name, "Death", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
         }
 
         private static float Severity(WeatherPreset preset)

@@ -112,7 +112,9 @@ namespace Airplane.Weapons
             if (_lineMaterial)
                 return _lineMaterial;
 
-            Shader shader = Shader.Find("Sprites/Default");
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (!shader)
+                shader = Shader.Find("Sprites/Default");
             if (!shader)
                 shader = Shader.Find("Universal Render Pipeline/Unlit");
             if (!shader)
@@ -120,8 +122,12 @@ namespace Airplane.Weapons
 
             _lineMaterial = shader ? new Material(shader) : new Material(Shader.Find("Sprites/Default"));
             _lineMaterial.name = "AircraftTracer";
+            if (_lineMaterial.HasProperty("_BaseColor"))
+                _lineMaterial.SetColor("_BaseColor", Color.white);
             if (_lineMaterial.HasProperty("_Color"))
                 _lineMaterial.SetColor("_Color", Color.white);
+            if (_lineMaterial.HasProperty("_Surface"))
+                _lineMaterial.SetFloat("_Surface", 1f);
             return _lineMaterial;
         }
 
@@ -244,7 +250,18 @@ namespace Airplane.Weapons
                     return;
                 }
 
-                DrawStreak(_launchOrigin + _velocity * t, t);
+                Vector3 prev = _launchOrigin + _velocity * Mathf.Max(0f, t - Time.deltaTime);
+                Vector3 cur = _launchOrigin + _velocity * t;
+                Vector3 step = cur - prev;
+                float dist = step.magnitude;
+                if (dist > 1e-4f && Physics.Raycast(prev, step / dist, out RaycastHit hit, dist))
+                {
+                    DrawStreak(hit.point, t);
+                    _life = 0f;
+                    return;
+                }
+
+                DrawStreak(cur, t);
                 return;
             }
 
@@ -302,7 +319,8 @@ namespace Airplane.Weapons
                 dir = Vector3.right;
 
             Vector3 up = Mathf.Abs(dir.y) > 0.98f ? Vector3.forward : Vector3.up;
-            float length = Mathf.Min(4f, speed * travelledTime);
+            float lengthCap = Mathf.Max(4f, width * 55f);
+            float length = Mathf.Min(lengthCap, speed * travelledTime);
             _line.SetPosition(0, vis - dir * length);
             _line.SetPosition(1, vis);
             transform.SetPositionAndRotation(vis, Quaternion.LookRotation(dir, up));

@@ -4,6 +4,7 @@ using System.Linq;
 using Airplane.Multiplayer;
 using Airplane.Weather;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -61,5 +62,14 @@ public class SettingsUI : MonoBehaviour
     private void SetResolution(Resolution resolution)
     {
         Screen.SetResolution(resolution.width, resolution.height, fullscreen);
+    }
+
+    public void SetFPSLimit(string limit)
+    {
+        if (int.TryParse(limit, out int value))
+        {
+            Application.targetFrameRate = value == -1 ? 0 : value;
+            PlayerPrefs.SetInt("FPSLimit", value);
+        }
     }
 }

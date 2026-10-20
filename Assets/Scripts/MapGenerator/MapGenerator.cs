@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Airplane.Trailer;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -32,19 +33,26 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private Vector3 minSpawnPosition;
     [SerializeField] private Vector3 maxSpawnPosition;
     [SerializeField] private Transform spawnArea;
+    [SerializeField] private Transform waterSurface;
+    [SerializeField] private float waterHeightOffset = -10f;
+    [SerializeField] private float sinkRatio = 0.82f;
     private Bounds _spawnAreaCollider;
 
     [Header("Amounts")]
-    [SerializeField] private int minIslandAmount;
-    [SerializeField] private int maxIslandAmount;
+    [SerializeField] private int minIslandAmount = 420;
+    [SerializeField] private int maxIslandAmount = 520;
     [SerializeField] private float spawnFrameBudgetMs = 12f;
+
+    [Header("Scale")]
+    [SerializeField] private float minIslandScale = 22f;
+    [SerializeField] private float maxIslandScale = 85f;
 
     [Header("Islands")]
     [SerializeField] private List<GameObject> islands = new List<GameObject>();
 
     [Header("Number Ranges")]
     [SerializeField] private List<NumberRanges> numberRanges = new List<NumberRanges>();
-    [SerializeField] private float rangedNumber;
+    [SerializeField] private float rangedNumber = 185f;
 
     private bool _generating;
     private bool _started;
@@ -54,6 +62,7 @@ public class MapGenerator : MonoBehaviour
     private System.Random _rng;
     private bool _seedHandlerRegistered;
     private bool _requestHandlerRegistered;
+    private float _waterLevelY;
 
     private static MapGenerator _sessionOwner;
 
@@ -175,9 +184,23 @@ public class MapGenerator : MonoBehaviour
         numberRanges.Clear();
         _rng = new System.Random(_seed);
 
+        var validIslands = new List<GameObject>();
+        if (islands != null)
+        {
+            for (int i = 0; i < islands.Count; i++)
+            {
+                if (islands[i])
+                    validIslands.Add(islands[i]);
+            }
+        }
+
         int islandAmount = 0;
-        if (islands != null && islands.Count > 0)
-            islandAmount = _rng.Next(minIslandAmount, maxIslandAmount + 1);
+        if (validIslands.Count > 0)
+        {
+            int low = Mathf.Max(0, Mathf.Min(minIslandAmount, maxIslandAmount));
+            int high = Mathf.Max(low, Mathf.Max(minIslandAmount, maxIslandAmount));
+            islandAmount = _rng.Next(low, high + 1);
+        }
 
         IslandTarget = islandAmount;
         IslandSpawned = 0;
@@ -186,10 +209,24 @@ public class MapGenerator : MonoBehaviour
         float budget = Mathf.Max(1f, spawnFrameBudgetMs) * 0.001f;
         float frameStart = Time.realtimeSinceStartup;
 
+        float scaleLo = Mathf.Max(1f, Mathf.Min(minIslandScale, maxIslandScale));
+        float scaleHi = Mathf.Max(scaleLo, Mathf.Max(minIslandScale, maxIslandScale));
+
         for (int i = 0; i < islandAmount; i++)
         {
-            Vector3 position = ReturnCheckedSpawnPosition();
-            Instantiate(islands[_rng.Next(0, islands.Count)], position, Quaternion.identity);
+            float scale = Mathf.Round(NextFloat(scaleLo, scaleHi));
+            float yaw = Mathf.Round(NextFloat(0f, 360f));
+            float minSeparation = Mathf.Max(rangedNumber, scale * 3.6f);
+            Vector3 position = ReturnCheckedSpawnPosition(minSeparation);
+
+            GameObject prefab = validIslands[_rng.Next(0, validIslands.Count)];
+            float submergedY = _waterLevelY + waterHeightOffset - scale * Mathf.Max(0f, sinkRatio);
+            position.y = submergedY;
+
+            GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f));
+            instance.transform.localScale = new Vector3(scale, scale, scale);
+            EnsureIslandCollider(instance);
+
             IslandSpawned = i + 1;
             Progress = IslandSpawned / (float)islandAmount;
 
@@ -206,74 +243,103 @@ public class MapGenerator : MonoBehaviour
         _rng = null;
     }
 
-    private Vector3 ReturnCheckedSpawnPosition()
+    private static void EnsureIslandCollider(GameObject instance)
     {
-        bool isChecked = false;
+        if (!instance || instance.GetComponentInChildren<Collider>() != null)
+            return;
 
+        MeshFilter filter = instance.GetComponent<MeshFilter>();
+        if (!filter)
+            filter = instance.GetComponentInChildren<MeshFilter>();
+        if (!filter || !filter.sharedMesh)
+            return;
+
+        MeshCollider collider = filter.gameObject.AddComponent<MeshCollider>();
+        collider.sharedMesh = filter.sharedMesh;
+    }
+
+    private Vector3 ReturnCheckedSpawnPosition(float separation)
+    {
         Vector3 spawnPosition = Vector3.zero;
-        while (!isChecked)
+        int attempts = 0;
+        while (attempts < 64)
         {
             spawnPosition = ReturnSpawnPosition();
-            if (!CheckNumber(spawnPosition))
-            {
-                isChecked = true;
-            }
+            attempts++;
+            if (!CheckNumber(spawnPosition, separation))
+                return spawnPosition;
         }
 
+        numberRanges.Add(new NumberRanges(
+            spawnPosition.x - separation,
+            spawnPosition.x + separation,
+            spawnPosition.y - separation,
+            spawnPosition.y + separation,
+            spawnPosition.z - separation,
+            spawnPosition.z + separation));
         return spawnPosition;
     }
 
     private Vector3 ReturnSpawnPosition()
     {
         float randomX = NextFloat(minSpawnPosition.x, maxSpawnPosition.x);
-        float randomY = NextFloat(minSpawnPosition.y, maxSpawnPosition.y);
         float randomZ = NextFloat(minSpawnPosition.z, maxSpawnPosition.z);
-
-        Vector3 spawnPosition = new Vector3(randomX, randomY, randomZ);
-        return spawnPosition;
+        return new Vector3(randomX, _waterLevelY, randomZ);
     }
 
-    private bool CheckNumber(Vector3 spawnPosition)
+    private bool CheckNumber(Vector3 spawnPosition, float separation)
     {
-
-        float minX = spawnPosition.x - rangedNumber;
-        float maxX = spawnPosition.x + rangedNumber;
-        float minY = spawnPosition.y - rangedNumber;
-        float maxY = spawnPosition.y + rangedNumber;
-        float minZ = spawnPosition.z - rangedNumber;
-        float maxZ = spawnPosition.z + rangedNumber;
-
-        NumberRanges numberRange = new NumberRanges(minX, maxX, minY, maxY, minZ, maxZ);
-
-        bool isInRange = false;
+        float minSq = separation * separation;
         for (int i = 0; i < numberRanges.Count; i++)
         {
-            isInRange = (spawnPosition.x >= numberRanges[i].minX && spawnPosition.x < numberRanges[i].maxX &&
-                spawnPosition.y >= numberRanges[i].minY && spawnPosition.y < numberRanges[i].maxY &&
-                spawnPosition.z >= numberRanges[i].minZ && spawnPosition.z < numberRanges[i].maxZ) ? true : false;
-
-            if (isInRange)
-            {
+            float cx = (numberRanges[i].minX + numberRanges[i].maxX) * 0.5f;
+            float cz = (numberRanges[i].minZ + numberRanges[i].maxZ) * 0.5f;
+            float r = (numberRanges[i].maxX - numberRanges[i].minX) * 0.5f;
+            float req = Mathf.Max(separation, r);
+            float dx = spawnPosition.x - cx;
+            float dz = spawnPosition.z - cz;
+            if (dx * dx + dz * dz < Mathf.Max(minSq, req * req))
                 return true;
-            }
         }
 
-
-        numberRanges.Add(numberRange);
+        numberRanges.Add(new NumberRanges(
+            spawnPosition.x - separation,
+            spawnPosition.x + separation,
+            spawnPosition.y - separation,
+            spawnPosition.y + separation,
+            spawnPosition.z - separation,
+            spawnPosition.z + separation));
         return false;
     }
 
     private void AssignLocation()
     {
+        if (spawnArea)
+        {
+            Collider col = spawnArea.GetComponent<Collider>();
+            if (col)
+            {
+                _spawnAreaCollider = col.bounds;
+                minSpawnPosition.x = _spawnAreaCollider.min.x;
+                maxSpawnPosition.x = _spawnAreaCollider.max.x;
+                minSpawnPosition.z = _spawnAreaCollider.min.z;
+                maxSpawnPosition.z = _spawnAreaCollider.max.z;
+            }
+        }
 
-        if (!spawnArea) return;
-        _spawnAreaCollider = spawnArea.GetComponent<Collider>().bounds;
-        minSpawnPosition.x = _spawnAreaCollider.min.x;
-        maxSpawnPosition.x = _spawnAreaCollider.max.x;
-        minSpawnPosition.y = _spawnAreaCollider.min.y;
-        maxSpawnPosition.y = _spawnAreaCollider.max.y;
-        minSpawnPosition.z = _spawnAreaCollider.min.z;
-        maxSpawnPosition.z = _spawnAreaCollider.max.z;
+        float waterY = 0f;
+        if (waterSurface)
+        {
+            waterY = waterSurface.position.y;
+        }
+        else
+        {
+            TrailerOceanSurface ocean = FindAnyObjectByType<TrailerOceanSurface>();
+            if (ocean)
+                waterY = ocean.transform.position.y;
+        }
+
+        _waterLevelY = waterY;
     }
 
     private float NextFloat(float min, float max)
@@ -403,5 +469,4 @@ public class MapGenerator : MonoBehaviour
             NetworkDelivery.Reliable);
         writer.Dispose();
     }
-
 }

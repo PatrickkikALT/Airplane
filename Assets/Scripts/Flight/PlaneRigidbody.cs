@@ -48,8 +48,6 @@ namespace Airplane.FlightSimulation
 
         [Header("Ground Contact")]
         [SerializeField] private bool enableLandingGear = true;
-        [SerializeField] private float groundPlaneY;
-        [SerializeField] private bool raycastGround;
         [SerializeField] private LayerMask groundMask = ~0;
 
         [SerializeField] private Vector3[] gearAttachBody =
@@ -683,18 +681,11 @@ namespace Airplane.FlightSimulation
             for (int i = 0; i < gearAttachBody.Length; i++)
             {
                 Vector3 attachWorld = TransformPoint(gearAttachBody[i]);
-                Vector3 rayDir = Vector3.down;
-                float groundY = groundPlaneY;
-                Vector3 groundNormal = up;
+                if (!RaycastIgnoringSelf(attachWorld, Vector3.down, gearRestLength + 4f, out RaycastHit hit))
+                    continue;
 
-                if (raycastGround)
-                {
-                    if (RaycastIgnoringSelf(attachWorld, rayDir, gearRestLength + 4f, out var hit))
-                    {
-                        groundY = hit.point.y;
-                        groundNormal = hit.normal;
-                    }
-                }
+                float groundY = hit.point.y;
+                Vector3 groundNormal = hit.normal.sqrMagnitude > 1e-6f ? hit.normal.normalized : up;
 
                 float compression = gearRestLength - (attachWorld.y - groundY);
                 if (compression <= 0f)

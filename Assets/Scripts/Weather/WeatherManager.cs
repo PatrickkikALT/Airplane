@@ -446,9 +446,13 @@ namespace Airplane.Weather
         private static readonly int SkyExposureId = Shader.PropertyToID("_Exposure");
         private static readonly int SkyTintId = Shader.PropertyToID("_Tint");
 
+        private bool _fromNetwork;
+
         public bool IsBlending => _blending;
         public int CurrentPresetIndex => currentPreset;
         public int PresetCount => presets != null ? presets.Length : 0;
+        public float RemainingBlendSeconds =>
+            _blending ? Mathf.Max(0f, (1f - _blend) * _activeTransitionDuration) : 0f;
 
         public WeatherPreset GetPreset(int index)
         {
@@ -482,9 +486,16 @@ namespace Airplane.Weather
 
         public void UpdateWeather()
         {
-            if (NetworkedWeather.Instance != null)
-                NetworkedWeather.Instance.UpdateWeatherClientRpc();
+            if (!_fromNetwork)
+                NetworkedWeather.Instance?.Publish(CurrentWeatherName, ResolveQueuedTransitionDuration());
             UpdateWeatherInternal();
+        }
+
+        public void ApplyReplicated(string name, float blendSeconds)
+        {
+            _fromNetwork = true;
+            TrySetWeather(name, blendSeconds);
+            _fromNetwork = false;
         }
 
         public void UpdateWeatherInternal()
@@ -824,6 +835,9 @@ namespace Airplane.Weather
         {
             if (!TryFindPreset(name, out int index))
                 return false;
+
+            if (index == currentPreset && (_fromNetwork || _blending))
+                return true;
 
             currentPreset = index;
             _queuedTransitionDuration = blendSeconds;

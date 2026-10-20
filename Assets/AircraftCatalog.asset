@@ -22,3 +22,6 @@ MonoBehaviour:
   - displayName: NLI GO-46
     prefab: {fileID: 3049803396400197431, guid: 00bf06368d5e08f409fd60cee900144d, type: 3}
     previewPrefab: {fileID: 3049803396400197431, guid: 27055e4105bad03358f67ac5b149b402, type: 3}
+  - displayName: NLI EG-47
+    prefab: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+    previewPrefab: {fileID: 5406935548688270214, guid: a47e322acf14566dc943c6d5c74f6dd1, type: 3}

@@ -30,6 +30,7 @@ public class MapLoadingScreen : MonoBehaviour
 
         yield return CompileShaders();
         yield return GenerateMap();
+        yield return WarmWorld();
 
         MapLoadGate.Release();
         yield return WaitForLocalAircraft();
@@ -111,6 +112,35 @@ public class MapLoadingScreen : MonoBehaviour
 
         SetStatus("Generating map  " + generator.IslandSpawned + "/" + generator.IslandTarget);
         SetProgress(1f);
+    }
+
+    private IEnumerator WarmWorld()
+    {
+        SetStatus("Compiling shaders");
+        SetProgress(1f);
+
+        Airplane.Trailer.TrailerOceanSurface ocean = FindAnyObjectByType<Airplane.Trailer.TrailerOceanSurface>();
+        Vector3 focus = ocean ? ocean.transform.position : Vector3.zero;
+        var go = new GameObject("ShaderWarmupCamera");
+        go.hideFlags = HideFlags.HideAndDontSave;
+        Camera cam = go.AddComponent<Camera>();
+        cam.nearClipPlane = 0.3f;
+        cam.farClipPlane = 8000f;
+        cam.fieldOfView = 70f;
+        cam.clearFlags = CameraClearFlags.Skybox;
+        cam.cullingMask = ~0;
+        cam.transform.position = focus + new Vector3(0f, 220f, -30f);
+        cam.transform.LookAt(focus + new Vector3(0f, 0f, 80f));
+        RenderTexture rt = new RenderTexture(384, 216, 24);
+        cam.targetTexture = rt;
+        cam.Render();
+        yield return null;
+        cam.transform.position = focus + new Vector3(-180f, 40f, 90f);
+        cam.transform.LookAt(focus);
+        cam.Render();
+        cam.targetTexture = null;
+        Destroy(rt);
+        Destroy(go);
     }
 
     private IEnumerator WaitForLocalAircraft()

@@ -18,8 +18,8 @@ RenderSettings:
   m_FogColor: {r: 0.82, g: 0.64, b: 0.46, a: 1}
   m_FogMode: 1
   m_FogDensity: 0.01
-  m_LinearFogStart: 5800
-  m_LinearFogEnd: 99999
+  m_LinearFogStart: 280
+  m_LinearFogEnd: 2600
   m_AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
   m_AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
   m_AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
@@ -93,7 +93,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 20201, guid: 0000000000000000f000000000000000, type: 0}
+  m_LightingDataAsset: {fileID: 112000000, guid: c1dc33ab8820abd5f9015e05af55df32, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -785,7 +785,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 638377645
+  GlobalObjectIdHash: 1317783419
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2349,6 +2349,110 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &598148033
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 598148037}
+  - component: {fileID: 598148036}
+  - component: {fileID: 598148035}
+  - component: {fileID: 598148034}
+  m_Layer: 0
+  m_Name: wATER
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!23 &598148034
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 598148033}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 0
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 3b8e1d6c9a0f4e72b5c14d88f6a093e1, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &598148035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 598148033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b8e1c6a9d2f47e0a5c3187b6e90d4f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Airplane.Trailer.TrailerOceanSurface
+  resolution: 29
+--- !u!33 &598148036
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 598148033}
+  m_Mesh: {fileID: 0}
+--- !u!4 &598148037
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 598148033}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2420.615, y: 358.8904, z: -371.07}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &615025316
 GameObject:
   m_ObjectHideFlags: 0
@@ -3119,7 +3223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4214700090
+  GlobalObjectIdHash: 1690776651
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -9701,9 +9805,14 @@ MonoBehaviour:
   minSpawnPosition: {x: 0, y: 0, z: 0}
   maxSpawnPosition: {x: 50000, y: 1000, z: 50000}
   spawnArea: {fileID: 1294057335}
+  waterSurface: {fileID: 0}
+  waterHeightOffset: -10
+  sinkRatio: 0.82
   minIslandAmount: 500
   maxIslandAmount: 5000
   spawnFrameBudgetMs: 12
+  minIslandScale: 22
+  maxIslandScale: 85
   islands:
   - {fileID: 6944617297588950579, guid: efa72ee57dd01f44fbaf72008c3cd44f, type: 3}
   - {fileID: 6944617297588950579, guid: 1c1bf156f98f4524f96ccaf5042790f3, type: 3}
@@ -13673,3 +13782,4 @@ SceneRoots:
   - {fileID: 1385194541}
   - {fileID: 1294057335}
   - {fileID: 1178358914}
+  - {fileID: 598148037}

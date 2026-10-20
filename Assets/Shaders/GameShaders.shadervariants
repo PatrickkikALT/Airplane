@@ -50,11 +50,7 @@ ShaderVariantCollection:
         passType: 0
   - first: {fileID: 4800000, guid: 69c1f799e772cb6438f56c23efccb782, type: 3}
     second:
-      variants:
-      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _CLUSTER_LIGHT_LOOP
-          _LIGHT_COOKIES _LIGHT_LAYERS _MAIN_LIGHT_SHADOWS_CASCADE _REFLECTION_PROBE_ATLAS
-          _REFLECTION_PROBE_BLENDING _SCREEN_SPACE_OCCLUSION _SHADOWS_SOFT _TERRAIN_INSTANCED_PERPIXEL_NORMAL
-        passType: 13
+      variants: []
   - first: {fileID: 4800000, guid: 8fbe92a9edfe6074e841d6dd1509bc59, type: 3}
     second:
       variants:
@@ -62,11 +58,7 @@ ShaderVariantCollection:
         passType: 0
   - first: {fileID: 4800000, guid: 21322c8b137c66e49b86085d3c8161f6, type: 3}
     second:
-      variants:
-      - keywords: FOG_EXP _ADDITIONAL_LIGHT_SHADOWS _ALPHATEST_ON _CLUSTER_LIGHT_LOOP
-          _LIGHT_COOKIES _LIGHT_LAYERS _MAIN_LIGHT_SHADOWS _REFLECTION_PROBE_ATLAS
-          _REFLECTION_PROBE_BLENDING _SCREEN_SPACE_OCCLUSION _TERRAIN_INSTANCED_PERPIXEL_NORMAL
-        passType: 13
+      variants: []
   - first: {fileID: 4800000, guid: 67050ab2c079fa4d59a88bcac344d6a7, type: 3}
     second:
       variants: []
@@ -77,5 +69,8 @@ ShaderVariantCollection:
     second:
       variants: []
   - first: {fileID: 4800000, guid: f8d299103e9fda93399c73c7973bbab4, type: 3}
+    second:
+      variants: []
+  - first: {fileID: 4800000, guid: 8f4c2a91b7e64d0c9a15e3d76b28c041, type: 3}
     second:
       variants: []

@@ -3694,6 +3694,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1968068785249558878, guid: 0e64a24d92c36a04891b55a726fbda01, type: 3}
+      propertyPath: m_ForceMeshLod
+      value: -1
+      objectReference: {fileID: 0}
     - target: {fileID: 6944617297588950579, guid: 0e64a24d92c36a04891b55a726fbda01, type: 3}
       propertyPath: m_Name
       value: eiland (23)
@@ -5133,7 +5137,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7722525538604207241, guid: efa72ee57dd01f44fbaf72008c3cd44f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -94
+      value: -93.2
       objectReference: {fileID: 0}
     - target: {fileID: 7722525538604207241, guid: efa72ee57dd01f44fbaf72008c3cd44f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -8355,6 +8359,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7140789950180635396, guid: 4ca7c7371a5d75db080de7ed13208319, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -3.100006
+      objectReference: {fileID: 0}
     - target: {fileID: 7242497740427375700, guid: 4ca7c7371a5d75db080de7ed13208319, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0.25
@@ -8390,6 +8398,14 @@ PrefabInstance:
     - target: {fileID: 8547235120791141877, guid: 4ca7c7371a5d75db080de7ed13208319, type: 3}
       propertyPath: m_AnchorMin.x
       value: 0.00990099
+      objectReference: {fileID: 0}
+    - target: {fileID: 8973932933412578348, guid: 4ca7c7371a5d75db080de7ed13208319, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 2.8885498
+      objectReference: {fileID: 0}
+    - target: {fileID: 9141259013644388125, guid: 4ca7c7371a5d75db080de7ed13208319, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -3.3947144
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

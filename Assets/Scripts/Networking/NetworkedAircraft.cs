@@ -527,6 +527,8 @@ namespace Airplane.Multiplayer
         private void SubmitShotDownRpc()
         {
             BeginShotDownRpc();
+            Vector3 point = _body ? _body.Position : transform.position;
+            AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
         }
 
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
@@ -646,6 +648,8 @@ namespace Airplane.Multiplayer
                 return;
 
             BeginShotDownRpc();
+            Vector3 point = _body ? _body.Position : transform.position;
+            AircraftNetworkSpawner.NotifyAircraftDestroyed(this, point);
         }
 
         internal void ServerSetScale(float scale)

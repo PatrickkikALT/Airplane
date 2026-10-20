@@ -96,6 +96,7 @@ namespace Airplane.Multiplayer
         private Coroutine _announce;
         private NetworkManager _manager;
         private readonly HashSet<ulong> _worldReadyClients = new HashSet<ulong>();
+        private readonly HashSet<ulong> _respawning = new HashSet<ulong>();
         private const string MapLoadReadyMessage = "Airplane.MapLoadReady";
 
         public static AircraftNetworkSpawner Instance { get; private set; }
@@ -212,6 +213,7 @@ namespace Airplane.Multiplayer
             _desiredBots = 0;
             _spawnDeferred = false;
             _worldReadyClients.Clear();
+            _respawning.Clear();
             AircraftSelection.Clear();
             BotCallsigns.Reset();
             AdminSession.Reset();
@@ -613,6 +615,9 @@ namespace Airplane.Multiplayer
                 return;
 
             NetworkObject netObject = aircraft.NetworkObject;
+            if (!netObject || !_respawning.Add(netObject.NetworkObjectId))
+                return;
+
             Vector3 origin = aircraft.Body ? aircraft.Body.Position : aircraft.transform.position;
             aircraft.PlayCrashExplosion(origin);
 
@@ -638,12 +643,14 @@ namespace Airplane.Multiplayer
 
         private IEnumerator DespawnThenRespawnBot(NetworkObject wreck)
         {
+            ulong id = wreck ? wreck.NetworkObjectId : 0UL;
             float hideFor = Mathf.Max(0f, despawnDelay);
             if (hideFor > 0f)
                 yield return new WaitForSeconds(hideFor);
 
             if (wreck && wreck.IsSpawned)
                 wreck.Despawn();
+            _respawning.Remove(id);
 
             float remaining = Mathf.Max(0f, botRespawnDelay - hideFor);
             if (remaining > 0f)
@@ -658,22 +665,26 @@ namespace Airplane.Multiplayer
 
         private IEnumerator DespawnDummy(NetworkObject wreck)
         {
+            ulong id = wreck ? wreck.NetworkObjectId : 0UL;
             float hideFor = Mathf.Max(0f, despawnDelay);
             if (hideFor > 0f)
                 yield return new WaitForSeconds(hideFor);
 
             if (wreck && wreck.IsSpawned)
                 wreck.Despawn();
+            _respawning.Remove(id);
         }
 
         private IEnumerator DespawnThenRespawn(ulong clientId, NetworkObject wreck)
         {
+            ulong id = wreck ? wreck.NetworkObjectId : 0UL;
             float hideFor = Mathf.Max(0f, despawnDelay);
             if (hideFor > 0f)
                 yield return new WaitForSeconds(hideFor);
 
             if (wreck && wreck.IsSpawned)
                 wreck.Despawn();
+            _respawning.Remove(id);
 
             float remaining = Mathf.Max(0f, respawnDelay - hideFor);
             if (remaining > 0f)
