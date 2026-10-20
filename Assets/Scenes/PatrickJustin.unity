@@ -617,6 +617,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &533239145
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 533239146}
+  m_Layer: 0
+  m_Name: Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &533239146
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 533239145}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &627687289
 GameObject:
   m_ObjectHideFlags: 0
@@ -1125,6 +1156,7 @@ MonoBehaviour:
   branchSpread: 0.85
   coreColor: {r: 1, g: 1, b: 1, a: 1}
   glowColor: {r: 0.55, g: 0.7, b: 1, a: 1}
+  emission: 8
   minDistance: 500
   maxDistance: 6000
   cloudAltitudeFallback: 1500
@@ -1135,6 +1167,7 @@ MonoBehaviour:
   flashIntensity: 13.3
   lightIntensity: 1300.5
   lightRange: 4000
+  environmentFlash: 1
   strikeLifetime: 5.4
   drawTime: 0.04
   closeThunderClips: []
@@ -1300,6 +1333,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   fadeHandler: {fileID: 1095214799}
   fightArea: {fileID: 302349517}
+  spawnAltitude: 970
   startButton: {fileID: 902318772}
 --- !u!114 &1095214799
 MonoBehaviour:
@@ -1314,7 +1348,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FadeHandler
   blackScreen: {fileID: 1139830516}
-  fadeAnimator: {fileID: 0}
   fadeDuration: 2
 --- !u!114 &1095214800
 MonoBehaviour:
@@ -1357,8 +1390,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EndGameHandler
   ShowTopMostFoldoutHeaderGroup: 1
-  playerTag: {fileID: 1885173754545710201, guid: 64093b7f74e0707458902b6ff4baee93, type: 3}
   resultTagParent: {fileID: 1032739996}
+  resultsTitle: {fileID: 0}
+  resultsHoldSeconds: 6
 --- !u!1 &1139830513
 GameObject:
   m_ObjectHideFlags: 0
@@ -1713,6 +1747,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1344364910}
+  - component: {fileID: 1344364911}
   - component: {fileID: 1344364909}
   m_Layer: 0
   m_Name: MapGenerator
@@ -1728,13 +1763,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1344364908}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b0e0afefe780314db4becff9dace008, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MapGenerator
   minSpawnPosition: {x: -100, y: -100, z: -100}
   maxSpawnPosition: {x: 100, y: 100, z: 100}
+  spawnArea: {fileID: 0}
+  mapParent: {fileID: 533239146}
   minIslandAmount: 10
   maxIslandAmount: 30
   islands:
@@ -1761,6 +1798,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1095214795}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1344364911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1344364908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99b199097be497f4d87431989543f9ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NewMapGenerator
+  ShowTopMostFoldoutHeaderGroup: 1
+  islandPrefabs:
+  - {fileID: 6944617297588950579, guid: efa72ee57dd01f44fbaf72008c3cd44f, type: 3}
+  - {fileID: 6944617297588950579, guid: 1c1bf156f98f4524f96ccaf5042790f3, type: 3}
+  - {fileID: 6944617297588950579, guid: 0e64a24d92c36a04891b55a726fbda01, type: 3}
+  - {fileID: 2951634835176427559, guid: e73140d41710ec54f8d9f2cbdf1663c8, type: 3}
+  - {fileID: 2951634835176427559, guid: 286c7c529ceeb4048a1d410e8d31de4d, type: 3}
+  - {fileID: 2951634835176427559, guid: 192036466db6cf34bae045d1613a633f, type: 3}
+  chunkSize: 400
+  islandsPerChunk: 8
+  minIslandSpacing: 200
+  worldSeed: 12345
+  visibleDistance: 300
+  visibilityCheckInterval: 0.25
 --- !u!1 &1524813792
 GameObject:
   m_ObjectHideFlags: 0
@@ -2353,6 +2416,23 @@ MonoBehaviour:
     FadeInMode: 0
     FadeInStart: 0
     FadeInDistance: 5000
+    SunColor: {r: 1, g: 0.74, b: 0.46, a: 1}
+    SunIntensity: 2.45
+    SunShadowStrength: 0.9
+    AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
+    AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
+    AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
+    AmbientIntensity: 0.85
+    SkyExposure: 1
+    SkyTint: {r: 1, g: 0.84, b: 0.66, a: 1}
+    GradeTemperature: 8
+    GradeTint: 4
+    GradeContrast: 12
+    GradeSaturation: 8
+    GradeExposure: 0.12
+    SplitShadow: {r: 0.32, g: 0.46, b: 0.58, a: 1}
+    SplitHighlight: {r: 0.78, g: 0.56, b: 0.32, a: 1}
+    BloomIntensity: 0.48
   - Name: Rain
     RainCount: 6000
     LightningEnabled: 0
@@ -2513,6 +2593,23 @@ MonoBehaviour:
     FadeInMode: 0
     FadeInStart: 0
     FadeInDistance: 5000
+    SunColor: {r: 1, g: 0.74, b: 0.46, a: 1}
+    SunIntensity: 2.45
+    SunShadowStrength: 0.9
+    AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
+    AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
+    AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
+    AmbientIntensity: 0.85
+    SkyExposure: 1
+    SkyTint: {r: 1, g: 0.84, b: 0.66, a: 1}
+    GradeTemperature: 8
+    GradeTint: 4
+    GradeContrast: 12
+    GradeSaturation: 8
+    GradeExposure: 0.12
+    SplitShadow: {r: 0.32, g: 0.46, b: 0.58, a: 1}
+    SplitHighlight: {r: 0.78, g: 0.56, b: 0.32, a: 1}
+    BloomIntensity: 0.48
   - Name: death
     RainCount: 60000
     LightningEnabled: 1
@@ -2673,6 +2770,23 @@ MonoBehaviour:
     FadeInMode: 0
     FadeInStart: 0
     FadeInDistance: 5000
+    SunColor: {r: 1, g: 0.74, b: 0.46, a: 1}
+    SunIntensity: 2.45
+    SunShadowStrength: 0.9
+    AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
+    AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
+    AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
+    AmbientIntensity: 0.85
+    SkyExposure: 1
+    SkyTint: {r: 1, g: 0.84, b: 0.66, a: 1}
+    GradeTemperature: 8
+    GradeTint: 4
+    GradeContrast: 12
+    GradeSaturation: 8
+    GradeExposure: 0.12
+    SplitShadow: {r: 0.32, g: 0.46, b: 0.58, a: 1}
+    SplitHighlight: {r: 0.78, g: 0.56, b: 0.32, a: 1}
+    BloomIntensity: 0.48
   - Name: Tornado
     RainCount: 0
     LightningEnabled: 0
@@ -2833,6 +2947,23 @@ MonoBehaviour:
     FadeInMode: 0
     FadeInStart: 0
     FadeInDistance: 5000
+    SunColor: {r: 1, g: 0.74, b: 0.46, a: 1}
+    SunIntensity: 2.45
+    SunShadowStrength: 0.9
+    AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
+    AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
+    AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
+    AmbientIntensity: 0.85
+    SkyExposure: 1
+    SkyTint: {r: 1, g: 0.84, b: 0.66, a: 1}
+    GradeTemperature: 8
+    GradeTint: 4
+    GradeContrast: 12
+    GradeSaturation: 8
+    GradeExposure: 0.12
+    SplitShadow: {r: 0.32, g: 0.46, b: 0.58, a: 1}
+    SplitHighlight: {r: 0.78, g: 0.56, b: 0.32, a: 1}
+    BloomIntensity: 0.48
   - Name: Thunder
     RainCount: 6000
     LightningEnabled: 1
@@ -2993,6 +3124,23 @@ MonoBehaviour:
     FadeInMode: 0
     FadeInStart: 0
     FadeInDistance: 5000
+    SunColor: {r: 1, g: 0.74, b: 0.46, a: 1}
+    SunIntensity: 2.45
+    SunShadowStrength: 0.9
+    AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
+    AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
+    AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
+    AmbientIntensity: 0.85
+    SkyExposure: 1
+    SkyTint: {r: 1, g: 0.84, b: 0.66, a: 1}
+    GradeTemperature: 8
+    GradeTint: 4
+    GradeContrast: 12
+    GradeSaturation: 8
+    GradeExposure: 0.12
+    SplitShadow: {r: 0.32, g: 0.46, b: 0.58, a: 1}
+    SplitHighlight: {r: 0.78, g: 0.56, b: 0.32, a: 1}
+    BloomIntensity: 0.48
   currentPreset: 0
   transitionDuration: 10
 --- !u!4 &1801246300
@@ -3140,3 +3288,4 @@ SceneRoots:
   - {fileID: 1524813795}
   - {fileID: 435825607}
   - {fileID: 6022578949337764087}
+  - {fileID: 533239146}
