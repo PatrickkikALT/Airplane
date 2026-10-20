@@ -594,6 +594,9 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 2418704245586941319}
+    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2418704245586941324}
     - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
@@ -608,9 +611,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2418704245586941320}
-    - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2418704245586941319}
     - targetCorrespondingSourceObject: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2418704245586941329}
@@ -1030,8 +1030,6 @@ MonoBehaviour:
   initialVelocityBody: {x: 0, y: 0, z: 50}
   initialAngularVelocityBody: {x: 0, y: 0, z: 0}
   enableLandingGear: 1
-  groundPlaneY: 0
-  raycastGround: 0
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
