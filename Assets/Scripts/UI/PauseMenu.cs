@@ -15,6 +15,6 @@ public class PauseMenu : SingletonMonoBehaviour<PauseMenu>
     public void Leave()
     {
         NetworkConnection.Disconnect();
-        SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(0));
+        SceneManager.LoadScene(0);
     }
 }

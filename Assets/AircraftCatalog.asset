@@ -25,3 +25,9 @@ MonoBehaviour:
   - displayName: NLI EG-47
     prefab: {fileID: 5626894056299800645, guid: e0ca8dd05017da64f9c3b94ad0b26aa0, type: 3}
     previewPrefab: {fileID: 5406935548688270214, guid: a47e322acf14566dc943c6d5c74f6dd1, type: 3}
+  - displayName: RAI A-23
+    prefab: {fileID: 1051272216326391967, guid: cbc21a4f02b6ed2489bd3aacbad39b65, type: 3}
+    previewPrefab: {fileID: 6400213540192837001, guid: 88a3899c374e4190a27a9c1ff8403005, type: 3}
+  - displayName: RAI I-03
+    prefab: {fileID: 4511661990466476459, guid: ed9b60f896e3ad749a09a5030d739174, type: 3}
+    previewPrefab: {fileID: 6400313540192837001, guid: b3c0bd9b210e4d18825ed8fad84c4f0e, type: 3}

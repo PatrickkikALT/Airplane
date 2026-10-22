@@ -15,9 +15,11 @@ Shader "Airplane/Water"
         _HorizonDistance("Horizon Distance", Float) = 65000.0
 
         [Header(Waves)]
-        _WaveHeight("Wave Height", Float) = 2.6
-        _WaveChoppiness("Choppiness", Range(0, 1.5)) = 0.92
-        _WaveSpeed("Wave Speed", Float) = 1.0
+        _WaveHeight("Wave Height", Float) = 8
+        _WavelengthScale("Wavelength", Float) = 1.35
+        _WaveChoppiness("Choppiness", Range(0, 1.5)) = 0.85
+        _WaveSpeed("Wave Speed", Float) = 1
+        _Storminess("Storminess", Range(0, 1)) = 0.2
         _WindDirection("Wind Direction XZ", Vector) = (0.85, 0.52, 0, 0)
         _RippleStrength("Ripple Detail", Range(0, 2)) = 1.15
         _RippleScale("Ripple Scale", Float) = 1.0
@@ -82,8 +84,10 @@ Shader "Airplane/Water"
                 float _NearGridRadius;
                 float _HorizonDistance;
                 float _WaveHeight;
+                float _WavelengthScale;
                 float _WaveChoppiness;
                 float _WaveSpeed;
+                float _Storminess;
                 float _RippleStrength;
                 float _RippleScale;
                 float _SurfaceRoughness;
@@ -200,9 +204,13 @@ Shader "Airplane/Water"
                 out float jacobian)
             {
                 float2 wind = length(_WindDirection.xy) > 1e-4 ? normalize(_WindDirection.xy) : float2(0.85, 0.52);
+                float storm = saturate(_Storminess);
+                float heightScale = lerp(1.0, 2.6, storm);
+                float chopScale = lerp(1.0, 1.35, storm);
+                float lengthScale = max(_WavelengthScale, 0.2) * lerp(1.0, 1.65, storm);
 
                 static const float wavelengths[8] = { 240.0, 145.0, 88.0, 54.0, 32.0, 19.0, 11.5, 7.2 };
-                static const float weights[8]     = { 0.44,  0.31,  0.22, 0.15, 0.10, 0.065, 0.042, 0.026 };
+                static const float weights[8]     = { 1.00,  0.55,  0.34, 0.22, 0.14, 0.09,  0.055, 0.032 };
                 static const float steepnesses[8] = { 0.36,  0.40,  0.44, 0.46, 0.48, 0.44,  0.40,  0.35 };
                 static const float anglesCos[8]   = { 0.996, 0.940, 0.970, 0.819, 0.899, 0.669, 0.766, 0.500 };
                 static const float anglesSin[8]   = { 0.087, -0.342, 0.242, 0.574, -0.438, 0.743, -0.643, -0.866 };
@@ -214,11 +222,12 @@ Shader "Airplane/Water"
                 [unroll]
                 for (int i = 0; i < 8; i++)
                 {
-                    float nyquistFade = saturate((wavelengths[i] - minWavelength) / max(minWavelength, 1.0));
+                    float wavelength = wavelengths[i] * lengthScale;
+                    float nyquistFade = saturate((wavelength - minWavelength) / max(minWavelength, 1.0));
                     float octaveFade = saturate(attenuation * (1.25 - i * 0.09)) * nyquistFade;
                     float2 dir = Rotate2D(wind, anglesCos[i], anglesSin[i]);
-                    float amp = _WaveHeight * weights[i] * octaveFade;
-                    AccumulateGerstner(xz, time, dir, wavelengths[i], amp, steepnesses[i], offset, dPdx, dPdz);
+                    float amp = _WaveHeight * heightScale * weights[i] * octaveFade;
+                    AccumulateGerstner(xz, time, dir, wavelength, amp, steepnesses[i] * chopScale, offset, dPdx, dPdz);
                 }
 
                 normalWS = normalize(cross(dPdz, dPdx));
@@ -293,7 +302,8 @@ Shader "Airplane/Water"
                 float localStep = (nearRadius + 5.0 * radialSpan * (r2 * r2)) * (1.0 / 64.0);
                 float minVertexWavelength = localStep * 2.5;
                 float viewDist = length(_WorldSpaceCameraPos - restWS);
-                float vertAtten = exp(-viewDist * 0.00018) * (1.0 - smoothstep(0.70, 0.95, r2));
+                float stormFade = lerp(0.00007, 0.000025, saturate(_Storminess));
+                float vertAtten = exp(-viewDist * stormFade) * (1.0 - smoothstep(0.70, 0.95, r2));
 
                 float3 offset;
                 float3 normalWS;
@@ -390,13 +400,14 @@ Shader "Airplane/Water"
                 float3 waterVolumeColor = waterBaseColor * (waterTintLight * (wrapDiffuse * shadow * 0.85) + waterAmbient * 0.75);
                 float3 underwaterColor = lerp(waterVolumeColor, sceneColor * _ShallowColor.rgb, transmittance);
 
-                float crestHeight = saturate((swellHeight + _WaveHeight * 0.35) / max(_WaveHeight * 1.4, 0.1));
+                float stormHeight = _WaveHeight * lerp(1.0, 2.6, saturate(_Storminess));
+                float crestHeight = saturate((swellHeight + stormHeight * 0.35) / max(stormHeight * 1.4, 0.1));
                 float backLight = pow(saturate(dot(viewWS, -lightDir + normalWS * 0.5)), 3.0);
                 float waveSlopeScatter = saturate(1.0 - normalWS.y) * 2.2;
                 float sssFactor = (backLight * 0.75 + waveSlopeScatter * 0.35 + (1.0 - ndotv) * 0.2) * crestHeight * _SubsurfaceScatter * shadow * swellAtten;
                 underwaterColor += _ScatterColor.rgb * waterTintLight * sssFactor;
 
-                float baseRough = clamp(_SurfaceRoughness, 0.02, 0.25);
+                float baseRough = clamp(_SurfaceRoughness + saturate(_Storminess) * 0.08, 0.02, 0.28);
                 float distanceRoughness = saturate(baseRough + (1.0 - detailAtten) * 0.06);
                 float3 reflectVec = reflect(-viewWS, normalWS);
                 reflectVec.y = max(reflectVec.y, 0.005);
@@ -436,7 +447,7 @@ Shader "Airplane/Water"
                 float ridges = 1.0 - abs(n1 * 2.0 - 1.0);
                 float foamTexture = saturate(n0 * 0.45 + ridges * 0.35 + n2 * 0.20);
 
-                float whitecaps = smoothstep(0.28, 0.72, slopeCrest * (foamTexture + 0.30)) * _Whitecaps * detailAtten;
+                float whitecaps = smoothstep(0.28, 0.72, slopeCrest * (foamTexture + 0.30)) * _Whitecaps * lerp(1.0, 1.8, saturate(_Storminess)) * detailAtten;
 
                 float shoreMask = isSkyDepth ? 0.0 : saturate(1.0 - opticalDepth / max(_ShoreFoamWidth, 0.1));
                 float shoreWave = sin(opticalDepth * 2.2 - _Time.y * 2.6 + n0 * 4.0) * 0.5 + 0.5;

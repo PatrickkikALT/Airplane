@@ -19,7 +19,7 @@ RenderSettings:
   m_FogMode: 1
   m_FogDensity: 0.01
   m_LinearFogStart: 280
-  m_LinearFogEnd: 2600
+  m_LinearFogEnd: 2800
   m_AmbientSkyColor: {r: 0.42, g: 0.5, b: 0.68, a: 1}
   m_AmbientEquatorColor: {r: 0.78, g: 0.5, b: 0.28, a: 1}
   m_AmbientGroundColor: {r: 0.09, g: 0.05, b: 0.035, a: 1}
@@ -852,7 +852,7 @@ Transform:
   m_GameObject: {fileID: 135916389}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -46.5, y: 0, z: 0}
+  m_LocalPosition: {x: -46.5, y: 20.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1961,7 +1961,7 @@ Transform:
   m_GameObject: {fileID: 367953597}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -46.5, y: 0, z: -85.50488}
+  m_LocalPosition: {x: -46.5, y: 20.4, z: -85.50488}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2478,7 +2478,7 @@ Transform:
   m_GameObject: {fileID: 615025316}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6463.2837, y: 644.246, z: -129.05139}
+  m_LocalPosition: {x: 0, y: 100, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2513,7 +2513,7 @@ Transform:
   m_GameObject: {fileID: 627687289}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 20.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2736,7 +2736,7 @@ MonoBehaviour:
       m_Calls: []
   m_text: Callsign
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 577fb7b6c80163f16af7daee418fe57b, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -2803,7 +2803,7 @@ MonoBehaviour:
   m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
+  m_hasFontAssetChanged: 1
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!222 &664813769
@@ -9182,7 +9182,7 @@ Transform:
   m_GameObject: {fileID: 1303509914}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6463.3994, y: -594.246, z: 133.14641}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9807,9 +9807,8 @@ MonoBehaviour:
   spawnArea: {fileID: 1294057335}
   waterSurface: {fileID: 0}
   waterHeightOffset: -10
-  sinkRatio: 0.82
-  minIslandAmount: 500
-  maxIslandAmount: 5000
+  minIslandAmount: 1200
+  maxIslandAmount: 2400
   spawnFrameBudgetMs: 12
   minIslandScale: 22
   maxIslandScale: 85
@@ -9828,7 +9827,7 @@ Transform:
   m_GameObject: {fileID: 1385194539}
   serializedVersion: 2
   m_LocalRotation: {x: 0.020512367, y: 0.008324653, z: -0.016470019, w: 0.9996193}
-  m_LocalPosition: {x: 866.3046, y: 741.1698, z: -143.45943}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10497,7 +10496,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.2
-  far clip plane: 25000
+  far clip plane: 12500
   field of view: 62
   orthographic: 0
   orthographic size: 5
@@ -11481,8 +11480,8 @@ MonoBehaviour:
     FogEnabled: 1
     FogColor: {r: 0.82, g: 0.64, b: 0.46, a: 1}
     FogDensity: 0.01
-    FogStart: 5800
-    FogEnd: 99999
+    FogStart: 5600
+    FogEnd: 14000
     Mode: 1
     DensityMultiplier: 0.191
     DensityCurve:
@@ -11637,6 +11636,14 @@ MonoBehaviour:
     SplitShadow: {r: 0.32, g: 0.46, b: 0.58, a: 1}
     SplitHighlight: {r: 0.78, g: 0.56, b: 0.32, a: 1}
     BloomIntensity: 0.48
+    OceanWaveHeight: 5
+    OceanWavelength: 1.15
+    OceanChoppiness: 0.55
+    OceanWaveSpeed: 0.75
+    OceanWhitecaps: 0.25
+    OceanStorm: 0.05
+    OceanRipple: 0.7
+    OceanRoughness: 0.05
   - Name: Rain
     RainCount: 6000
     LightningEnabled: 0
@@ -11658,8 +11665,8 @@ MonoBehaviour:
     FogEnabled: 1
     FogColor: {r: 0.72, g: 0.74, b: 0.76, a: 1}
     FogDensity: 0.0001
-    FogStart: 5200
-    FogEnd: 22000
+    FogStart: 3300
+    FogEnd: 12000
     Mode: 1
     DensityMultiplier: 0.3
     DensityCurve:
@@ -11814,6 +11821,14 @@ MonoBehaviour:
     SplitShadow: {r: 0.38, g: 0.42, b: 0.5, a: 1}
     SplitHighlight: {r: 0.55, g: 0.58, b: 0.64, a: 1}
     BloomIntensity: 0.18
+    OceanWaveHeight: 9
+    OceanWavelength: 1.4
+    OceanChoppiness: 0.95
+    OceanWaveSpeed: 1.05
+    OceanWhitecaps: 1.1
+    OceanStorm: 0.42
+    OceanRipple: 1.15
+    OceanRoughness: 0.08
   - Name: death
     RainCount: 60000
     LightningEnabled: 1
@@ -11991,6 +12006,14 @@ MonoBehaviour:
     SplitShadow: {r: 0.22, g: 0.24, b: 0.3, a: 1}
     SplitHighlight: {r: 0.4, g: 0.34, b: 0.28, a: 1}
     BloomIntensity: 0.12
+    OceanWaveHeight: 14
+    OceanWavelength: 1.65
+    OceanChoppiness: 1.2
+    OceanWaveSpeed: 1.3
+    OceanWhitecaps: 1.65
+    OceanStorm: 0.82
+    OceanRipple: 1.4
+    OceanRoughness: 0.12
   - Name: Tornado
     RainCount: 0
     LightningEnabled: 0
@@ -12168,10 +12191,18 @@ MonoBehaviour:
     SplitShadow: {r: 0.42, g: 0.32, b: 0.22, a: 1}
     SplitHighlight: {r: 0.7, g: 0.52, b: 0.3, a: 1}
     BloomIntensity: 0.16
+    OceanWaveHeight: 16
+    OceanWavelength: 1.8
+    OceanChoppiness: 1.35
+    OceanWaveSpeed: 1.4
+    OceanWhitecaps: 1.9
+    OceanStorm: 1
+    OceanRipple: 1.6
+    OceanRoughness: 0.15
   - Name: Thunder
     RainCount: 6000
     LightningEnabled: 1
-    StrikesPerMinute: 36
+    StrikesPerMinute: 12
     LightningFlashIntensity: 7.43
     LightningBranchiness: 0.6
     LightningCoreColor: {r: 1, g: 1, b: 1, a: 1}
@@ -12345,6 +12376,14 @@ MonoBehaviour:
     SplitShadow: {r: 0.24, g: 0.3, b: 0.48, a: 1}
     SplitHighlight: {r: 0.55, g: 0.6, b: 0.75, a: 1}
     BloomIntensity: 0.4
+    OceanWaveHeight: 12
+    OceanWavelength: 1.55
+    OceanChoppiness: 1.1
+    OceanWaveSpeed: 1.2
+    OceanWhitecaps: 1.45
+    OceanStorm: 0.68
+    OceanRipple: 1.3
+    OceanRoughness: 0.1
   currentPreset: 0
   transitionDuration: 10
 --- !u!4 &1801246300
@@ -12788,7 +12827,7 @@ MonoBehaviour:
   readyConeDeg: 1.35
   pipperSize: 14
   boresightSize: 8
-  pipperColor: {r: 1, g: 0.82, b: 0.28, a: 0.95}
+  pipperColor: {r: 0.8509804, g: 0.5519922, b: 0, a: 0.95}
   readyColor: {r: 0.45, g: 1, b: 0.55, a: 0.95}
   boresightColor: {r: 0.2, g: 0.9, b: 0.3, a: 0.55}
   offscreenColor: {r: 1, g: 0.82, b: 0.28, a: 0.75}
@@ -12815,8 +12854,8 @@ MonoBehaviour:
   worldOffset: 9
   minFontSize: 10
   maxFontSize: 17
-  playerColor: {r: 0.75, g: 0.9, b: 1, a: 1}
-  botColor: {r: 1, g: 0.82, b: 0.55, a: 1}
+  playerColor: {r: 1, g: 0, b: 0.12962759, a: 1}
+  botColor: {r: 1, g: 0, b: 0.12941177, a: 1}
   showDistance: 1
   occlusionTest: 1
   occluderMask:

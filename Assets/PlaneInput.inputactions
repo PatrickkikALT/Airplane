@@ -380,6 +380,39 @@
                     "isPartOfComposite": true
                 },
                 {
+                    "name": "Keyboard2",
+                    "id": "1c992295-b31e-4028-85f3-1c0fddb18238",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Throttle",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "bebfd686-db25-4c79-be3e-b2e3618804af",
+                    "path": "<Keyboard>/leftCtrl",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Throttle",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "7b470b93-0daf-4f18-bca2-93dd8ed16c0a",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Throttle",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
                     "name": "Controller",
                     "id": "c038d3ec-043b-492c-b237-f0c06a80c278",
                     "path": "1DAxis",

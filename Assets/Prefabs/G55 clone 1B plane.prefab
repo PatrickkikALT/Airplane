@@ -2186,8 +2186,6 @@ MonoBehaviour:
   initialVelocityBody: {x: 0, y: 0, z: 50}
   initialAngularVelocityBody: {x: 0, y: 0, z: 0}
   enableLandingGear: 1
-  groundPlaneY: 0
-  raycastGround: 0
   groundMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -2214,7 +2212,7 @@ MonoBehaviour:
   collisionBaumgarte: 0.7
   angularDamping: {x: 8000, y: 7000, z: 7000}
   dampingReferenceQ: 1800
-  maxAngularSpeedDeg: {x: 120, y: 40, z: 68}
+  maxAngularSpeedDeg: {x: 70, y: 40, z: 50}
   idleRateDamping: 2.2
   drawGizmos: 1
   gizmoForceScale: 0.0004

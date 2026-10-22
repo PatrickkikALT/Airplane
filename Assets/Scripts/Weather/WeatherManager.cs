@@ -114,6 +114,16 @@ public class WeatherPreset
     public Color SplitHighlight = new(0.78f, 0.56f, 0.32f, 1f);
     public float BloomIntensity = 0.48f;
 
+    [Header("Ocean")]
+    public float OceanWaveHeight = 8f;
+    public float OceanWavelength = 1.35f;
+    [Range(0f, 1.5f)] public float OceanChoppiness = 0.85f;
+    public float OceanWaveSpeed = 1f;
+    [Range(0f, 2f)] public float OceanWhitecaps = 0.9f;
+    [Range(0f, 1f)] public float OceanStorm = 0.2f;
+    [Range(0f, 2f)] public float OceanRipple = 1.15f;
+    [Range(0.02f, 0.35f)] public float OceanRoughness = 0.06f;
+
     public void ApplyCloudLook(VolumetricClouds.CloudPresets look)
     {
         CloudPreset = look;
@@ -232,6 +242,14 @@ public class WeatherPreset
         p.BottomAltitude = 4000.0f;
         p.AltitudeRange = 800.0f;
         p.GlobalSpeed = 8.0f;
+        p.OceanWaveHeight = 4.5f;
+        p.OceanWavelength = 1.1f;
+        p.OceanChoppiness = 0.5f;
+        p.OceanWaveSpeed = 0.7f;
+        p.OceanWhitecaps = 0.2f;
+        p.OceanStorm = 0f;
+        p.OceanRipple = 0.65f;
+        p.OceanRoughness = 0.045f;
         p.SunLightDimmer = 1.05f;
         p.AmbientLightProbeDimmer = 1.0f;
         p.Shadows = false;
@@ -243,6 +261,12 @@ public class WeatherPreset
         WeatherPreset p = Base("Fair", VolumetricClouds.CloudPresets.Sparse);
         p.RainCount = 0;
         p.GlobalSpeed = 20.0f;
+        p.OceanWaveHeight = 6f;
+        p.OceanWavelength = 1.2f;
+        p.OceanChoppiness = 0.65f;
+        p.OceanWaveSpeed = 0.85f;
+        p.OceanWhitecaps = 0.4f;
+        p.OceanStorm = 0.08f;
         p.Shadows = false;
         return p;
     }
@@ -252,6 +276,9 @@ public class WeatherPreset
         WeatherPreset p = Base("Cloudy", VolumetricClouds.CloudPresets.Cloudy);
         p.RainCount = 0;
         p.GlobalSpeed = 35.0f;
+        p.OceanWaveHeight = 6f;
+        p.OceanStorm = 0.12f;
+        p.OceanWhitecaps = 0.45f;
         p.Shadows = true;
         p.ShadowOpacity = 0.45f;
         return p;
@@ -267,6 +294,11 @@ public class WeatherPreset
         p.ScatteringTint = new Color(0.08f, 0.09f, 0.12f, 1f);
         p.Shadows = true;
         p.ShadowOpacity = 0.7f;
+        p.OceanWaveHeight = 7.5f;
+        p.OceanWavelength = 1.35f;
+        p.OceanChoppiness = 0.8f;
+        p.OceanWhitecaps = 0.65f;
+        p.OceanStorm = 0.22f;
         return p;
     }
 
@@ -275,6 +307,13 @@ public class WeatherPreset
         WeatherPreset p = Base("Rain", VolumetricClouds.CloudPresets.Overcast);
         p.RainCount = 80000;
         p.GlobalSpeed = 55.0f;
+        p.OceanWaveHeight = 11f;
+        p.OceanWavelength = 1.5f;
+        p.OceanChoppiness = 1.05f;
+        p.OceanWaveSpeed = 1.15f;
+        p.OceanWhitecaps = 1.25f;
+        p.OceanStorm = 0.55f;
+        p.OceanRoughness = 0.09f;
         p.SunLightDimmer = 0.55f;
         p.AmbientLightProbeDimmer = 0.7f;
         p.ScatteringTint = new Color(0.12f, 0.13f, 0.16f, 1f);
@@ -302,6 +341,13 @@ public class WeatherPreset
         p.LightningFlashIntensity = 0.8f;
         p.LightningBranchiness = 0.45f;
         p.ThunderVolume = 0.7f;
+        p.OceanWaveHeight = 12f;
+        p.OceanWavelength = 1.55f;
+        p.OceanChoppiness = 1.1f;
+        p.OceanWaveSpeed = 1.2f;
+        p.OceanWhitecaps = 1.45f;
+        p.OceanStorm = 0.7f;
+        p.OceanRoughness = 0.1f;
         return p;
     }
 
@@ -328,6 +374,13 @@ public class WeatherPreset
         p.LightningFlashIntensity = 1.0f;
         p.LightningBranchiness = 0.65f;
         p.ThunderVolume = 1.0f;
+        p.OceanWaveHeight = 16f;
+        p.OceanWavelength = 1.7f;
+        p.OceanChoppiness = 1.25f;
+        p.OceanWaveSpeed = 1.35f;
+        p.OceanWhitecaps = 1.7f;
+        p.OceanStorm = 0.85f;
+        p.OceanRoughness = 0.12f;
         return p;
     }
 
@@ -365,6 +418,13 @@ public class WeatherPreset
         p.LightningFlashIntensity = 1.1f;
         p.LightningBranchiness = 0.7f;
         p.ThunderVolume = 1.0f;
+        p.OceanWaveHeight = 20f;
+        p.OceanWavelength = 1.85f;
+        p.OceanChoppiness = 1.4f;
+        p.OceanWaveSpeed = 1.45f;
+        p.OceanWhitecaps = 2f;
+        p.OceanStorm = 1f;
+        p.OceanRoughness = 0.16f;
         return p;
     }
 
@@ -392,6 +452,13 @@ public class WeatherPreset
         p.LightningCoreColor = Color.white;
         p.LightningGlowColor = new Color(0.62f, 0.72f, 1f, 1f);
         p.ThunderVolume = 1.0f;
+        p.OceanWaveHeight = 14f;
+        p.OceanWavelength = 1.6f;
+        p.OceanChoppiness = 1.15f;
+        p.OceanWaveSpeed = 1.25f;
+        p.OceanWhitecaps = 1.55f;
+        p.OceanStorm = 0.72f;
+        p.OceanRoughness = 0.11f;
         return p;
     }
 
@@ -442,9 +509,21 @@ namespace Airplane.Weather
         private FogSnapshot _toFog;
         private LightingSnapshot _fromLight;
         private LightingSnapshot _toLight;
+        private OceanSnapshot _fromOcean;
+        private OceanSnapshot _toOcean;
         private Material _skybox;
+        private Material _ocean;
         private static readonly int SkyExposureId = Shader.PropertyToID("_Exposure");
         private static readonly int SkyTintId = Shader.PropertyToID("_Tint");
+        private static readonly int OceanWaveHeightId = Shader.PropertyToID("_WaveHeight");
+        private static readonly int OceanWavelengthId = Shader.PropertyToID("_WavelengthScale");
+        private static readonly int OceanChoppinessId = Shader.PropertyToID("_WaveChoppiness");
+        private static readonly int OceanWaveSpeedId = Shader.PropertyToID("_WaveSpeed");
+        private static readonly int OceanWhitecapsId = Shader.PropertyToID("_Whitecaps");
+        private static readonly int OceanStormId = Shader.PropertyToID("_Storminess");
+        private static readonly int OceanRippleId = Shader.PropertyToID("_RippleStrength");
+        private static readonly int OceanRoughnessId = Shader.PropertyToID("_SurfaceRoughness");
+        private static readonly int OceanWindId = Shader.PropertyToID("_WindDirection");
 
         private bool _fromNetwork;
 
@@ -603,6 +682,7 @@ namespace Airplane.Weather
             _fromLightning = LightningSnapshot.FromSystem(lightningSystem);
             _fromFog = FogSnapshot.FromRenderSettings();
             _fromLight = LightingSnapshot.FromScene(this);
+            _fromOcean = OceanSnapshot.FromMaterial(OceanMaterial());
             _fromWind = weatherSystem != null ? weatherSystem.Wind : AtmosphericModel.SampleWind();
             _fromClouds = TryGetClouds(out VolumetricClouds clouds)
                 ? CloudSnapshot.FromVolume(clouds)
@@ -618,6 +698,7 @@ namespace Airplane.Weather
             _toLightning = LightningSnapshot.FromPreset(target);
             _toFog = FogSnapshot.FromPreset(target);
             _toLight = LightingSnapshot.FromPreset(target);
+            _toOcean = OceanSnapshot.FromPreset(target);
             _toCloudPreset = target.CloudPreset;
             _toClouds = CloudSnapshot.FromPreset(target);
             ApplyWind(target);
@@ -639,6 +720,7 @@ namespace Airplane.Weather
             ApplyLightningBlend(t);
             ApplyFogBlend(t);
             ApplyLightingBlend(t);
+            ApplyOceanBlend(t, wind);
 
             if (!TryGetClouds(out VolumetricClouds clouds))
                 return;
@@ -975,6 +1057,107 @@ namespace Airplane.Weather
             {
                 bloom.intensity.overrideState = true;
                 bloom.intensity.value = light.BloomIntensity;
+            }
+        }
+
+        private void ApplyOceanBlend(float t, Vector3 wind)
+        {
+            Material ocean = OceanMaterial();
+            if (ocean == null)
+                return;
+
+            OceanSnapshot sea = OceanSnapshot.Lerp(_fromOcean, _toOcean, t);
+            ocean.SetFloat(OceanWaveHeightId, sea.WaveHeight);
+            ocean.SetFloat(OceanWavelengthId, sea.Wavelength);
+            ocean.SetFloat(OceanChoppinessId, sea.Choppiness);
+            ocean.SetFloat(OceanWaveSpeedId, sea.WaveSpeed);
+            ocean.SetFloat(OceanWhitecapsId, sea.Whitecaps);
+            ocean.SetFloat(OceanStormId, sea.Storm);
+            ocean.SetFloat(OceanRippleId, sea.Ripple);
+            ocean.SetFloat(OceanRoughnessId, sea.Roughness);
+
+            Vector2 direction = new Vector2(wind.x, wind.z);
+            if (direction.sqrMagnitude > 0.0001f)
+            {
+                direction.Normalize();
+                ocean.SetVector(OceanWindId, new Vector4(direction.x, direction.y, 0f, 0f));
+            }
+        }
+
+        private Material OceanMaterial()
+        {
+            if (_ocean != null)
+                return _ocean;
+
+            Airplane.Trailer.TrailerOceanSurface surface = FindAnyObjectByType<Airplane.Trailer.TrailerOceanSurface>();
+            if (surface == null)
+                return null;
+
+            Renderer renderer = surface.GetComponent<Renderer>();
+            if (renderer == null || renderer.sharedMaterial == null)
+                return null;
+
+            _ocean = renderer.material;
+            return _ocean;
+        }
+
+        private struct OceanSnapshot
+        {
+            public float WaveHeight;
+            public float Wavelength;
+            public float Choppiness;
+            public float WaveSpeed;
+            public float Whitecaps;
+            public float Storm;
+            public float Ripple;
+            public float Roughness;
+
+            public static OceanSnapshot FromPreset(WeatherPreset preset)
+            {
+                return new OceanSnapshot
+                {
+                    WaveHeight = preset.OceanWaveHeight,
+                    Wavelength = preset.OceanWavelength,
+                    Choppiness = preset.OceanChoppiness,
+                    WaveSpeed = preset.OceanWaveSpeed,
+                    Whitecaps = preset.OceanWhitecaps,
+                    Storm = preset.OceanStorm,
+                    Ripple = preset.OceanRipple,
+                    Roughness = preset.OceanRoughness
+                };
+            }
+
+            public static OceanSnapshot FromMaterial(Material ocean)
+            {
+                if (ocean == null)
+                    return FromPreset(new WeatherPreset());
+
+                return new OceanSnapshot
+                {
+                    WaveHeight = ocean.GetFloat(OceanWaveHeightId),
+                    Wavelength = ocean.HasProperty(OceanWavelengthId) ? ocean.GetFloat(OceanWavelengthId) : 1.35f,
+                    Choppiness = ocean.GetFloat(OceanChoppinessId),
+                    WaveSpeed = ocean.GetFloat(OceanWaveSpeedId),
+                    Whitecaps = ocean.GetFloat(OceanWhitecapsId),
+                    Storm = ocean.HasProperty(OceanStormId) ? ocean.GetFloat(OceanStormId) : 0.2f,
+                    Ripple = ocean.GetFloat(OceanRippleId),
+                    Roughness = ocean.GetFloat(OceanRoughnessId)
+                };
+            }
+
+            public static OceanSnapshot Lerp(OceanSnapshot a, OceanSnapshot b, float t)
+            {
+                return new OceanSnapshot
+                {
+                    WaveHeight = Mathf.Lerp(a.WaveHeight, b.WaveHeight, t),
+                    Wavelength = Mathf.Lerp(a.Wavelength, b.Wavelength, t),
+                    Choppiness = Mathf.Lerp(a.Choppiness, b.Choppiness, t),
+                    WaveSpeed = Mathf.Lerp(a.WaveSpeed, b.WaveSpeed, t),
+                    Whitecaps = Mathf.Lerp(a.Whitecaps, b.Whitecaps, t),
+                    Storm = Mathf.Lerp(a.Storm, b.Storm, t),
+                    Ripple = Mathf.Lerp(a.Ripple, b.Ripple, t),
+                    Roughness = Mathf.Lerp(a.Roughness, b.Roughness, t)
+                };
             }
         }
 

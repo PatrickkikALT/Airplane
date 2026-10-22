@@ -46,6 +46,7 @@ Material:
     - _Roughness: 0.227
     - _ShoreFoamWidth: 8
     - _ShoreWidth: 9
+    - _Storminess: 0
     - _SubsurfaceScatter: 1.1
     - _SubsurfaceStrength: 1.427
     - _SunGlintIntensity: 1.6
@@ -53,8 +54,9 @@ Material:
     - _SurfaceRoughness: 0.055
     - _Swell: 1.42
     - _WaveChoppiness: 0.92
-    - _WaveHeight: 2.6
+    - _WaveHeight: 0.74
     - _WaveSpeed: 1
+    - _WavelengthScale: 1.35
     - _WhitecapThreshold: 0.28
     - _Whitecaps: 1
     m_Colors:
