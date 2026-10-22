@@ -15,29 +15,39 @@ namespace Airplane.Trailer
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _propertyBlock;
         private int _builtResolution = -1;
-        private bool _hasInitialWaterLevel;
         private float _waterLevelY;
 
         private void OnEnable()
         {
-            RecordWaterLevel();
+            AlignToSeaLevel();
             BuildMesh();
             KeepVisible();
         }
 
         private void Awake()
         {
-            RecordWaterLevel();
+            AlignToSeaLevel();
             BuildMesh();
         }
 
         private void LateUpdate()
         {
-            if (!Application.isPlaying)
-                _waterLevelY = transform.position.y;
-
+            AlignToSeaLevel();
             BuildMesh();
             KeepVisible();
+        }
+
+        private void AlignToSeaLevel()
+        {
+            float sea = Airplane.FlightSimulation.AtmosphericModel.SeaLevelWorldY;
+            Vector3 position = transform.position;
+            if (position.y != sea)
+            {
+                position.y = sea;
+                transform.position = position;
+            }
+
+            _waterLevelY = sea;
         }
 
         private void KeepVisible()
@@ -58,15 +68,6 @@ namespace Airplane.Trailer
             if (cam)
                 center = transform.InverseTransformPoint(cam.transform.position);
             _mesh.bounds = new Bounds(center, new Vector3(400000f, 80000f, 400000f));
-        }
-
-        private void RecordWaterLevel()
-        {
-            if (!_hasInitialWaterLevel || !Application.isPlaying)
-            {
-                _waterLevelY = transform.position.y;
-                _hasInitialWaterLevel = true;
-            }
         }
 
         private void ApplyWaterLevelProperty()

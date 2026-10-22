@@ -77,6 +77,8 @@ namespace Airplane.FlightSimulation
         [SerializeField] private Vector3 gravityOverride = new Vector3(0f, -StandardGravity, 0f);
 
         public float SeaLevelY => seaLevelY;
+
+        public static float SeaLevelWorldY => Instance ? Instance.seaLevelY : 0f;
         public float SeaLevelDensity => seaLevelDensity;
         public Vector3 WindWorld => windWorld;
 

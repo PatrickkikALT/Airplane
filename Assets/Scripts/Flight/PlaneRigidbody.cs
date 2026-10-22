@@ -514,6 +514,7 @@ namespace Airplane.FlightSimulation
 
             SanitizeState();
             ResolveColliderContacts();
+            EnforceSeaLevel();
         }
 
         private void StepRK4(float dt)
@@ -546,6 +547,39 @@ namespace Airplane.FlightSimulation
             _alphaBody = (k1.AngularAccelerationBody + 2f * k2.AngularAccelerationBody + 2f * k3.AngularAccelerationBody + k4.AngularAccelerationBody) / 6f;
             SanitizeState();
             ResolveColliderContacts();
+            EnforceSeaLevel();
+        }
+
+        private void EnforceSeaLevel()
+        {
+            float sea = AtmosphericModel.SeaLevelWorldY;
+            ApplyToTransform(_position, _orientation);
+            if (_ownColliders == null || _ownColliders.Length == 0)
+                CacheOwnColliders();
+
+            float minY = transform.position.y;
+            bool any = false;
+            for (int i = 0; i < _ownColliders.Length; i++)
+            {
+                Collider collider = _ownColliders[i];
+                if (!collider || !collider.enabled)
+                    continue;
+                any = true;
+                if (collider.bounds.min.y < minY)
+                    minY = collider.bounds.min.y;
+            }
+
+            if (!any)
+                minY = transform.position.y;
+
+            float penetration = sea - minY;
+            if (penetration <= 0f)
+                return;
+
+            _position.y += penetration;
+            if (_velocity.y < 0f)
+                _velocity.y = 0f;
+            ApplyToTransform(_position, _orientation);
         }
 
         private void ClampAngularRates()

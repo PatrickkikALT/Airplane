@@ -35,7 +35,6 @@ public class MapGenerator : MonoBehaviour
     [SerializeField] private Transform spawnArea;
     [SerializeField] private Transform waterSurface;
     [SerializeField] private float waterHeightOffset = -10f;
-    [SerializeField] private float sinkRatio = 0.82f;
     private Bounds _spawnAreaCollider;
 
     [Header("Amounts")]
@@ -220,8 +219,7 @@ public class MapGenerator : MonoBehaviour
             Vector3 position = ReturnCheckedSpawnPosition(minSeparation);
 
             GameObject prefab = validIslands[_rng.Next(0, validIslands.Count)];
-            float submergedY = _waterLevelY + waterHeightOffset - scale * Mathf.Max(0f, sinkRatio);
-            position.y = submergedY;
+            position.y = _waterLevelY + waterHeightOffset;
 
             GameObject instance = Instantiate(prefab, position, Quaternion.Euler(0f, yaw, 0f));
             instance.transform.localScale = new Vector3(scale, scale, scale);
