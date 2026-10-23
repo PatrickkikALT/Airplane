@@ -78,6 +78,7 @@ namespace Airplane.Weapons
         [SerializeField] private float gizmoLength = 1.6f;
 
         private PlaneRigidbody _body;
+        private AudioSource _shot;
         private Vector3 _muzzleLocalPos;
         private Quaternion _muzzleLocalRot;
         private bool _muzzlePoseCached;
@@ -133,6 +134,7 @@ namespace Airplane.Weapons
             if (!muzzle)
                 muzzle = transform;
             _body = GetComponentInParent<PlaneRigidbody>();
+            _shot = GetComponent<AudioSource>();
             _ammo = ammoCapacity;
             CacheMuzzlePose();
         }
@@ -141,6 +143,8 @@ namespace Airplane.Weapons
         {
             if (!_body)
                 _body = GetComponentInParent<PlaneRigidbody>();
+            if (!_shot)
+                _shot = GetComponent<AudioSource>();
             CacheMuzzlePose();
         }
 
@@ -218,6 +222,8 @@ namespace Airplane.Weapons
         private void FireOne(PlaneRigidbody body, bool visualOnly)
         {
             GetMuzzleWorld(body, out Vector3 origin, out Vector3 axis);
+            if (_shot)
+                _shot.Play();
             Vector3 shotDir = ApplySpread(axis);
             Vector3 inherited = body.GetPointVelocity(origin);
             Vector3 velocity = inherited + shotDir * muzzleSpeed;

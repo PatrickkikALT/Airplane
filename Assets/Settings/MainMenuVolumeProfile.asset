@@ -400,7 +400,7 @@ MonoBehaviour:
     m_Value: 4
   densityMultiplier:
     m_OverrideState: 1
-    m_Value: 0.423
+    m_Value: 0.384
   densityCurve:
     m_OverrideState: 1
     m_Value:
@@ -438,7 +438,7 @@ MonoBehaviour:
       m_RotationOrder: 4
   shapeFactor:
     m_OverrideState: 1
-    m_Value: 0.845
+    m_Value: 0.852
   shapeScale:
     m_OverrideState: 1
     m_Value: 5
@@ -571,7 +571,7 @@ MonoBehaviour:
     m_Value: 0.1
   scatteringTint:
     m_OverrideState: 1
-    m_Value: {r: 0, g: 0, b: 0, a: 1}
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
   powderEffectIntensity:
     m_OverrideState: 1
     m_Value: 0.25
@@ -595,7 +595,7 @@ MonoBehaviour:
     m_Value: 0
   temporalAccumulationFactor:
     m_OverrideState: 1
-    m_Value: 0.95
+    m_Value: 0
   perceptualBlending:
     m_OverrideState: 1
     m_Value: 1

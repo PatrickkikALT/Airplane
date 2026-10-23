@@ -7,6 +7,8 @@ public class VolumeHandler : MonoBehaviour
 {
     [SerializeField] private AudioMixer audioMixer;
 
+    public AudioMixer Mixer => audioMixer;
+
     [SerializeField] private Slider masterSlider;
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Slider sfxSlider;
